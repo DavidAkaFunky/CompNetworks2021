@@ -1,18 +1,4 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <netdb.h>
-#include <string.h>
-#include <arpa/inet.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#define PORT "58001"
-#define SIZE 512
-#define INVALID_CMD "Invalid command. Try again!"
-
-int has_correct_args(char* arg1, char* arg2){
-    // Talvez se vá usar: Verificar se o(s) arg(s) que precisamos não são vazios
-}
+#include "client.h" 
 
 int is_correct_arg_size(char* arg, int size){
     if (strlen(arg) != size){
@@ -22,50 +8,81 @@ int is_correct_arg_size(char* arg, int size){
     return 1;
 }
 
+int has_correct_arg_sizes(char* arg1, int size1, char* arg2, int size2){
+    return is_correct_arg_size(arg1, size1) && is_correct_arg_size(arg2, size2);
+}
+
+int digits_only(char *s){
+    while (*s) {
+        if (!isdigit(*s++)){
+            printf("UID has a non-numeric character. Try again!\n");
+            return 0;
+        }
+    }
+    return 1;
+}
+
 void parse(char* command){
-    char name[11];
+    char name[11]; //The largest command name has 11 characters
     char arg1[SIZE];
     char arg2[SIZE];
-    sscanf(command, "%s %s %s", name, arg1, arg2);
-    puts(name);
+    char arg3[SIZE];
+    sscanf(command, "%s %s %s %s", name, arg1, arg2, arg3); 
+    if (strcmp(arg3, "")){ //Isto deve falhar se tivermos espaços depois do arg2? (Perguntar ao prof)
+        puts("Too many arguments. Try again!");
+        return;
+    }
     if (!strcmp(name, "reg")){
         //Register (UDP): UID (tam 5), pass (tam 8)
-        if (!(is_correct_arg_size(arg1, 5) && is_correct_arg_size(arg2, 8)))
+        if (!(digits_only(arg1) && has_correct_arg_sizes(arg1, 5, arg2, 8)))
             return;
+        //register(arg1,arg2);
     } else if (!strcmp(name, "unregister") || !strcmp(name, "unr")){
         //Unegister (UDP): UID (tam 5), pass (tam 8)
-        if (!(is_correct_arg_size(arg1, 5) && is_correct_arg_size(arg2, 8)))
+        if (!(digits_only(arg1) && has_correct_arg_sizes(arg1, 5, arg2, 8)))
             return;
     } else if (!strcmp(name, "login")){
         //Login (UDP): UID (tam 5), pass (tam 8)
-        if (!(is_correct_arg_size(arg1, 5) && is_correct_arg_size(arg2, 8)))
+        if (!(digits_only(arg1) && has_correct_arg_sizes(arg1, 5, arg2, 8)))
             return;
     } else if (!strcmp(name, "logout")){
         //Logout (UDP): (nada)
+        if (!has_correct_arg_sizes(arg1, 0, arg2, 0))
+            return;
     } else if (!strcmp(name, "exit")){
-        //Exit: (nada)
+        //Exit (TCP): (nada)
+        if (!has_correct_arg_sizes(arg1, 0, arg2, 0))
+            return;
     } else if (!strcmp(name, "groups") || !strcmp(name, "gl")){
         //Groups (UDP): (nada)
+        if (!has_correct_arg_sizes(arg1, 0, arg2, 0))
+            return;
     } else if (!strcmp(name, "subscribe") || !strcmp(name, "s")){
         //Subscribe (UDP): GID (tam 2), GName (tam 24)
-        if (!(is_correct_arg_size(arg1, 2) && is_correct_arg_size(arg2, 24)))
+        if (!has_correct_arg_sizes(arg1, 2, arg2, 24))
             return;
     } else if (!strcmp(name, "unsubscribe") || !strcmp(name, "u")){
         //Unsubscribe (UDP): GID (tam 2)
-        if (!is_correct_arg_size(arg1, 2))
+        if (!has_correct_arg_sizes(arg1, 2, arg2, 24))
             return;
     } else if (!strcmp(name, "my_groups") || !strcmp(name, "mgl")){
         //My groups (UDP): (nada)
+        if (!has_correct_arg_sizes(arg1, 0, arg2, 0))
+            return;
     } else if (!strcmp(name, "select") || !strcmp(name, "sag")){
         //Select (UDP): GID (tam 2)
-        if (!is_correct_arg_size(arg1, 2))
+        if (!has_correct_arg_sizes(arg1, 2, arg2, 0))
             return;
     } else if (!strcmp(name, "ulist") || !strcmp(name, "ul")){
         //User list (TCP): (nada)
+        if (!has_correct_arg_sizes(arg1, 0, arg2, 0))
+            return;
     } else if (!strcmp(name, "post")){
         //Post (TCP): "text" (Verificar as aspas, talvez?), [FName] (Verificar os parênteses, talvez?)
     } else if (!strcmp(name, "retrieve") || !strcmp(name, "r")){
         //Retrieve (TCP): MID
+        if (!has_correct_arg_sizes(arg1, 0/*???*/, arg2, 0))
+            return;
     } else
         puts(INVALID_CMD);
 }
