@@ -1,5 +1,6 @@
 #include "client.h" 
 
+
 int is_correct_arg_size(char* arg, int size){
     if (strlen(arg) != size){
         printf("%s's size is not %d. Try again!\n", arg, size);
@@ -87,7 +88,9 @@ void parse(char* command){
         puts(INVALID_CMD);
 }
 
-int main(){
+int main(int argc, char* argv[]){     //nota primeiro argumento é o ./User
+    strcpy(IP_ADDRESS,argv[2]);       //Defines the IP_ADDRESS where the server runs
+    strcpy(PORT,argv[4]);             //Defines the PORT where the server accepts requests
     char command[SIZE];
     while(fgets(command, SIZE, stdin)){
         parse(command);
