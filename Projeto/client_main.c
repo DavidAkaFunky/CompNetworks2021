@@ -23,6 +23,18 @@ int digits_only(char *s){
     return 1;
 }
 
+void create_socket(){   //Creates a socket for the client
+    fd = socket(AF_INET, SOCK_DGRAM, 0);
+    if (fd == -1)
+		exit(EXIT_FAILURE);
+    
+    memset(&hints, 0, sizeof hints);
+	hints.ai_family = AF_INET;
+	hints.ai_socktype = SOCK_DGRAM;
+    if (getaddrinfo(IP_ADDRESS, PORT, &hints, &res) != 0)
+		exit(EXIT_FAILURE);
+}
+
 void parse(char* command){
     char name[11]; //The largest command name has 11 characters
     char arg1[SIZE];
@@ -37,7 +49,7 @@ void parse(char* command){
         //Register (UDP): UID (tam 5), pass (tam 8)
         if (!(digits_only(arg1) && has_correct_arg_sizes(arg1, 5, arg2, 8)))
             return;
-        //register(arg1,arg2);
+        reg(IP_ADDRESS,PORT,arg1,arg2);
     } else if (!strcmp(name, "unregister") || !strcmp(name, "unr")){
         //Unegister (UDP): UID (tam 5), pass (tam 8)
         if (!(digits_only(arg1) && has_correct_arg_sizes(arg1, 5, arg2, 8)))
@@ -88,10 +100,14 @@ void parse(char* command){
         puts(INVALID_CMD);
 }
 
-int main(int argc, char* argv[]){     //nota primeiro argumento é o ./User
-    strcpy(IP_ADDRESS,argv[2]);       //Defines the IP_ADDRESS where the server runs
-    strcpy(PORT,argv[4]);             //Defines the PORT where the server accepts requests
-    char command[SIZE];
+int main(int argc, char* argv[]){
+    char command[SIZE],ADDRESS[10];
+    strcpy(ADDRESS,argv[2]);            //Defines the IP_ADDRESS where the server runs
+    sprintf(IP_ADDRESS,"%s%s",ADDRESS,".ist.utl.pt");
+    strcpy(PORT,argv[4]);               //Defines the PORT where the server accepts requests
+    
+    create_socket();                    //NEW
+
     while(fgets(command, SIZE, stdin)){
         parse(command);
     }

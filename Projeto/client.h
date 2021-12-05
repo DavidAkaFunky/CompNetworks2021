@@ -11,7 +11,13 @@
 #define SIZE 512
 #define INVALID_CMD "Invalid command. Try again!"
 
-char IP_ADDRESS[20],PORT[20]; //
+char IP_ADDRESS[20],PORT[20];
+int fd, errcode;
+ssize_t n;
+socklen_t addrlen;
+struct addrinfo hints, *res;
+struct sockaddr_in addr;
+char buffer[128];
 
 /* -------------------- client_main -------------------- */
 int is_correct_arg_size(char* arg, int size);
@@ -20,6 +26,7 @@ int digits_only(char *s);
 void parse(char* command);
 int main(int argc, char* argv[]);
 
-/* -------------------- client_tcp -------------------- */
-
 /* -------------------- client_udp -------------------- */
+void reg(char* IP_ADDRESS, char* PORT,char* UID, char* pass);
+
+/* -------------------- client_tcp -------------------- */
