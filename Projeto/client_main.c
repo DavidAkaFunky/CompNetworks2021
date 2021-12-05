@@ -26,7 +26,7 @@ int digits_only(char *s){
     return 1;
 }
 
-void create_socket(){   //Creates a socket for the client
+int create_socket(){   //Creates a socket for the client
     int fd = socket(AF_INET, SOCK_DGRAM, 0);
     if (fd == -1){
         puts("Failed creating the socket!");
@@ -40,10 +40,10 @@ void create_socket(){   //Creates a socket for the client
         puts("Failed getting the address' information!");
         exit(EXIT_FAILURE);
     }
-		
+	return fd;
 }
 
-void parse(char* command){
+void parse(int fd, char* command){
     char name[11]; //The largest command name has 11 characters
     char arg1[SIZE];
     char arg2[SIZE];
@@ -57,7 +57,7 @@ void parse(char* command){
         //Register (UDP): UID (tam 5), pass (tam 8)
         if (!(digits_only(arg1) && has_correct_arg_sizes(arg1, 5, arg2, 8)))
             return;
-        reg(IP_ADDRESS, PORT, arg1, arg2, res);
+        reg(IP_ADDRESS, PORT, arg1, arg2, res, fd);
     } else if (!strcmp(name, "unregister") || !strcmp(name, "unr")){
         //Unegister (UDP): UID (tam 5), pass (tam 8)
         if (!(digits_only(arg1) && has_correct_arg_sizes(arg1, 5, arg2, 8)))
@@ -114,10 +114,8 @@ int main(int argc, char* argv[]){
     strcpy(ADDRESS,argv[2]);            //Defines the IP_ADDRESS where the server runs
     sprintf(IP_ADDRESS,"%s%s",ADDRESS,".ist.utl.pt");
     strcpy(PORT,argv[4]);               //Defines the PORT where the server accepts requests
-    
-    create_socket();                    //NEW
-    puts("Here");
+    int fd = create_socket();                    //NEW
     while(fgets(command, SIZE, stdin)){
-        parse(command);
+        parse(fd, command);
     }
 }
