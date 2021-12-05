@@ -1,5 +1,8 @@
 #include "client.h" 
 
+char IP_ADDRESS[20], PORT[20];
+int errcode;
+struct addrinfo hints, *res;
 
 int is_correct_arg_size(char* arg, int size){
     if (strlen(arg) != size){
@@ -23,19 +26,24 @@ int digits_only(char *s){
     return 1;
 }
 
-void create_socket(){   //Creates a socket for the client
-    fd = socket(AF_INET, SOCK_DGRAM, 0);
-    if (fd == -1)
-		exit(EXIT_FAILURE);
+int create_socket(){   //Creates a socket for the client
+    int fd = socket(AF_INET, SOCK_DGRAM, 0);
+    if (fd == -1){
+        puts("Failed creating the socket!");
+        exit(EXIT_FAILURE);
+    }
     
     memset(&hints, 0, sizeof hints);
 	hints.ai_family = AF_INET;
 	hints.ai_socktype = SOCK_DGRAM;
-    if (getaddrinfo(IP_ADDRESS, PORT, &hints, &res) != 0)
-		exit(EXIT_FAILURE);
+    if (getaddrinfo(IP_ADDRESS, PORT, &hints, &res) != 0){
+        puts("Failed getting the address' information!");
+        exit(EXIT_FAILURE);
+    }
+	return fd;
 }
 
-void parse(char* command){
+void parse(int fd, char* command){
     char name[11]; //The largest command name has 11 characters
     char arg1[SIZE];
     char arg2[SIZE];
@@ -49,7 +57,7 @@ void parse(char* command){
         //Register (UDP): UID (tam 5), pass (tam 8)
         if (!(digits_only(arg1) && has_correct_arg_sizes(arg1, 5, arg2, 8)))
             return;
-        reg(IP_ADDRESS,PORT,arg1,arg2);
+        reg(IP_ADDRESS, PORT, arg1, arg2, res, fd);
     } else if (!strcmp(name, "unregister") || !strcmp(name, "unr")){
         //Unegister (UDP): UID (tam 5), pass (tam 8)
         if (!(digits_only(arg1) && has_correct_arg_sizes(arg1, 5, arg2, 8)))
@@ -101,14 +109,13 @@ void parse(char* command){
 }
 
 int main(int argc, char* argv[]){
+
     char command[SIZE],ADDRESS[10];
     strcpy(ADDRESS,argv[2]);            //Defines the IP_ADDRESS where the server runs
     sprintf(IP_ADDRESS,"%s%s",ADDRESS,".ist.utl.pt");
     strcpy(PORT,argv[4]);               //Defines the PORT where the server accepts requests
-    
-    create_socket();                    //NEW
-
+    int fd = create_socket();                    //NEW
     while(fgets(command, SIZE, stdin)){
-        parse(command);
+        parse(fd, command);
     }
 }
