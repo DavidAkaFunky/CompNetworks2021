@@ -62,6 +62,7 @@ void parse(int fd, char* command){
         //Unegister (UDP): UID (tam 5), pass (tam 8)
         if (!(digits_only(arg1) && has_correct_arg_sizes(arg1, 5, arg2, 8)))
             return;
+        unreg(IP_ADDRESS, PORT, arg1, arg2, res, fd);
     } else if (!strcmp(name, "login")){
         //Login (UDP): UID (tam 5), pass (tam 8)
         if (!(digits_only(arg1) && has_correct_arg_sizes(arg1, 5, arg2, 8)))

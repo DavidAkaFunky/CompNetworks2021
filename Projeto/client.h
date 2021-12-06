@@ -23,6 +23,7 @@ int main(int argc, char* argv[]);
 
 /* -------------------- client_udp -------------------- */
 void reg(char* IP_ADDRESS, char* PORT,char* UID, char* pass, struct addrinfo *res, int fd);
+void unreg(char* IP_ADDRESS, char* PORT,char* UID, char* pass, struct addrinfo *res, int fd);
 
 /* -------------------- client_tcp -------------------- */
 

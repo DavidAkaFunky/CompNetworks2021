@@ -27,3 +27,24 @@ void reg(char* IP_ADDRESS, char* PORT, char* UID, char* pass, struct addrinfo *r
     }      
     puts("User successfully registered");
 }
+void unreg(char* IP_ADDRESS, char* PORT, char* UID, char* pass, struct addrinfo *res, int fd){
+    char message[19];
+    sprintf(message,"%s %s %s\n","UNR",UID,pass);
+    printf("%d\n", res -> ai_addrlen);
+    n = sendto(fd, message, strlen(message)+1, 0, res -> ai_addr, res -> ai_addrlen);
+	if (n == -1){
+        puts("Failed sending!");
+        exit(EXIT_FAILURE);
+    }
+	addrlen = sizeof(addr);
+	n = recvfrom(fd, buffer, strlen(buffer), 0, (struct sockaddr*) &addr, &addrlen); 
+	if (n == -1){
+        puts("Failed receiving!");
+        exit(EXIT_FAILURE);
+    }
+    if (strcmp("RUN OK\n",buffer) != 0){
+        puts("There was an error in the unregistration. Please try again.");
+        exit(EXIT_FAILURE);
+    }      
+    puts("User successfully unregistered");
+}
