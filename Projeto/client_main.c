@@ -43,12 +43,15 @@ int create_socket(){   //Creates a socket for the client
 	return fd;
 }
 
-void parse(int fd, char* command){
-    char name[11]; //The largest command name has 11 characters
+void parse(int fd, char* command, char* uid, char* password){
+    char name[12]; //The largest command name has 11 characters
     char arg1[SIZE];
     char arg2[SIZE];
     char arg3[SIZE];
-    sscanf(command, "%s %s %s %s", name, arg1, arg2, arg3); 
+    memset(arg1, 0, SIZE); //Pq é que isto é necessário?
+    memset(arg2, 0, SIZE); //Se as strings são declaradas localmente,
+    memset(arg3, 0, SIZE); //Não deveriam ter sempre outras coisas?
+    sscanf(command, "%s %s %s %s", name, arg1, arg2, arg3);
     if (strcmp(arg3, "")){ //Isto deve falhar se tivermos espaços depois do arg2? (Perguntar ao prof)
         puts("Too many arguments. Try again!");
         return;
@@ -67,10 +70,17 @@ void parse(int fd, char* command){
         //Login (UDP): UID (tam 5), pass (tam 8)
         if (!(digits_only(arg1) && has_correct_arg_sizes(arg1, 5, arg2, 8)))
             return;
+        if (login(IP_ADDRESS, PORT, arg1, arg2, res, fd) == 1){
+            strcpy(uid, arg1);
+            strcpy(password, arg2);
+        }
+            
     } else if (!strcmp(name, "logout")){
         //Logout (UDP): (nada)
         if (!has_correct_arg_sizes(arg1, 0, arg2, 0))
             return;
+        if (logout(IP_ADDRESS, PORT, uid, password, res, fd) == 1)
+            memset(uid, 0, 6);
     } else if (!strcmp(name, "exit")){
         //Exit (TCP): (nada)
         if (!has_correct_arg_sizes(arg1, 0, arg2, 0))
@@ -111,12 +121,15 @@ void parse(int fd, char* command){
 
 int main(int argc, char* argv[]){
 
-    char command[SIZE],ADDRESS[10];
+    char command[SIZE], ADDRESS[10], uid[6], password[9];
     strcpy(ADDRESS,argv[2]);            //Defines the IP_ADDRESS where the server runs
     sprintf(IP_ADDRESS,"%s%s",ADDRESS,".ist.utl.pt");
     strcpy(PORT,argv[4]);               //Defines the PORT where the server accepts requests
-    int fd = create_socket();                    //NEW
+    int fd = create_socket();
+    memset(uid, 0, 6);
+    memset(password, 0, 9);
     while(fgets(command, SIZE, stdin)){
-        parse(fd, command);
+        parse(fd, command, uid, password);
+        memset(command, 0, SIZE);
     }
 }
