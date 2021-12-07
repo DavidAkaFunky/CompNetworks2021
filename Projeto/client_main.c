@@ -4,8 +4,28 @@ char IP_ADDRESS[20], PORT[20];
 int errcode;
 struct addrinfo hints, *res;
 
+int is_alphanumerical(char* s, int flag){
+    while (*s) {
+        if (!(isalpha(*s) || isdigit(*s))){
+            if (flag){
+                if(!(*s == 45 || *s == 95)){
+                    puts("The argument doesn't contain only alphanumerical characters, - or _. Try again!");
+                    return 0;
+                }
+                s++;
+                continue;
+            }
+            puts("The argument doesn't contain only alphanumerical characters. Try again!");
+            return 0;
+        }
+        s++;
+    }
+    return 1;
+}
+
 int is_correct_arg_size(char* arg, int size){
     if (strlen(arg) != size){
+        printf("%d",strlen(arg));
         printf("%s's size is not %d. Try again!\n", arg, size);
         return 0;
     }
@@ -18,10 +38,11 @@ int has_correct_arg_sizes(char* arg1, int size1, char* arg2, int size2){
 
 int digits_only(char *s){
     while (*s) {
-        if (!isdigit(*s++)){
-            printf("UID has a non-numeric character. Try again!\n");
+        if (!isdigit(*s)){
+            puts("UID has a non-numeric character. Try again!\n");
             return 0;
         }
+        s++;
     }
     return 1;
 }
@@ -58,28 +79,27 @@ void parse(int fd, char* command, char* uid, char* password){
     }
     if (!strcmp(name, "reg")){
         //Register (UDP): UID (tam 5), pass (tam 8)
-        if (!(digits_only(arg1) && has_correct_arg_sizes(arg1, 5, arg2, 8)))
+        if (!(digits_only(arg1) && has_correct_arg_sizes(arg1, 5, arg2, 8) && is_alphanumerical(arg2, 0)))
             return;
-        reg(IP_ADDRESS, PORT, arg1, arg2, res, fd);
+        reg(IP_ADDRESS, arg1, arg2, res, fd);
     } else if (!strcmp(name, "unregister") || !strcmp(name, "unr")){
         //Unegister (UDP): UID (tam 5), pass (tam 8)
-        if (!(digits_only(arg1) && has_correct_arg_sizes(arg1, 5, arg2, 8)))
+        if (!(digits_only(arg1) && has_correct_arg_sizes(arg1, 5, arg2, 8) && is_alphanumerical(arg2, 0)))
             return;
-        unreg(IP_ADDRESS, PORT, arg1, arg2, res, fd);
+        unreg(IP_ADDRESS, arg1, arg2, res, fd);
     } else if (!strcmp(name, "login")){
         //Login (UDP): UID (tam 5), pass (tam 8)
-        if (!(digits_only(arg1) && has_correct_arg_sizes(arg1, 5, arg2, 8)))
+        if (!(digits_only(arg1) && has_correct_arg_sizes(arg1, 5, arg2, 8) && is_alphanumerical(arg2, 0)))
             return;
-        if (login(IP_ADDRESS, PORT, arg1, arg2, res, fd) == 1){
+        if (login(IP_ADDRESS, arg1, arg2, res, fd) == 1){
             strcpy(uid, arg1);
             strcpy(password, arg2);
-        }
-            
+        } 
     } else if (!strcmp(name, "logout")){
         //Logout (UDP): (nada)
         if (!has_correct_arg_sizes(arg1, 0, arg2, 0))
             return;
-        if (logout(IP_ADDRESS, PORT, uid, password, res, fd) == 1)
+        if (logout(IP_ADDRESS, uid, password, res, fd) == 1)
             memset(uid, 0, 6);
     } else if (!strcmp(name, "exit")){
         //Exit (TCP): (nada)
@@ -89,6 +109,7 @@ void parse(int fd, char* command, char* uid, char* password){
         //Groups (UDP): (nada)
         if (!has_correct_arg_sizes(arg1, 0, arg2, 0))
             return;
+        groups(IP_ADDRESS, res, fd);
     } else if (!strcmp(name, "subscribe") || !strcmp(name, "s")){
         //Subscribe (UDP): GID (tam 2), GName (tam 24)
         if (!has_correct_arg_sizes(arg1, 2, arg2, 24))
@@ -122,8 +143,8 @@ void parse(int fd, char* command, char* uid, char* password){
 int main(int argc, char* argv[]){
 
     char command[SIZE], ADDRESS[10], uid[6], password[9];
-    strcpy(ADDRESS,argv[2]);            //Defines the IP_ADDRESS where the server runs
-    sprintf(IP_ADDRESS,"%s%s",ADDRESS,".ist.utl.pt");
+    strcpy(IP_ADDRESS,argv[2]);            //Defines the IP_ADDRESS where the server runs
+    //sprintf(IP_ADDRESS,"%s%s",ADDRESS,".ist.utl.pt");
     strcpy(PORT,argv[4]);               //Defines the PORT where the server accepts requests
     int fd = create_socket();
     memset(uid, 0, 6);

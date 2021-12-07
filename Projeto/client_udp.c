@@ -5,19 +5,21 @@ socklen_t addrlen;
 
 struct sockaddr_in addr;
 
-void reg(char* IP_ADDRESS, char* PORT, char* UID, char* password, struct addrinfo *res, int fd){
+void reg(char* IP_ADDRESS, char* UID, char* password, struct addrinfo *res, int fd){
     char message[19], buffer[BUF_SIZE];
+    memset(message, 0, 19);
+    memset(buffer, 0, BUF_SIZE);
     sprintf(message,"%s %s %s\n","REG",UID,password);
     n = sendto(fd, message, strlen(message), 0, res -> ai_addr, res -> ai_addrlen); // Afinal morre aqui
 	if (n == -1){
         puts("Failed sending!");
-        exit(EXIT_FAILURE); //Substituir por return?
-    }
+        return;
+    } 
 	addrlen = sizeof(addr);
-	n = recvfrom(fd, buffer, BUF_SIZE, 0, (struct sockaddr*) &addr, &addrlen); 
+	n = recvfrom(fd, buffer, BUF_SIZE, 0, (struct sockaddr*) &addr, &addrlen);
     if (n == -1){
         puts("Failed receiving!");
-        exit(EXIT_FAILURE);
+        return;
     }
     buffer[n] = '\0';
     if (!strcmp("RRG OK\n",buffer)) {
@@ -27,25 +29,25 @@ void reg(char* IP_ADDRESS, char* PORT, char* UID, char* password, struct addrinf
     } else if (!strcmp("RRG NOK\n",buffer)) {
         puts("Registration not accepted (too many users might be registered).");
     } else {
-        puts(buffer);
         puts("There was an error in the registration. Please try again.");
-        exit(EXIT_FAILURE);
     }
 }
 
-void unreg(char* IP_ADDRESS, char* PORT, char* UID, char* password, struct addrinfo *res, int fd){
+void unreg(char* IP_ADDRESS, char* UID, char* password, struct addrinfo *res, int fd){
     char message[19], buffer[BUF_SIZE];
+    memset(message, 0, 19);
+    memset(buffer, 0, BUF_SIZE);
     sprintf(message,"%s %s %s\n","UNR",UID,password);
     n = sendto(fd, message, strlen(message), 0, res -> ai_addr, res -> ai_addrlen);
 	if (n == -1){
         puts("Failed sending!");
-        exit(EXIT_FAILURE);
+        return;
     }
 	addrlen = sizeof(addr);
 	n = recvfrom(fd, buffer, BUF_SIZE, 0, (struct sockaddr*) &addr, &addrlen); 
 	if (n == -1){
         puts("Failed receiving!");
-        exit(EXIT_FAILURE);
+        return;
     }
     buffer[n] = '\0';
     if (!strcmp("RUN OK\n", buffer)) {
@@ -53,25 +55,25 @@ void unreg(char* IP_ADDRESS, char* PORT, char* UID, char* password, struct addri
     } else if (!strcmp("RUN NOK\n", buffer)) {
         puts("Unregister request unsuccessful");
     } else {
-        puts(buffer);
         puts("There was an error in the unregistration. Please try again.");
-        exit(EXIT_FAILURE);
     }    
 }
 
-int login(char* IP_ADDRESS, char* PORT, char* UID, char* password, struct addrinfo *res, int fd){
+int login(char* IP_ADDRESS, char* UID, char* password, struct addrinfo *res, int fd){
     char message[19], buffer[BUF_SIZE];
+    memset(message, 0, 19);
+    memset(buffer, 0, BUF_SIZE);
     sprintf(message,"%s %s %s\n","LOG",UID,password);
     n = sendto(fd, message, strlen(message), 0, res -> ai_addr, res -> ai_addrlen);
 	if (n == -1){
         puts("Failed sending!");
-        exit(EXIT_FAILURE);
+        return -1;
     }
 	addrlen = sizeof(addr);
 	n = recvfrom(fd, buffer, BUF_SIZE, 0, (struct sockaddr*) &addr, &addrlen); 
 	if (n == -1){
         puts("Failed receiving!");
-        exit(EXIT_FAILURE);
+        return -1;
     }
     buffer[n] = '\0';
     if (!strcmp("RLO OK\n",buffer)) {
@@ -81,25 +83,26 @@ int login(char* IP_ADDRESS, char* PORT, char* UID, char* password, struct addrin
         puts("Log in unsuccessful");
         return 0;
     } else {
-        puts(buffer);
         puts("There was an error logging in. Please try again.");
-        exit(EXIT_FAILURE); //ou return -1
+        return -1;
     }    
 }
 
-int logout(char* IP_ADDRESS, char* PORT, char* UID, char* password, struct addrinfo *res, int fd){
+int logout(char* IP_ADDRESS, char* UID, char* password, struct addrinfo *res, int fd){
     char message[19], buffer[BUF_SIZE];
+    memset(message, 0, 19);
+    memset(buffer, 0, BUF_SIZE);
     sprintf(message,"%s %s %s\n","OUT",UID,password);
     n = sendto(fd, message, strlen(message), 0, res -> ai_addr, res -> ai_addrlen);
 	if (n == -1){
         puts("Failed sending!");
-        exit(EXIT_FAILURE);
+        return -1;
     }
 	addrlen = sizeof(addr);
 	n = recvfrom(fd, buffer, BUF_SIZE, 0, (struct sockaddr*) &addr, &addrlen); 
 	if (n == -1){
         puts("Failed receiving!");
-        exit(EXIT_FAILURE);
+        return -1;
     }
     buffer[n] = '\0';
     if (!strcmp("ROU OK\n",buffer)) {
@@ -109,8 +112,31 @@ int logout(char* IP_ADDRESS, char* PORT, char* UID, char* password, struct addri
         puts("Log out unsuccessful");
         return 0;
     } else {
-        puts(buffer);
         puts("There was an error logging out. Please try again.");
-        exit(EXIT_FAILURE); //ou return -1
+        return -1;
     }    
+}
+
+void groups(char* IP_ADDRESS, struct addrinfo *res, int fd){
+    char message[4], buffer[BUF_SIZE];
+    memset(message, 0, 4);
+    memset(buffer, 0, BUF_SIZE);
+    sprintf(message,"%s\n","GLS");
+    n = sendto(fd, message, strlen(message), 0, res -> ai_addr, res -> ai_addrlen);
+	if (n == -1){
+        puts("Failed sending!");
+        return;
+    }
+	addrlen = sizeof(addr);
+	n = recvfrom(fd, buffer, BUF_SIZE, 0, (struct sockaddr*) &addr, &addrlen); 
+	if (n == -1){
+        puts("Failed receiving!");
+        return;
+    }
+    buffer[n] = '\0';
+    puts(buffer);
+    /* scanf dos 2 primeiros args, ver se é RGL e um número (N)
+    Fazer um ciclo for N vezes em que verificamos se temos um nº de tamanho 2,
+    uma string alfanumérica de tamanho <= 24 e um nº de tamanho 4.
+    Se ao ler a seguir não tivermos só \n, significa que temos lixo => Erro! */
 }
