@@ -25,7 +25,6 @@ int is_alphanumerical(char* s, int flag){
 
 int is_correct_arg_size(char* arg, int size){
     if (strlen(arg) != size){
-        printf("%d",strlen(arg));
         printf("%s's size is not %d. Try again!\n", arg, size);
         return 0;
     }
@@ -65,13 +64,14 @@ int create_socket(){   //Creates a socket for the client
 }
 
 void parse(int fd, char* command, char* uid, char* password){
-    char name[12]; //The largest command name has 11 characters
+    char name[12]; //The largest command name has 11 characters '\0'
     char arg1[SIZE];
     char arg2[SIZE];
     char arg3[SIZE];
-    memset(arg1, 0, SIZE); //Pq é que isto é necessário?
-    memset(arg2, 0, SIZE); //Se as strings são declaradas localmente,
-    memset(arg3, 0, SIZE); //Não deveriam ter sempre outras coisas?
+    memset(name, 0, 12);
+    memset(arg1, 0, SIZE);
+    memset(arg2, 0, SIZE);
+    memset(arg3, 0, SIZE);
     sscanf(command, "%s %s %s %s", name, arg1, arg2, arg3);
     if (strcmp(arg3, "")){ //Isto deve falhar se tivermos espaços depois do arg2? (Perguntar ao prof)
         puts("Too many arguments. Try again!");
