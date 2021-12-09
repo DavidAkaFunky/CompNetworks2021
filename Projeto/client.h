@@ -33,6 +33,7 @@ void unreg(char* IP_ADDRESS, char* UID, char* password, struct addrinfo *res, in
 int login(char* IP_ADDRESS, char* UID, char* password, struct addrinfo *res, int fd);
 int logout(char* IP_ADDRESS, char* UID, char* password, struct addrinfo *res, int fd);
 void groups(char* IP_ADDRESS, struct addrinfo *res, int fd);
+void subscribe(char* IP_ADDRESS, char* UID, char* GID, char* GName, struct addrinfo *res, int fd);
 
 /* -------------------- client_tcp -------------------- */
 

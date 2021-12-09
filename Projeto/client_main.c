@@ -112,8 +112,11 @@ void parse(int fd, char* command, char* uid, char* password){
         groups(IP_ADDRESS, res, fd);
     } else if (!strcmp(name, "subscribe") || !strcmp(name, "s")){
         //Subscribe (UDP): GID (tam 2), GName (tam 24)
-        if (!has_correct_arg_sizes(arg1, 2, arg2, 24))
+        if (strlen(arg1) == 1)
+            sprintf(arg1, "0%s", arg1);
+        if (!(is_correct_arg_size(arg1, 2) && digits_only(arg1) && strlen(arg2) <= 24 && is_alphanumerical(arg2, 1)))
             return;
+        subscribe(IP_ADDRESS, uid, arg1, arg2, res, fd);
     } else if (!strcmp(name, "unsubscribe") || !strcmp(name, "u")){
         //Unsubscribe (UDP): GID (tam 2)
         if (!has_correct_arg_sizes(arg1, 2, arg2, 24))

@@ -34,7 +34,7 @@ void reg(char* IP_ADDRESS, char* UID, char* password, struct addrinfo *res, int 
     } else if (!strcmp("RRG NOK\n",buffer)) {
         puts("Registration not accepted (too many users might be registered).");
     } else {
-        puts("There was an error in the registration. Please try again.");
+        puts("There was an error in the registration. Please try again!");
     }
 }
 
@@ -50,7 +50,7 @@ void unreg(char* IP_ADDRESS, char* UID, char* password, struct addrinfo *res, in
     } else if (!strcmp("RUN NOK\n", buffer)) {
         puts("Unregister request unsuccessful");
     } else {
-        puts("There was an error in the unregistration. Please try again.");
+        puts("There was an error in the unregistration. Please try again!");
     }    
 }
 
@@ -68,7 +68,7 @@ int login(char* IP_ADDRESS, char* UID, char* password, struct addrinfo *res, int
         puts("Log in unsuccessful");
         return 0;
     } else {
-        puts("There was an error logging in. Please try again.");
+        puts("There was an error logging in. Please try again!");
         return -1;
     }    
 }
@@ -87,7 +87,7 @@ int logout(char* IP_ADDRESS, char* UID, char* password, struct addrinfo *res, in
         puts("Log out unsuccessful");
         return 0;
     } else {
-        puts("There was an error logging out. Please try again.");
+        puts("There was an error logging out. Please try again!");
         return -1;
     }    
 }
@@ -123,7 +123,7 @@ void groups(char* IP_ADDRESS, struct addrinfo *res, int fd){
             return;
         }
         printf("Group ID: %s\tGroup name: %s", groups, group_name);
-        for(int j = (int) strlen(group_name); j < 24; ++j){
+        for(int j = (int) strlen(group_name); j < 26; ++j){
             putchar(' '); //Manter tudo organizado por colunas
         }
         printf("Group's last message: %s\n", mid);
@@ -133,5 +133,37 @@ void groups(char* IP_ADDRESS, struct addrinfo *res, int fd){
         puts(buffer);
         puts(INFO_ERR);
         return;
+    }
+}
+
+void subscribe(char* IP_ADDRESS, char* UID, char* GID, char* GName, struct addrinfo *res, int fd){
+    char message[38], buffer[BUF_SIZE];
+    memset(message, 0, 38);
+    memset(buffer, 0, BUF_SIZE);
+    sprintf(message,"GSR %s %s %s\n", UID, GID, GName);
+    if (send_and_receive(fd, res, message, buffer, BUF_SIZE) == -1)
+        return;
+    if (!strcmp("RGS OK\n",buffer)) 
+        puts("User successfully registered to group");
+    else if (!strcmp("RGS E_GRP\n",buffer))
+        puts("The group ID does not exist. Please try again!");
+    else if (!strcmp("RGS E_GNAME\n",buffer))
+        puts("The group name is invalid. Please try again!");
+    else if (!strcmp("RGS E_FULL\n",buffer))
+        puts("The group database is full. Please try again!");
+    else if (!strcmp("RGS NOK\n",buffer)) 
+        puts("There was a problem subscribing. Please try again!");
+    else {
+        char cmd[3], new_GID[2], extra[SIZE];
+        memset(cmd, 0, 3);
+        memset(new_GID, 0, 2);
+        memset(extra, 0, SIZE);
+        sscanf(buffer, "%s %s %s", cmd, new_GID, extra);
+        if (!(!strcmp(extra, "") && has_correct_arg_sizes(cmd, 3, new_GID, 2))){
+            strcpy(GID, new_GID);
+            printf("New group created with GID %s\n", new_GID);
+        }
+        else
+            puts("There was an error subscribing. Please try again!");
     }
 }

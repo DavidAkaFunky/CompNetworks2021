@@ -9,7 +9,7 @@ CC   = gcc
 
 all: user #Colocar aqui DS
 
-user: client.o
+user:
 	$(CC) -o user client_main.c client_tcp.c client_udp.c client.h
 
 clean:
