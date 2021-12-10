@@ -93,11 +93,11 @@ int logout(char* IP_ADDRESS, char* UID, char* password, struct addrinfo *res, in
 }
 
 void groups(char* IP_ADDRESS, struct addrinfo *res, int fd){
-    char message[5], buffer[SIZE]; //Tamanho do buffer provavelmente vai mudar
+    char message[5], buffer[GROUPS]; //Tamanho do buffer provavelmente vai mudar
     memset(message, 0, 5);
-    memset(buffer, 0, SIZE);
+    memset(buffer, 0, GROUPS);
     strcpy(message,"GLS\n");
-    if (send_and_receive(fd, res, message, buffer, SIZE) == -1)
+    if (send_and_receive(fd, res, message, buffer, GROUPS) == -1)
         return;
     char groups[3];
     memset(message, 0, 5);
@@ -154,12 +154,13 @@ void subscribe(char* IP_ADDRESS, char* UID, char* GID, char* GName, struct addri
     else if (!strcmp("RGS NOK\n",buffer)) 
         puts("There was a problem subscribing. Please try again!");
     else {
-        char cmd[3], new_GID[2], extra[SIZE];
-        memset(cmd, 0, 3);
-        memset(new_GID, 0, 2);
+        char cmd1[4], cmd2[4], new_GID[3], extra[SIZE];
+        memset(cmd1, 0, 4);
+        memset(cmd2, 0, 4);
+        memset(new_GID, 0, 3);
         memset(extra, 0, SIZE);
-        sscanf(buffer, "%s %s %s", cmd, new_GID, extra);
-        if (!(!strcmp(extra, "") && has_correct_arg_sizes(cmd, 3, new_GID, 2))){
+        sscanf(buffer, "%s %s %s %s", cmd1, cmd2, new_GID, extra);
+        if (!(!strcmp(cmd1, "RGS") && !strcmp(cmd1, "NEW") && is_correct_arg_size(new_GID, 2) && !strcmp(extra, ""))){
             strcpy(GID, new_GID);
             printf("New group created with GID %s\n", new_GID);
         }

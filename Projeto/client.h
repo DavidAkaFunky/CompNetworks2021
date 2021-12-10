@@ -13,6 +13,7 @@
 
 #define SIZE 512
 #define BUF_SIZE 128
+#define GROUPS 3169
 #define INVALID_CMD "Invalid command. Try again!"
 #define SEND_ERR "There was an error sending information from the server. Try again!"
 #define RECV_ERR "There was an error receiving information from the server. Try again!"
