@@ -68,7 +68,7 @@ int check_select(char *GID){
     return 1;
 }
 
-int create_socket(){   //Creates a socket for the client
+int create_udp_socket(){   //Creates a socket for the client
     int fd = socket(AF_INET, SOCK_DGRAM, 0);
     if (fd == -1){
         puts("Failed creating the socket!");
@@ -169,7 +169,7 @@ void parse(int fd, char* command, char* uid, char* password, char* gid){
         //User list (TCP): (nada)
         if (!(has_correct_arg_sizes(arg1, 0, arg2, 0) && check_login(uid) && check_select(gid)))
             return;
-        ulist(IP_ADDRESS,gid, res, fd);    
+        ulist(IP_ADDRESS,gid, res, fd); //To-do   
     } else if (!strcmp(name, "post")){
         //Post (TCP): "text" (Verificar as aspas, talvez?), [FName] (Verificar os parênteses, talvez?)
     } else if (!strcmp(name, "retrieve") || !strcmp(name, "r")){
@@ -181,12 +181,11 @@ void parse(int fd, char* command, char* uid, char* password, char* gid){
 }
 
 int main(int argc, char* argv[]){
-
     char command[SIZE], ADDRESS[10], uid[6], password[9], gid[3];
     strcpy(IP_ADDRESS,argv[2]);            //Defines the IP_ADDRESS where the server runs
     //sprintf(IP_ADDRESS,"%s%s",ADDRESS,".ist.utl.pt");
     strcpy(PORT,argv[4]);               //Defines the PORT where the server accepts requests
-    int fd = create_socket();
+    int fd = create_udp_socket();
     memset(uid, 0, 6);
     memset(password, 0, 9);
     memset(gid, 0, 3);

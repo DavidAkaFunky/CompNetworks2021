@@ -58,7 +58,7 @@ int login(char* IP_ADDRESS, char* UID, char* password, struct addrinfo *res, int
     char message[20], buffer[BUF_SIZE];
     memset(message, 0, 20);
     memset(buffer, 0, BUF_SIZE);
-    sprintf(message,"%s %s %s\n","LOG",UID,password);
+    sprintf(message,"LOG %s %s\n",UID,password);
     if (send_and_receive(fd, res, message, buffer, BUF_SIZE) == -1)
         return -1;
     if (!strcmp("RLO OK\n",buffer)) {
@@ -92,52 +92,17 @@ int logout(char* IP_ADDRESS, char* UID, char* password, struct addrinfo *res, in
     }    
 }
 
-int ulist(char* IP_ADDRESS, char* GID, struct addrinfo *res, int fd){
-    char message[20], buffer[BUF_SIZE];
-    memset(message, 0, 20);
-    memset(buffer, 0, BUF_SIZE);
-    sprintf(message,"ULS %s\n", GID);
-    if (connect(fd, res, BUF_SIZE) == -1)
-        return -1;
-    printf("TEST\n");
-    if (write(fd,message,sizeof(message)) == -1) //morre aqui ?
-        return -1;
-    printf("TEST\n"); 
-    if (read(fd,buffer,BUF_SIZE)==-1)
-        return -1;
-    printf("TEST\n");
-    close(fd);
-    printf("%s",buffer);
-    return 0;     
-}
-
-void groups(char* IP_ADDRESS, struct addrinfo *res, int fd){
-    char message[5], buffer[GROUPS]; //Tamanho do buffer provavelmente vai mudar
-    memset(message, 0, 5);
-    memset(buffer, 0, GROUPS);
-    strcpy(message,"GLS\n");
-    if (send_and_receive(fd, res, message, buffer, GROUPS) == -1)
-        return;
-    char groups[3];
-    memset(message, 0, 5);
-    memset(groups, 0, 3);
-    sscanf(buffer, "%s %s", message, groups);
-    if (!(is_correct_arg_size(groups, 2) && digits_only(groups,0) && !strcmp("RGL", message))){   //vai dar erro caso haja menos de 10 grupos atençao !!
-        puts(INFO_ERR);
-        return;
-    }
-    printf("There are %s registered groups:\n", groups);
+void show_groups(char* ptr, char* groups, char* end){
     int n = atoi(groups);
     char group_name[25];
     char mid[5];
-    char* ptr = &(buffer[6]);
     for (int i = 0; i < n; ++i){
-        //printf("%d\n", i);
         memset(groups, 0, 3);
         memset(group_name, 0, 25);
         memset(mid, 0, 5);
         sscanf(ptr, " %s %s %s", groups, group_name, mid);
         if (!(has_correct_arg_sizes(groups, 2, mid, 4) && digits_only(groups,0) && strlen(group_name) <= 24 && is_alphanumerical(group_name, 1) && digits_only(mid,0))){
+            puts(ptr);
             puts(INFO_ERR);
             return;
         }
@@ -148,11 +113,25 @@ void groups(char* IP_ADDRESS, struct addrinfo *res, int fd){
         printf("Group's last message: %s\n", mid);
         ptr += 9 + strlen(group_name);
     }
-    if (strcmp("\n", ptr)){
-        puts(buffer);
+    if (strcmp(end, ptr))
+        puts(INFO_ERR);
+}
+
+void groups(char* IP_ADDRESS, struct addrinfo *res, int fd){
+    char buffer[GROUPS];
+    memset(buffer, 0, GROUPS);
+    if (send_and_receive(fd, res, "GLS\n", buffer, GROUPS) == -1)
+        return;
+    char response[4], groups[3];
+    memset(response, 0, 4);
+    memset(groups, 0, 3);
+    sscanf(buffer, "%s %s", response, groups);
+    if (!(!strcmp("RGL", response) && (strlen(groups) == 1 || strlen(groups) == 2) && digits_only(groups, 0))){
         puts(INFO_ERR);
         return;
     }
+    printf("There are %s registered groups:\n", groups);
+    show_groups(&(buffer[6]), groups, "\n");
 }
 
 void subscribe(char* IP_ADDRESS, char* UID, char* GID, char* GName, struct addrinfo *res, int fd){
@@ -194,16 +173,15 @@ void unsubscribe(char* IP_ADDRESS, char* UID, char* GID, struct addrinfo *res, i
     if (send_and_receive(fd, res, message, buffer, BUF_SIZE) == -1)
         return;
     if (!strcmp("RGU OK\n",buffer)) 
-        puts("User successfully unregistered to group");
+        printf("User successfully unregistered from group %s\n", GID);
     else if (!strcmp("RGU E_USR\n",buffer))
         puts("The UID does not exist. Please try again!");
     else if (!strcmp("RGU E_GRP\n",buffer))
         puts("The group does not exist. Please try again!");
     else if (!strcmp("RGU NOK\n",buffer)) 
-        puts("There was a problem subscribing. Please try again!");
-    else {
+        puts("There was a problem unsubscribing. Please try again!");
+    else
         puts("There was an error unsubscribing. Please try again!");
-    }
 }
 
 void my_groups(char* IP_ADDRESS, char* UID, struct addrinfo *res, int fd){
@@ -212,47 +190,18 @@ void my_groups(char* IP_ADDRESS, char* UID, struct addrinfo *res, int fd){
     sprintf(message,"GLM %s\n", UID);
     if (send_and_receive(fd, res, message, buffer, GROUPS) == -1)
         return;
-    char groups[3],response[5];
-    //memset(message, 0, 12);
+    if (!strcmp("RGM E_USR\n",buffer)){
+        puts("Either you're not logged in or your user is invalid. Please try again!");
+        return;
+    }
+    char response[4], groups[3];
+    memset(response, 0, 4);
     memset(groups, 0, 3);
-    //printf("%s\n",buffer);
     sscanf(buffer, "%s %s", response, groups);
-    //printf("%s\n %s\n",response,groups);
-    //printf("%s\n",buffer);
-    
-    if (!(digits_only(groups,0) && !strcmp("RGM", response))){
+    if (!(!strcmp("RGM", response) && (strlen(groups) == 1 || strlen(groups) == 2) && digits_only(groups, 0))){
         puts(INFO_ERR);
         return;
     }
-    
     printf("You are subscribed to %s groups:\n", groups);
-    int n = atoi(groups);
-    char group_name[25];
-    char mid[5];
-    char* ptr = &(buffer[6]);
-    for (int i = 0; i < n; ++i){
-        //printf("%d\n", i);
-        memset(groups, 0, 3);
-        memset(group_name, 0, 25);
-        memset(mid, 0, 5);
-        sscanf(ptr, " %s %s %s", groups, group_name, mid);
-        if (!(has_correct_arg_sizes(groups, 2, mid, 4) && digits_only(groups,0) && strlen(group_name) <= 24 && is_alphanumerical(group_name, 1) && digits_only(mid,0))){
-            puts(INFO_ERR);
-            return;
-        }
-        printf("Group ID: %s\tGroup name: %s", groups, group_name);
-        for(int j = (int) strlen(group_name); j < 26; ++j){
-            putchar(' '); //Manter tudo organizado por colunas
-        }
-        printf("Group's last message: %s\n", mid);
-        ptr += 9 + strlen(group_name);
-    }
-    /*      // nao sei o que isto esta aqui a fazer :thinking:
-    printf("%s",ptr);
-    if (strcmp("\n", ptr)){
-        puts(buffer);
-        puts(INFO_ERR);
-        return;
-    }
- */
+    show_groups(&(buffer[6]), groups, "");
 }
