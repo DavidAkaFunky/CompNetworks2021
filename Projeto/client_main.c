@@ -35,13 +35,35 @@ int has_correct_arg_sizes(char* arg1, int size1, char* arg2, int size2){
     return is_correct_arg_size(arg1, size1) && is_correct_arg_size(arg2, size2);
 }
 
-int digits_only(char *s){
+int digits_only(char *s, int flag){
     while (*s) {
         if (!isdigit(*s)){
-            puts("UID has a non-numeric character. Try again!\n");
-            return 0;
+            if(flag==0){
+                puts("UID has a non-numeric character. Try again!");
+                return 0;
+            }
+            else{
+                puts("GID has a non-numeric character. Try again!");
+                return 0;
+            }
         }
         s++;
+    }
+    return 1;
+}
+
+int check_login(char *UID){
+    if (strlen(UID)!=5){
+        puts("Not logged in. Try again!");
+        return 0;
+    }
+    return 1;
+}
+
+int check_select(char *GID){
+    if (strlen(GID)!=2){
+        puts("No group selected. Try again!");
+        return 0;
     }
     return 1;
 }
@@ -63,7 +85,7 @@ int create_socket(){   //Creates a socket for the client
 	return fd;
 }
 
-void parse(int fd, char* command, char* uid, char* password){
+void parse(int fd, char* command, char* uid, char* password, char* gid){
     char name[12]; //The largest command name has 11 characters '\0'
     char arg1[SIZE];
     char arg2[SIZE];
@@ -79,28 +101,33 @@ void parse(int fd, char* command, char* uid, char* password){
     }
     if (!strcmp(name, "reg")){
         //Register (UDP): UID (tam 5), pass (tam 8)
-        if (!(digits_only(arg1) && has_correct_arg_sizes(arg1, 5, arg2, 8) && is_alphanumerical(arg2, 0)))
+        if (!(digits_only(arg1,0) && has_correct_arg_sizes(arg1, 5, arg2, 8) && is_alphanumerical(arg2, 0)))
             return;
         reg(IP_ADDRESS, arg1, arg2, res, fd);
     } else if (!strcmp(name, "unregister") || !strcmp(name, "unr")){
         //Unegister (UDP): UID (tam 5), pass (tam 8)
-        if (!(digits_only(arg1) && has_correct_arg_sizes(arg1, 5, arg2, 8) && is_alphanumerical(arg2, 0)))
+        if (!(digits_only(arg1,0) && has_correct_arg_sizes(arg1, 5, arg2, 8) && is_alphanumerical(arg2, 0)))
             return;
         unreg(IP_ADDRESS, arg1, arg2, res, fd);
     } else if (!strcmp(name, "login")){
         //Login (UDP): UID (tam 5), pass (tam 8)
-        if (!(digits_only(arg1) && has_correct_arg_sizes(arg1, 5, arg2, 8) && is_alphanumerical(arg2, 0)))
+        if (!(digits_only(arg1,0) && has_correct_arg_sizes(arg1, 5, arg2, 8) && is_alphanumerical(arg2, 0)))
             return;
         if (login(IP_ADDRESS, arg1, arg2, res, fd) == 1){
             strcpy(uid, arg1);
             strcpy(password, arg2);
-        } 
+        }
     } else if (!strcmp(name, "logout")){
         //Logout (UDP): (nada)
         if (!has_correct_arg_sizes(arg1, 0, arg2, 0))
             return;
         if (logout(IP_ADDRESS, uid, password, res, fd) == 1)
             memset(uid, 0, 6);
+    } else if (!strcmp(name, "showuid") || !strcmp(name, "su")){
+        //displays uid : (nada)
+        if (!(has_correct_arg_sizes(arg1, 0, arg2, 0) && check_login(uid)))
+            return;
+        printf("The UID selected is %s\n",uid);
     } else if (!strcmp(name, "exit")){
         //Exit (TCP): (nada)
         if (!has_correct_arg_sizes(arg1, 0, arg2, 0))
@@ -114,12 +141,12 @@ void parse(int fd, char* command, char* uid, char* password){
         //Subscribe (UDP): GID (tam 2), GName (tam 24)
         if (strlen(arg1) == 1)
             sprintf(arg1, "0%s", arg1);
-        if (!(is_correct_arg_size(arg1, 2) && digits_only(arg1) && strlen(arg2) <= 24 && is_alphanumerical(arg2, 1)))
+        if (!(is_correct_arg_size(arg1, 2) && digits_only(arg1,0) && strlen(arg2) <= 24 && is_alphanumerical(arg2, 1)))
             return;
         subscribe(IP_ADDRESS, uid, arg1, arg2, res, fd);
     } else if (!strcmp(name, "unsubscribe") || !strcmp(name, "u")){
         //Unsubscribe (UDP): GID (tam 2)
-        if (!(is_correct_arg_size(arg1, 2) && digits_only(arg1)))
+        if (!(is_correct_arg_size(arg1, 2) && digits_only(arg1,0)))
             return;
         unsubscribe(IP_ADDRESS, uid, arg1, res, fd);
     } else if (!strcmp(name, "my_groups") || !strcmp(name, "mgl")){
@@ -128,13 +155,21 @@ void parse(int fd, char* command, char* uid, char* password){
             return;
         my_groups(IP_ADDRESS, uid, res, fd);
     } else if (!strcmp(name, "select") || !strcmp(name, "sag")){
-        //Select (UDP): GID (tam 2)
-        if (!has_correct_arg_sizes(arg1, 2, arg2, 0))
+        //Select: GID (tam 2)
+        if (!(has_correct_arg_sizes(arg1, 2, arg2, 0) && digits_only(arg1,1) && check_login(uid)))
             return;
+        strcpy(gid,arg1);
+        printf("Group sucessfully selected\n");
+    } else if (!strcmp(name, "showgid") || !strcmp(name, "sg")){
+        //displays selected group : (nada)
+        if (!(has_correct_arg_sizes(arg1, 0, arg2, 0) && check_login(uid) && check_select(gid)))
+            return;
+        printf("The group selected is %s\n",gid);
     } else if (!strcmp(name, "ulist") || !strcmp(name, "ul")){
         //User list (TCP): (nada)
-        if (!has_correct_arg_sizes(arg1, 0, arg2, 0))
+        if (!(has_correct_arg_sizes(arg1, 0, arg2, 0) && check_login(uid) && check_select(gid)))
             return;
+        ulist(IP_ADDRESS,gid, res, fd);    
     } else if (!strcmp(name, "post")){
         //Post (TCP): "text" (Verificar as aspas, talvez?), [FName] (Verificar os parênteses, talvez?)
     } else if (!strcmp(name, "retrieve") || !strcmp(name, "r")){
@@ -147,15 +182,16 @@ void parse(int fd, char* command, char* uid, char* password){
 
 int main(int argc, char* argv[]){
 
-    char command[SIZE], ADDRESS[10], uid[6], password[9];
+    char command[SIZE], ADDRESS[10], uid[6], password[9], gid[3];
     strcpy(IP_ADDRESS,argv[2]);            //Defines the IP_ADDRESS where the server runs
     //sprintf(IP_ADDRESS,"%s%s",ADDRESS,".ist.utl.pt");
     strcpy(PORT,argv[4]);               //Defines the PORT where the server accepts requests
     int fd = create_socket();
     memset(uid, 0, 6);
     memset(password, 0, 9);
+    memset(gid, 0, 3);
     while(fgets(command, SIZE, stdin)){
-        parse(fd, command, uid, password);
+        parse(fd, command, uid, password, gid);
         memset(command, 0, SIZE);
     }
 }

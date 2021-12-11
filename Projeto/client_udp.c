@@ -92,6 +92,25 @@ int logout(char* IP_ADDRESS, char* UID, char* password, struct addrinfo *res, in
     }    
 }
 
+int ulist(char* IP_ADDRESS, char* GID, struct addrinfo *res, int fd){
+    char message[20], buffer[BUF_SIZE];
+    memset(message, 0, 20);
+    memset(buffer, 0, BUF_SIZE);
+    sprintf(message,"ULS %s\n", GID);
+    if (connect(fd, res, BUF_SIZE) == -1)
+        return -1;
+    printf("TEST\n");
+    if (write(fd,message,sizeof(message)) == -1) //morre aqui ?
+        return -1;
+    printf("TEST\n"); 
+    if (read(fd,buffer,BUF_SIZE)==-1)
+        return -1;
+    printf("TEST\n");
+    close(fd);
+    printf("%s",buffer);
+    return 0;     
+}
+
 void groups(char* IP_ADDRESS, struct addrinfo *res, int fd){
     char message[5], buffer[GROUPS]; //Tamanho do buffer provavelmente vai mudar
     memset(message, 0, 5);
@@ -103,7 +122,7 @@ void groups(char* IP_ADDRESS, struct addrinfo *res, int fd){
     memset(message, 0, 5);
     memset(groups, 0, 3);
     sscanf(buffer, "%s %s", message, groups);
-    if (!(is_correct_arg_size(groups, 2) && digits_only(groups) && !strcmp("RGL", message))){   //vai dar erro caso haja menos de 10 grupos atençao !!
+    if (!(is_correct_arg_size(groups, 2) && digits_only(groups,0) && !strcmp("RGL", message))){   //vai dar erro caso haja menos de 10 grupos atençao !!
         puts(INFO_ERR);
         return;
     }
@@ -118,7 +137,7 @@ void groups(char* IP_ADDRESS, struct addrinfo *res, int fd){
         memset(group_name, 0, 25);
         memset(mid, 0, 5);
         sscanf(ptr, " %s %s %s", groups, group_name, mid);
-        if (!(has_correct_arg_sizes(groups, 2, mid, 4) && digits_only(groups) && strlen(group_name) <= 24 && is_alphanumerical(group_name, 1) && digits_only(mid))){
+        if (!(has_correct_arg_sizes(groups, 2, mid, 4) && digits_only(groups,0) && strlen(group_name) <= 24 && is_alphanumerical(group_name, 1) && digits_only(mid,0))){
             puts(INFO_ERR);
             return;
         }
@@ -201,7 +220,7 @@ void my_groups(char* IP_ADDRESS, char* UID, struct addrinfo *res, int fd){
     //printf("%s\n %s\n",response,groups);
     //printf("%s\n",buffer);
     
-    if (!(digits_only(groups) && !strcmp("RGM", response))){
+    if (!(digits_only(groups,0) && !strcmp("RGM", response))){
         puts(INFO_ERR);
         return;
     }
@@ -217,7 +236,7 @@ void my_groups(char* IP_ADDRESS, char* UID, struct addrinfo *res, int fd){
         memset(group_name, 0, 25);
         memset(mid, 0, 5);
         sscanf(ptr, " %s %s %s", groups, group_name, mid);
-        if (!(has_correct_arg_sizes(groups, 2, mid, 4) && digits_only(groups) && strlen(group_name) <= 24 && is_alphanumerical(group_name, 1) && digits_only(mid))){
+        if (!(has_correct_arg_sizes(groups, 2, mid, 4) && digits_only(groups,0) && strlen(group_name) <= 24 && is_alphanumerical(group_name, 1) && digits_only(mid,0))){
             puts(INFO_ERR);
             return;
         }

@@ -23,8 +23,10 @@
 int is_alphanumerical(char* s, int flag);
 int is_correct_arg_size(char* arg, int size);
 int has_correct_arg_sizes(char* arg1, int size1, char* arg2, int size2);
-int digits_only(char *s);
-void parse(int fd, char* command, char* uid, char* password);
+int digits_only(char *s, int flag);
+int check_login(char *UID);
+int check_select(char *GID);
+void parse(int fd, char* command, char* uid, char* password,char* gid);
 int main(int argc, char* argv[]);
 
 /* -------------------- client_udp -------------------- */
@@ -37,6 +39,7 @@ void groups(char* IP_ADDRESS, struct addrinfo *res, int fd);
 void subscribe(char* IP_ADDRESS, char* UID, char* GID, char* GName, struct addrinfo *res, int fd);
 void unsubscribe(char* IP_ADDRESS, char* UID, char* GID, struct addrinfo *res, int fd);
 void my_groups(char* IP_ADDRESS, char* UID, struct addrinfo *res, int fd);
+int ulist(char* IP_ADDRESS, char* GID, struct addrinfo *res, int fd);
 
 /* -------------------- client_tcp -------------------- */
 
