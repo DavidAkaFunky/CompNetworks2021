@@ -119,12 +119,14 @@ void parse(int fd, char* command, char* uid, char* password){
         subscribe(IP_ADDRESS, uid, arg1, arg2, res, fd);
     } else if (!strcmp(name, "unsubscribe") || !strcmp(name, "u")){
         //Unsubscribe (UDP): GID (tam 2)
-        if (!has_correct_arg_sizes(arg1, 2, arg2, 24))
+        if (!(is_correct_arg_size(arg1, 2) && digits_only(arg1)))
             return;
+        unsubscribe(IP_ADDRESS, uid, arg1, res, fd);
     } else if (!strcmp(name, "my_groups") || !strcmp(name, "mgl")){
         //My groups (UDP): (nada)
         if (!has_correct_arg_sizes(arg1, 0, arg2, 0))
             return;
+        my_groups(IP_ADDRESS, uid, res, fd);
     } else if (!strcmp(name, "select") || !strcmp(name, "sag")){
         //Select (UDP): GID (tam 2)
         if (!has_correct_arg_sizes(arg1, 2, arg2, 0))

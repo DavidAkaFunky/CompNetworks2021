@@ -35,6 +35,8 @@ int login(char* IP_ADDRESS, char* UID, char* password, struct addrinfo *res, int
 int logout(char* IP_ADDRESS, char* UID, char* password, struct addrinfo *res, int fd);
 void groups(char* IP_ADDRESS, struct addrinfo *res, int fd);
 void subscribe(char* IP_ADDRESS, char* UID, char* GID, char* GName, struct addrinfo *res, int fd);
+void unsubscribe(char* IP_ADDRESS, char* UID, char* GID, struct addrinfo *res, int fd);
+void my_groups(char* IP_ADDRESS, char* UID, struct addrinfo *res, int fd);
 
 /* -------------------- client_tcp -------------------- */
 

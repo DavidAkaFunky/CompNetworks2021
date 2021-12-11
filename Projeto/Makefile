@@ -14,4 +14,4 @@ user:
 
 clean:
 	@echo Cleaning...
-	rm -f *.o user
+	rm -f *.o user *.gch
