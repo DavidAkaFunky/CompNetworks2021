@@ -26,7 +26,7 @@ int has_correct_arg_sizes(char* arg1, int size1, char* arg2, int size2);
 int digits_only(char *s, int flag);
 int check_login(char *UID);
 int check_select(char *GID);
-void parse(int fd, char* command, char* uid, char* password,char* gid);
+void parse(int fd, int sockfd, char* command, char* uid, char* password,char* gid);
 int main(int argc, char* argv[]);
 
 /* -------------------- client_udp -------------------- */
@@ -42,6 +42,6 @@ void my_groups(char* IP_ADDRESS, char* UID, struct addrinfo *res, int fd);
 void show_groups(char* ptr, char* groups, char* end);
 
 /* -------------------- client_tcp -------------------- */
-int ulist(char* IP_ADDRESS, char* GID, struct addrinfo *res, int fd);
+int ulist(char* IP_ADDRESS, char* GID, struct addrinfo *res, int sockfd);
 
 #endif
