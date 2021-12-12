@@ -2,10 +2,9 @@
 
 ssize_t bytes;
 socklen_t addrlen;
-
 struct sockaddr_in addr;
 
-int send_and_receive(int fd, struct addrinfo *res, char* message, char* buffer, int size){
+int udp_send_and_receive(int fd, struct addrinfo *res, char* message, char* buffer, int size){
     bytes = sendto(fd, message, strlen(message), 0, res -> ai_addr, res -> ai_addrlen);
 	if (bytes == -1){
         puts(SEND_ERR);
@@ -25,7 +24,7 @@ void reg(char* IP_ADDRESS, char* UID, char* password, struct addrinfo *res, int 
     memset(message, 0, 20);
     memset(buffer, 0, BUF_SIZE);
     sprintf(message,"REG %s %s\n",UID,password);
-    if (send_and_receive(fd, res, message, buffer, BUF_SIZE) == -1)
+    if (udp_send_and_receive(fd, res, message, buffer, BUF_SIZE) == -1)
         return;
     if (!strcmp("RRG OK\n",buffer)) {
         puts("User successfully registered");
@@ -43,7 +42,7 @@ void unreg(char* IP_ADDRESS, char* UID, char* password, struct addrinfo *res, in
     memset(message, 0, 20);
     memset(buffer, 0, BUF_SIZE);
     sprintf(message,"UNR %s %s\n", UID, password);
-    if (send_and_receive(fd, res, message, buffer, BUF_SIZE) == -1)
+    if (udp_send_and_receive(fd, res, message, buffer, BUF_SIZE) == -1)
         return;
     if (!strcmp("RUN OK\n", buffer)) {
         puts("User successfully unregistered");
@@ -59,7 +58,7 @@ int login(char* IP_ADDRESS, char* UID, char* password, struct addrinfo *res, int
     memset(message, 0, 20);
     memset(buffer, 0, BUF_SIZE);
     sprintf(message,"LOG %s %s\n",UID,password);
-    if (send_and_receive(fd, res, message, buffer, BUF_SIZE) == -1)
+    if (udp_send_and_receive(fd, res, message, buffer, BUF_SIZE) == -1)
         return -1;
     if (!strcmp("RLO OK\n",buffer)) {
         puts("User successfully logged in");
@@ -78,7 +77,7 @@ int logout(char* IP_ADDRESS, char* UID, char* password, struct addrinfo *res, in
     memset(message, 0, 20);
     memset(buffer, 0, BUF_SIZE);
     sprintf(message,"OUT %s %s\n", UID, password);
-    if (send_and_receive(fd, res, message, buffer, BUF_SIZE) == -1)
+    if (udp_send_and_receive(fd, res, message, buffer, BUF_SIZE) == -1)
         return -1;
     if (!strcmp("ROU OK\n",buffer)) {
         puts("User successfully logged out");
@@ -101,8 +100,7 @@ void show_groups(char* ptr, char* groups, char* end){
         memset(group_name, 0, 25);
         memset(mid, 0, 5);
         sscanf(ptr, " %s %s %s", groups, group_name, mid);
-        if (!(has_correct_arg_sizes(groups, 2, mid, 4) && digits_only(groups,0) && strlen(group_name) <= 24 && is_alphanumerical(group_name, 1) && digits_only(mid,0))){
-            puts(ptr);
+        if (!(has_correct_arg_sizes(groups, 2, mid, 4) && digits_only(groups, "GID") && strlen(group_name) <= 24 && is_alphanumerical(group_name, 1) && digits_only(mid, "MID"))){
             puts(INFO_ERR);
             return;
         }
@@ -120,13 +118,13 @@ void show_groups(char* ptr, char* groups, char* end){
 void groups(char* IP_ADDRESS, struct addrinfo *res, int fd){
     char buffer[GROUPS];
     memset(buffer, 0, GROUPS);
-    if (send_and_receive(fd, res, "GLS\n", buffer, GROUPS) == -1)
+    if (udp_send_and_receive(fd, res, "GLS\n", buffer, GROUPS) == -1)
         return;
     char response[4], groups[3];
     memset(response, 0, 4);
     memset(groups, 0, 3);
     sscanf(buffer, "%s %s", response, groups);
-    if (!(!strcmp("RGL", response) && (strlen(groups) == 1 || strlen(groups) == 2) && digits_only(groups, 0))){
+    if (!(!strcmp("RGL", response) && (strlen(groups) == 1 || strlen(groups) == 2) && digits_only(groups, "number of groups"))){
         puts(INFO_ERR);
         return;
     }
@@ -139,7 +137,7 @@ void subscribe(char* IP_ADDRESS, char* UID, char* GID, char* GName, struct addri
     memset(message, 0, 38);
     memset(buffer, 0, BUF_SIZE);
     sprintf(message,"GSR %s %s %s\n", UID, GID, GName);
-    if (send_and_receive(fd, res, message, buffer, BUF_SIZE) == -1)
+    if (udp_send_and_receive(fd, res, message, buffer, BUF_SIZE) == -1)
         return;
     if (!strcmp("RGS OK\n",buffer)) 
         puts("User successfully registered to group");
@@ -170,7 +168,7 @@ void subscribe(char* IP_ADDRESS, char* UID, char* GID, char* GName, struct addri
 void unsubscribe(char* IP_ADDRESS, char* UID, char* GID, struct addrinfo *res, int fd) {
     char message[13], buffer[BUF_SIZE];
     sprintf(message,"GUR %s %s\n", UID, GID);
-    if (send_and_receive(fd, res, message, buffer, BUF_SIZE) == -1)
+    if (udp_send_and_receive(fd, res, message, buffer, BUF_SIZE) == -1)
         return;
     if (!strcmp("RGU OK\n",buffer)) 
         printf("User successfully unregistered from group %s\n", GID);
@@ -188,7 +186,7 @@ void my_groups(char* IP_ADDRESS, char* UID, struct addrinfo *res, int fd){
     char message[12], buffer[GROUPS];
     memset(buffer, 0, GROUPS);
     sprintf(message,"GLM %s\n", UID);
-    if (send_and_receive(fd, res, message, buffer, GROUPS) == -1)
+    if (udp_send_and_receive(fd, res, message, buffer, GROUPS) == -1)
         return;
     if (!strcmp("RGM E_USR\n",buffer)){
         puts("Either you're not logged in or your user is invalid. Please try again!");
@@ -198,7 +196,7 @@ void my_groups(char* IP_ADDRESS, char* UID, struct addrinfo *res, int fd){
     memset(response, 0, 4);
     memset(groups, 0, 3);
     sscanf(buffer, "%s %s", response, groups);
-    if (!(!strcmp("RGM", response) && (strlen(groups) == 1 || strlen(groups) == 2) && digits_only(groups, 0))){
+    if (!(!strcmp("RGM", response) && (strlen(groups) == 1 || strlen(groups) == 2) && digits_only(groups, "number of groups"))){
         puts(INFO_ERR);
         return;
     }
