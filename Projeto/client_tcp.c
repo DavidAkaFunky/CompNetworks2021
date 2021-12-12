@@ -23,7 +23,7 @@ int tcp_send_and_receive(struct addrinfo *res, char* message, char* buffer, int 
 
 void users(char *ptr){
     if (strlen(ptr) == 0){
-        puts("There are no users registered to this group.");
+        puts(NO_USERS);
         return;
     }  
     char uid[6];
@@ -52,7 +52,7 @@ void ulist(char* IP_ADDRESS, char* GID, struct addrinfo *res){
     if (tcp_send_and_receive(res, message, buffer, USERS) == -1)
         return;
     if (!strcmp("RUL NOK\n", buffer)){
-        puts("The group does not exist. Please try again!");
+        puts(GRP_FAIL);
         return;
     }
     char response[4], status[4], group_name[25];

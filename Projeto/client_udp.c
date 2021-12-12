@@ -27,13 +27,13 @@ void reg(char* IP_ADDRESS, char* UID, char* password, struct addrinfo *res, int 
     if (udp_send_and_receive(fd, res, message, buffer, BUF_SIZE) == -1)
         return;
     if (!strcmp("RRG OK\n",buffer)) {
-        puts("User successfully registered");
+        puts(REG_USER_SUC);
     } else if (!strcmp("RRG DUP\n",buffer)) {
-        puts("User already registered");
+        puts(REG_USER_DUP);
     } else if (!strcmp("RRG NOK\n",buffer)) {
-        puts("Registration not accepted (too many users might be registered).");
+        puts(REG_USER_FAIL);
     } else {
-        puts("There was an error in the registration. Please try again!");
+        puts(REG_USER_ERR);
     }
 }
 
@@ -45,11 +45,11 @@ void unreg(char* IP_ADDRESS, char* UID, char* password, struct addrinfo *res, in
     if (udp_send_and_receive(fd, res, message, buffer, BUF_SIZE) == -1)
         return;
     if (!strcmp("RUN OK\n", buffer)) {
-        puts("User successfully unregistered");
+        puts(UNR_USER_SUC);
     } else if (!strcmp("RUN NOK\n", buffer)) {
-        puts("Unregister request unsuccessful");
+        puts(UNR_USER_FAIL);
     } else {
-        puts("There was an error in the unregistration. Please try again!");
+        puts(UNR_USER_ERR);
     }    
 }
 
@@ -61,13 +61,13 @@ int login(char* IP_ADDRESS, char* UID, char* password, struct addrinfo *res, int
     if (udp_send_and_receive(fd, res, message, buffer, BUF_SIZE) == -1)
         return -1;
     if (!strcmp("RLO OK\n",buffer)) {
-        puts("User successfully logged in");
+        puts(LOGIN_SUC);
         return 1;
     } else if (!strcmp("RLO NOK\n",buffer)) {
-        puts("Log in unsuccessful");
+        puts(LOGIN_FAIL);
         return 0;
     } else {
-        puts("There was an error logging in. Please try again!");
+        puts(LOGIN_ERR);
         return -1;
     }    
 }
@@ -80,13 +80,13 @@ int logout(char* IP_ADDRESS, char* UID, char* password, struct addrinfo *res, in
     if (udp_send_and_receive(fd, res, message, buffer, BUF_SIZE) == -1)
         return -1;
     if (!strcmp("ROU OK\n",buffer)) {
-        puts("User successfully logged out");
+        puts(LOGOUT_SUC);
         return 1;
     } else if (!strcmp("ROU NOK\n",buffer)) {
-        puts("Log out unsuccessful");
+        puts(LOGOUT_FAIL);
         return 0;
     } else {
-        puts("There was an error logging out. Please try again!");
+        puts(LOGOUT_ERR);
         return -1;
     }    
 }
@@ -140,15 +140,15 @@ void subscribe(char* IP_ADDRESS, char* UID, char* GID, char* GName, struct addri
     if (udp_send_and_receive(fd, res, message, buffer, BUF_SIZE) == -1)
         return;
     if (!strcmp("RGS OK\n",buffer)) 
-        puts("User successfully registered to group");
+        printf("User successfully subscribed to group %d\n", GID);
     else if (!strcmp("RGS E_GRP\n",buffer))
-        puts("The group ID does not exist. Please try again!");
+        puts(GRP_FAIL);
     else if (!strcmp("RGS E_GNAME\n",buffer))
-        puts("The group name is invalid. Please try again!");
+        puts(REG_GRP_INV);
     else if (!strcmp("RGS E_FULL\n",buffer))
-        puts("The group database is full. Please try again!");
+        puts(REG_GRP_FULL);
     else if (!strcmp("RGS NOK\n",buffer)) 
-        puts("There was a problem subscribing. Please try again!");
+        puts(REG_GRP_ERR1);
     else {
         char cmd1[4], cmd2[4], new_GID[3], extra[SIZE];
         memset(cmd1, 0, 4);
@@ -161,7 +161,7 @@ void subscribe(char* IP_ADDRESS, char* UID, char* GID, char* GName, struct addri
             printf("New group created with GID %s\n", new_GID);
         }
         else
-            puts("There was an error subscribing. Please try again!");
+            puts(REG_GRP_ERR2);
     }
 }
 
@@ -171,15 +171,15 @@ void unsubscribe(char* IP_ADDRESS, char* UID, char* GID, struct addrinfo *res, i
     if (udp_send_and_receive(fd, res, message, buffer, BUF_SIZE) == -1)
         return;
     if (!strcmp("RGU OK\n",buffer)) 
-        printf("User successfully unregistered from group %s\n", GID);
+        printf("User successfully unsubscribed from group %s\n", GID);
     else if (!strcmp("RGU E_USR\n",buffer))
-        puts("The UID does not exist. Please try again!");
+        puts(UNR_GRP_FAIL_USR);
     else if (!strcmp("RGU E_GRP\n",buffer))
-        puts("The group does not exist. Please try again!");
+        puts(GRP_FAIL);
     else if (!strcmp("RGU NOK\n",buffer)) 
-        puts("There was a problem unsubscribing. Please try again!");
+        puts(UNR_GRP_ERR1);
     else
-        puts("There was an error unsubscribing. Please try again!");
+        puts(UNR_GRP_ERR2);
 }
 
 void my_groups(char* IP_ADDRESS, char* UID, struct addrinfo *res, int fd){
@@ -189,7 +189,7 @@ void my_groups(char* IP_ADDRESS, char* UID, struct addrinfo *res, int fd){
     if (udp_send_and_receive(fd, res, message, buffer, GROUPS) == -1)
         return;
     if (!strcmp("RGM E_USR\n",buffer)){
-        puts("Either you're not logged in or your user is invalid. Please try again!");
+        puts(GRP_ERR);
         return;
     }
     char response[4], groups[3];

@@ -9,13 +9,13 @@ int is_alphanumerical(char* s, int flag){
         if (!(isalpha(*s) || isdigit(*s))){
             if (flag){
                 if(!(*s == 45 || *s == 95)){
-                    puts("The argument doesn't contain only alphanumerical characters, - or _. Please try again!");
+                    puts(NO_ALPH1);
                     return 0;
                 }
                 s++;
                 continue;
             }
-            puts("The argument doesn't contain only alphanumerical characters. Please try again!");
+            puts(NO_ALPH2);
             return 0;
         }
         s++;
@@ -48,7 +48,7 @@ int digits_only(char *s, char* id){
 
 int check_login(char *UID){
     if (strlen(UID) != 5){
-        puts("Not logged in. Please try again!");
+        puts(NO_LOGIN);
         return 0;
     }
     return 1;
@@ -56,7 +56,7 @@ int check_login(char *UID){
 
 int check_select(char *GID){
     if (strlen(GID) != 2){
-        puts("No group selected. Please try again!");
+        puts(NO_GROUP);
         return 0;
     }
     return 1;
@@ -65,14 +65,14 @@ int check_select(char *GID){
 int create_socket(int socktype){
     int sockfd = socket(AF_INET,socktype,0);
     if (sockfd == -1){
-        puts("Failed creating the socket!");
+        puts(SOCK_FAIL);
         exit(EXIT_FAILURE);
     }
     memset(&hints, 0, sizeof hints);
     hints.ai_family = AF_INET;
     hints.ai_socktype = socktype;
     if(getaddrinfo(IP_ADDRESS, PORT, &hints, &res) != 0){
-        puts("Failed getting the adresss' information!");
+        puts(ADDR_FAIL);
         exit(EXIT_FAILURE);
     }
     return sockfd;
@@ -151,13 +151,13 @@ void parse(int udp_socket, char* command, char* uid, char* password, char* gid){
         //Select: GID (tam 2)
         if (!(has_correct_arg_sizes(arg1, 2, arg2, 0) && digits_only(arg1,"GID") && check_login(uid)))
             return;
-        strcpy(gid,arg1); //Ele não devia verificar se está subscrito??????????
-        printf("Group sucessfully selected\n");
+        strcpy(gid, arg1); //Ele não devia verificar se está subscrito??????????
+        printf("Group %s sucessfully selected\n", gid);
     } else if (!strcmp(name, "showgid") || !strcmp(name, "sg")){
         //displays selected group : (nada)
         if (!(has_correct_arg_sizes(arg1, 0, arg2, 0) && check_login(uid) && check_select(gid)))
             return;
-        printf("The group selected is %s\n",gid);
+        printf("The group selected is %s\n", gid);
     } else if (!strcmp(name, "ulist") || !strcmp(name, "ul")){
         //User list (TCP): (nada)
         if (!(has_correct_arg_sizes(arg1, 0, arg2, 0) && check_login(uid) && check_select(gid)))
@@ -174,9 +174,9 @@ void parse(int udp_socket, char* command, char* uid, char* password, char* gid){
 }
 
 int main(int argc, char* argv[]){
-    char command[SIZE], ADDRESS[10], uid[6], password[9], gid[3];
+    char command[SIZE], uid[6], password[9], gid[3];
+    //Fazer parse do argv e ver se os argumentos existem
     strcpy(IP_ADDRESS,argv[2]);            //Defines the IP_ADDRESS where the server runs
-    //sprintf(IP_ADDRESS,"%s%s",ADDRESS,".ist.utl.pt");
     strcpy(PORT,argv[4]);               //Defines the PORT where the server accepts requests
     int udp_socket = create_socket(SOCK_DGRAM);
     memset(uid, 0, 6);
