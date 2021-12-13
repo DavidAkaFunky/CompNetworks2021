@@ -91,7 +91,7 @@ int logout(char* IP_ADDRESS, char* UID, char* password, struct addrinfo *res, in
     }    
 }
 
-void show_groups(char* ptr, char* groups, char* end){
+void show_groups(char* ptr, char* groups){
     int n = atoi(groups);
     char group_name[25];
     char mid[5];
@@ -111,7 +111,7 @@ void show_groups(char* ptr, char* groups, char* end){
         printf("Group's last message: %s\n", mid);
         ptr += 9 + strlen(group_name);
     }
-    if (strcmp(end, ptr))
+    if (strcmp(ptr, "\n"))
         puts(INFO_ERR);
 }
 
@@ -129,7 +129,7 @@ void groups(char* IP_ADDRESS, struct addrinfo *res, int fd){
         return;
     }
     printf("There are %s registered groups:\n", groups);
-    show_groups(&(buffer[6]), groups, "\n");
+    show_groups(&(buffer[4+strlen(groups)]), groups);
 }
 
 void subscribe(char* IP_ADDRESS, char* UID, char* GID, char* GName, struct addrinfo *res, int fd){
@@ -140,7 +140,7 @@ void subscribe(char* IP_ADDRESS, char* UID, char* GID, char* GName, struct addri
     if (udp_send_and_receive(fd, res, message, buffer, BUF_SIZE) == -1)
         return;
     if (!strcmp("RGS OK\n",buffer)) 
-        printf("User successfully subscribed to group %d\n", GID);
+        printf("User successfully subscribed to group %s\n", GID);
     else if (!strcmp("RGS E_GRP\n",buffer))
         puts(GRP_FAIL);
     else if (!strcmp("RGS E_GNAME\n",buffer))
@@ -201,5 +201,5 @@ void my_groups(char* IP_ADDRESS, char* UID, struct addrinfo *res, int fd){
         return;
     }
     printf("You are subscribed to %s groups:\n", groups);
-    show_groups(&(buffer[6]), groups, "");
+    show_groups(&(buffer[4+strlen(groups)]), groups);
 }

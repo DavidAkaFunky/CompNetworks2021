@@ -71,7 +71,7 @@ void groups(char* IP_ADDRESS, struct addrinfo *res, int fd);
 void subscribe(char* IP_ADDRESS, char* UID, char* GID, char* GName, struct addrinfo *res, int fd);
 void unsubscribe(char* IP_ADDRESS, char* UID, char* GID, struct addrinfo *res, int fd);
 void my_groups(char* IP_ADDRESS, char* UID, struct addrinfo *res, int fd);
-void show_groups(char* ptr, char* groups, char* end);
+void show_groups(char* ptr, char* groups);
 
 /* -------------------- client_tcp -------------------- */
 void users(char *ptr);
