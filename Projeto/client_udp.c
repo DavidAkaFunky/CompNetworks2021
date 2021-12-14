@@ -140,7 +140,7 @@ void subscribe(char* IP_ADDRESS, char* UID, char* GID, char* GName, struct addri
     if (udp_send_and_receive(fd, res, message, buffer, BUF_SIZE) == -1)
         return;
     if (!strcmp("RGS OK\n",buffer)) 
-        printf("User successfully subscribed to group %d\n", GID);
+        printf("User successfully subscribed to group %s\n", GID);
     else if (!strcmp("RGS E_GRP\n",buffer))
         puts(GRP_FAIL);
     else if (!strcmp("RGS E_GNAME\n",buffer))

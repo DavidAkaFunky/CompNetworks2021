@@ -4,19 +4,46 @@ int tcp_socket;
 
 int tcp_send_and_receive(struct addrinfo *res, char* message, char* buffer, int size){
     int bytes;
+    ssize_t nbytes,nleft,nwritten,nread;
+    char *ptr;    
     tcp_socket = create_socket(SOCK_STREAM);
+
     if ((bytes = connect(tcp_socket, res->ai_addr, res->ai_addrlen)) == -1){
         puts(CONN_ERR);
         return -1;
     }
-    if (write(tcp_socket,message,sizeof(message)) == -1){
-        puts(SEND_ERR);
-        return -1;
+    //Caso o servidor não aceite a mensagem completa, manda por packages
+    nbytes = sizeof(message);
+    ptr = message;
+    nleft = nbytes;
+    while(nleft > 0) {
+        nwritten = write(tcp_socket, ptr,nleft);
+        if (nwritten <=0) {
+            puts(SEND_ERR);
+            return -1;
+        }
+        //printf("%s\n",ptr);
+        nleft -= nwritten;
+        ptr += nwritten;  
     }
-    if (read(tcp_socket,buffer,BUF_SIZE)==-1){
-        puts(RECV_ERR);
-        return -1;
+    
+    ptr = buffer;
+    while(1){
+        nread = read(tcp_socket, ptr, USERS);
+        printf("Numero de bytes lido %ld\n", nread);
+        if (nread == -1){
+            puts(RECV_ERR);
+            return -1;
+        }
+        else if(nread == 0)
+            break;
+        printf("%s\n",buffer);
+        //printf("%s\n",ptr);
+        ptr += nread;
     }
+ 
+    //printf("%s\n",buffer);
+    
     close(tcp_socket);
     return bytes;
 }
@@ -43,7 +70,6 @@ void users(char *ptr){
     }
 }
 
-//É preciso criar o socket TCP primeiro kekW
 void ulist(char* IP_ADDRESS, char* GID, struct addrinfo *res){ 
     char message[7], buffer[USERS];
     memset(message, 0, 7);
@@ -51,6 +77,7 @@ void ulist(char* IP_ADDRESS, char* GID, struct addrinfo *res){
     sprintf(message,"ULS %s\n", GID);
     if (tcp_send_and_receive(res, message, buffer, USERS) == -1)
         return;
+    //printf("%s\n",buffer);
     if (!strcmp("RUL NOK\n", buffer)){
         puts(GRP_FAIL);
         return;
