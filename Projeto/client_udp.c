@@ -26,15 +26,16 @@ void reg(char* IP_ADDRESS, char* UID, char* password, struct addrinfo *res, int 
     sprintf(message,"REG %s %s\n",UID,password);
     if (udp_send_and_receive(fd, res, message, buffer, BUF_SIZE) == -1)
         return;
-    if (!strcmp("RRG OK\n",buffer)) {
+    if (!strcmp("ERR\n", buffer))
+        puts(GEN_ERR);
+    else if (!strcmp("RRG OK\n",buffer))
         puts(REG_USER_SUC);
-    } else if (!strcmp("RRG DUP\n",buffer)) {
+    else if (!strcmp("RRG DUP\n",buffer))
         puts(REG_USER_DUP);
-    } else if (!strcmp("RRG NOK\n",buffer)) {
+    else if (!strcmp("RRG NOK\n",buffer))
         puts(REG_USER_FAIL);
-    } else {
-        puts(REG_USER_ERR);
-    }
+    else
+        puts(INFO_ERR);
 }
 
 void unreg(char* IP_ADDRESS, char* UID, char* password, struct addrinfo *res, int fd){
@@ -44,12 +45,14 @@ void unreg(char* IP_ADDRESS, char* UID, char* password, struct addrinfo *res, in
     sprintf(message,"UNR %s %s\n", UID, password);
     if (udp_send_and_receive(fd, res, message, buffer, BUF_SIZE) == -1)
         return;
+    if (!strcmp("ERR\n", buffer))
+        puts(GEN_ERR);
     if (!strcmp("RUN OK\n", buffer)) {
         puts(UNR_USER_SUC);
     } else if (!strcmp("RUN NOK\n", buffer)) {
         puts(UNR_USER_FAIL);
     } else {
-        puts(UNR_USER_ERR);
+        puts(INFO_ERR);
     }    
 }
 
@@ -60,16 +63,20 @@ int login(char* IP_ADDRESS, char* UID, char* password, struct addrinfo *res, int
     sprintf(message,"LOG %s %s\n",UID,password);
     if (udp_send_and_receive(fd, res, message, buffer, BUF_SIZE) == -1)
         return -1;
+    if (!strcmp("ERR\n", buffer)){
+        puts(GEN_ERR);
+        return -1;
+    }
     if (!strcmp("RLO OK\n",buffer)) {
         puts(LOGIN_SUC);
         return 1;
-    } else if (!strcmp("RLO NOK\n",buffer)) {
+    }
+    if (!strcmp("RLO NOK\n",buffer)) {
         puts(LOGIN_FAIL);
         return 0;
-    } else {
-        puts(LOGIN_ERR);
-        return -1;
-    }    
+    }
+    puts(INFO_ERR);
+    return -1;
 }
 
 int logout(char* IP_ADDRESS, char* UID, char* password, struct addrinfo *res, int fd){
@@ -79,16 +86,21 @@ int logout(char* IP_ADDRESS, char* UID, char* password, struct addrinfo *res, in
     sprintf(message,"OUT %s %s\n", UID, password);
     if (udp_send_and_receive(fd, res, message, buffer, BUF_SIZE) == -1)
         return -1;
+    if (!strcmp("ERR\n", buffer)){
+        puts(GEN_ERR);
+        return -1;
+    }
     if (!strcmp("ROU OK\n",buffer)) {
         puts(LOGOUT_SUC);
         return 1;
-    } else if (!strcmp("ROU NOK\n",buffer)) {
+    }
+    if (!strcmp("ROU NOK\n",buffer)) {
         puts(LOGOUT_FAIL);
         return 0;
-    } else {
-        puts(LOGOUT_ERR);
-        return -1;
-    }    
+    }
+    puts(INFO_ERR);
+    return -1;
+  
 }
 
 void show_groups(char* ptr, char* groups){
@@ -124,6 +136,10 @@ void groups(char* IP_ADDRESS, struct addrinfo *res, int fd){
     memset(response, 0, 4);
     memset(groups, 0, 3);
     sscanf(buffer, "%s %s", response, groups);
+    if (!strcmp("ERR\n", buffer)){
+        puts(GEN_ERR);
+        return;
+    }
     if (!(!strcmp("RGL", response) && (strlen(groups) == 1 || strlen(groups) == 2) && digits_only(groups, "number of groups"))){
         puts(INFO_ERR);
         return;
@@ -139,7 +155,9 @@ void subscribe(char* IP_ADDRESS, char* UID, char* GID, char* GName, struct addri
     sprintf(message,"GSR %s %s %s\n", UID, GID, GName);
     if (udp_send_and_receive(fd, res, message, buffer, BUF_SIZE) == -1)
         return;
-    if (!strcmp("RGS OK\n",buffer)) 
+    if (!strcmp("ERR\n", buffer))
+        puts(GEN_ERR);
+    else if (!strcmp("RGS OK\n",buffer)) 
         printf("User successfully subscribed to group %s\n", GID);
     else if (!strcmp("RGS E_GRP\n",buffer))
         puts(GRP_FAIL);
@@ -161,7 +179,7 @@ void subscribe(char* IP_ADDRESS, char* UID, char* GID, char* GName, struct addri
             printf("New group created with GID %s\n", new_GID);
         }
         else
-            puts(REG_GRP_ERR2);
+            puts(INFO_ERR);
     }
 }
 
@@ -170,7 +188,9 @@ void unsubscribe(char* IP_ADDRESS, char* UID, char* GID, struct addrinfo *res, i
     sprintf(message,"GUR %s %s\n", UID, GID);
     if (udp_send_and_receive(fd, res, message, buffer, BUF_SIZE) == -1)
         return;
-    if (!strcmp("RGU OK\n",buffer)) 
+    if (!strcmp("ERR\n", buffer))
+        puts(GEN_ERR);
+    else if (!strcmp("RGU OK\n",buffer)) 
         printf("User successfully unsubscribed from group %s\n", GID);
     else if (!strcmp("RGU E_USR\n",buffer))
         puts(UNR_GRP_FAIL_USR);
@@ -179,7 +199,7 @@ void unsubscribe(char* IP_ADDRESS, char* UID, char* GID, struct addrinfo *res, i
     else if (!strcmp("RGU NOK\n",buffer)) 
         puts(UNR_GRP_ERR1);
     else
-        puts(UNR_GRP_ERR2);
+        puts(INFO_ERR);
 }
 
 void my_groups(char* IP_ADDRESS, char* UID, struct addrinfo *res, int fd){
@@ -188,6 +208,10 @@ void my_groups(char* IP_ADDRESS, char* UID, struct addrinfo *res, int fd){
     sprintf(message,"GLM %s\n", UID);
     if (udp_send_and_receive(fd, res, message, buffer, GROUPS) == -1)
         return;
+    if (!strcmp("ERR\n", buffer)){
+        puts(GEN_ERR);
+        return;
+    }  
     if (!strcmp("RGM E_USR\n",buffer)){
         puts(GRP_ERR);
         return;

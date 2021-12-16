@@ -2,7 +2,7 @@
 
 int tcp_socket;
 
-int tcp_send_and_receive(struct addrinfo *res, char* message, char* buffer, int size){
+int tcp_send(struct addrinfo *res, char* message, char* buffer, int size){
     int bytes;
     ssize_t nbytes,nleft,nwritten,nread;
     char *ptr;    
@@ -17,7 +17,7 @@ int tcp_send_and_receive(struct addrinfo *res, char* message, char* buffer, int 
     ptr = message;
     nleft = nbytes;
     while(nleft > 0) {
-        nwritten = write(tcp_socket, ptr,nleft);
+        nwritten = write(tcp_socket, ptr, nleft);
         if (nwritten <=0) {
             puts(SEND_ERR);
             return -1;
@@ -26,29 +26,20 @@ int tcp_send_and_receive(struct addrinfo *res, char* message, char* buffer, int 
         nleft -= nwritten;
         ptr += nwritten;  
     }
-    
-    ptr = buffer;
-    while(1){
-        nread = read(tcp_socket, ptr, USERS);
-        printf("Numero de bytes lido %ld\n", nread);
-        if (nread == -1){
-            puts(RECV_ERR);
-            return -1;
-        }
-        else if(nread == 0)
-            break;
-        printf("%s\n",buffer);
-        //printf("%s\n",ptr);
-        ptr += nread;
-    }
- 
-    //printf("%s\n",buffer);
-    
-    close(tcp_socket);
     return bytes;
 }
 
-void users(char *ptr){
+int tcp_read(char* buffer, int size){
+    ssize_t nread = read(tcp_socket, buffer, size);
+    if (nread == -1){
+        puts(RECV_ERR);
+        close(tcp_socket);
+        return -1;
+    }
+    return nread;
+}
+
+/* void users(char *ptr){
     if (strlen(ptr) == 0){
         puts(NO_USERS);
         return;
@@ -93,4 +84,95 @@ void ulist(char* IP_ADDRESS, char* GID, struct addrinfo *res){
     }
     printf("Group name: %s\n", group_name);
     users(&(buffer[34]));
+} */
+
+void ulist(char* IP_ADDRESS, char* GID, struct addrinfo *res){
+    char message[7], buffer[USERS];
+    memset(message, 0, 7);
+    memset(buffer, 0, USERS);
+    sprintf(message,"ULS %s\n", GID);
+    if (tcp_send(res, message, buffer, USERS) == -1)
+        return;
+    char response[4];
+    ssize_t nread = tcp_read(response, 4);
+    if (nread == -1)
+        return;
+    if (!strcmp("ERR\n", response))
+        puts(GEN_ERR);
+    if (strcmp("RUL ", response) || nread == -1){
+        puts(RECV_ERR);
+        return;
+    }
+    char status[3];
+    nread = tcp_read(status, 3);
+    if (nread == -1)
+        return;
+    char end[1];
+    if (!strcmp("NOK", status)){
+        nread = tcp_read(end, 1);
+        if (nread == -1)
+            return;
+        if (!strcmp("\n", end))
+            puts(GRP_FAIL);
+        else
+            puts(RECV_ERR);
+        close(tcp_socket);
+        return;
+    }
+    if (!strcmp("OK ", status)){
+        char* group_name;
+        int counter = 0;
+        while (1){
+            nread = tcp_read(group_name + counter, 1);
+            if (nread == -1)
+                return;
+            if (group_name[counter] == '\n' || group_name[counter] == ' '){
+                if (!(counter > 0 && is_alphanumerical(group_name, 1))){
+                    close(tcp_socket);
+                    puts(INFO_ERR);
+                    return;
+                }     
+                break;
+            }
+            if (counter == 25){
+                close(tcp_socket);
+                puts(INFO_ERR);
+                return;
+            }
+            ++counter;    
+        }
+        printf("Group name: %s", group_name);
+        if (group_name[counter] == '\n'){
+            puts(NO_USERS);
+            close(tcp_socket);
+            return;
+        }
+        putchar('\n');
+        printf("This group contains the following users: ");
+        char user[5];  
+        while (1){
+            nread = tcp_read(user, 5);
+            if (nread == -1)
+                return;
+            if (!digits_only(user, "user id")){
+                close(tcp_socket);
+                puts(INFO_ERR);
+                return;
+            }
+            nread = tcp_read(end, 1);
+            if (nread == -1)
+                return;
+            if (!strcmp("\n", end))
+                break;
+            else if (!strcmp(" ", end)){
+                close(tcp_socket);
+                puts(INFO_ERR);
+                return;
+            }
+            puts(user);
+        }
+    }
+    else
+        puts(INFO_ERR);
+    close(tcp_socket);
 }
