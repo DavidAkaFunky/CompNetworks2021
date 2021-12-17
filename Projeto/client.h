@@ -70,8 +70,8 @@ void my_groups(char* IP_ADDRESS, char* UID, struct addrinfo *res, int fd);
 void show_groups(char* ptr, char* groups);
 
 /* -------------------- client_tcp -------------------- */
-void users(char *ptr);
+int tcp_send(struct addrinfo *res, char* message);
+ssize_t tcp_read(char* buffer, int size);
 void ulist(char* IP_ADDRESS, char* GID, struct addrinfo *res);
-int tcp_send_and_receive(struct addrinfo *res, char* message, char* buffer, int size);
 
 #endif
