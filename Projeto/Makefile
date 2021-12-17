@@ -1,17 +1,9 @@
-# Makefile, versao 1
-# Sistemas Operativos, DEI/IST/ULisboa 2020-21
+# Makefile - Projeto de Redes de Computadores - 2º Período 2021/22 - IST
 
-CC   = gcc
+all: user 
 
-# A phony target is one that is not really the name of a file
-# https://www.gnu.org/software/make/manual/html_node/Phony-Targets.html
-.PHONY: all clean run
-
-all: user #Colocar aqui DS
-
-user:
-	$(CC) -o user client_main.c client_tcp.c client_udp.c client.h
+user: client_main.o client_tcp.o client_udp.o
+	gcc -o user client_main.o client_tcp.o client_udp.o
 
 clean:
-	@echo Cleaning...
-	rm -f *.o user *.gch
+	rm *.o user
