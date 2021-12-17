@@ -31,7 +31,7 @@ int tcp_send(struct addrinfo *res, char* message){
 
 ssize_t tcp_read(char* buffer, int size){
     ssize_t nread = read(tcp_socket, buffer, size);
-    printf("nread = %d\n", nread);
+    //printf("nread = %d\n", nread);
     if (nread == -1){
         puts(RECV_ERR);
         close(tcp_socket);
@@ -127,19 +127,20 @@ void ulist(char* IP_ADDRESS, char* GID, struct addrinfo *res){
         return;
     }
     if (!strcmp("OK ", status)){
-        char* group_name;
+        char group_name[25];
+        memset(group_name, 0, 25);
         int counter = 0;
         while (1){
             nread = tcp_read(group_name + counter, 1);
             if (nread == -1)
                 return;
             if (group_name[counter] == '\n' || group_name[counter] == ' '){
+                group_name[counter] = '\0';
                 if (!(counter > 0 && is_alphanumerical(group_name, 1))){
                     close(tcp_socket);
                     puts(INFO_ERR);
                     return;
-                }
-                group_name[++counter] = '\0';     
+                }   
                 break;
             }
             if (counter == 25){
@@ -156,7 +157,7 @@ void ulist(char* IP_ADDRESS, char* GID, struct addrinfo *res){
             return;
         }
         putchar('\n');
-        printf("This group contains the following users: ");
+        puts("This group contains the following users: ");
         char user[6];
         memset(user, 0, 6);  
         while (1){
@@ -171,9 +172,11 @@ void ulist(char* IP_ADDRESS, char* GID, struct addrinfo *res){
             nread = tcp_read(end, 1);
             if (nread == -1)
                 return;
-            if (!strcmp("\n", end))
+            if (!strcmp("\n", end)){
+                puts(user);
                 break;
-            else if (!strcmp(" ", end)){
+            }
+            else if (strcmp(" ", end)){
                 close(tcp_socket);
                 puts(INFO_ERR);
                 return;
