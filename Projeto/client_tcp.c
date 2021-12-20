@@ -2,36 +2,37 @@
 
 int tcp_socket;
 
-int tcp_send(struct addrinfo *res, char* message){
+int tcp_connect(struct addrinfo *res){
     int bytes;
-    ssize_t nbytes, nleft, nwritten;
-    char *ptr;    
     tcp_socket = create_socket(SOCK_STREAM);
-
     if ((bytes = connect(tcp_socket, res->ai_addr, res->ai_addrlen)) == -1){
         puts(CONN_ERR);
         return -1;
     }
+    return bytes;
+}
+
+int tcp_send(char* message){
+    ssize_t nleft, nwritten;
+    char *ptr;    
+    
     //Caso o servidor não aceite a mensagem completa, manda por packages
-    nbytes = sizeof(message);
+    nleft = sizeof(message);
     ptr = message;
-    nleft = nbytes;
     while(nleft > 0) {
         nwritten = write(tcp_socket, ptr, nleft);
-        if (nwritten <=0) {
+        if (nwritten <= 0) {
             puts(SEND_ERR);
             return -1;
-        }
-        //printf("%s\n",ptr);
+        }    
         nleft -= nwritten;
         ptr += nwritten;  
     }
-    return bytes;
+    return 1;
 }
 
 ssize_t tcp_read(char* buffer, int size){
     ssize_t nread = read(tcp_socket, buffer, size);
-    //printf("nread = %d\n", nread);
     if (nread == -1){
         puts(RECV_ERR);
         close(tcp_socket);
@@ -40,58 +41,11 @@ ssize_t tcp_read(char* buffer, int size){
     return nread;
 }
 
-/* void users(char *ptr){
-    if (strlen(ptr) == 0){
-        puts(NO_USERS);
-        return;
-    }  
-    char uid[6];
-    printf("This group contains the following users: ");
-    while (1){
-        memset(uid, 0, 6);
-        sscanf(ptr, "%s ", uid);
-        if (strlen(uid) == 0)
-            return;
-        printf(", ");
-        if (!(is_correct_arg_size(uid, 5) && digits_only(uid, "UID"))){
-            puts(INFO_ERR);
-            return;
-        }
-        printf("%s", uid);
-        ptr += 6;
-    }
-}
-
-void ulist(char* IP_ADDRESS, char* GID, struct addrinfo *res){ 
-    char message[7], buffer[USERS];
-    memset(message, 0, 7);
-    memset(buffer, 0, USERS);
-    sprintf(message,"ULS %s\n", GID);
-    if (tcp_send_and_receive(res, message, buffer, USERS) == -1)
-        return;
-    //printf("%s\n",buffer);
-    if (!strcmp("RUL NOK\n", buffer)){
-        puts(GRP_FAIL);
-        return;
-    }
-    char response[4], status[4], group_name[25];
-    memset(response, 0, 4);
-    memset(status, 0, 4);
-    memset(group_name, 0, 25);
-    sscanf(buffer, "%s %s %s ", response, status, group_name);
-    if (!(!strcmp("RUL", response) && !strcmp("OK", status))){
-        puts(INFO_ERR);
-        return;
-    }
-    printf("Group name: %s\n", group_name);
-    users(&(buffer[34]));
-} */
-
 void ulist(char* IP_ADDRESS, char* GID, struct addrinfo *res){
     char message[8];
     memset(message, 0, 8);
     sprintf(message,"ULS %s\n", GID);
-    if (tcp_send(res, message) == -1)
+    if (tcp_connect(res) == -1 || tcp_send(message) == -1)
         return;
     char response[5];
     memset(response, 0, 5);
@@ -100,9 +54,8 @@ void ulist(char* IP_ADDRESS, char* GID, struct addrinfo *res){
         return;
     if (!strcmp("ERR\n", response))
         puts(GEN_ERR);
-    if (strcmp("RUL ", response) || nread == -1){
-        puts(response);
-        puts(RECV_ERR);
+    if (strcmp("RUL ", response)){
+        puts(INFO_ERR);
         return;
     }
     char status[4];
@@ -116,11 +69,9 @@ void ulist(char* IP_ADDRESS, char* GID, struct addrinfo *res){
         nread = tcp_read(end, 1);
         if (nread == -1)
             return;
-        if (!strcmp("\n", end))
+        if (!strcmp("\n", end)){
             puts(GRP_FAIL);
-        else{
-            puts(status);
-            puts(RECV_ERR);
+            return;
         }
             
         close(tcp_socket);
@@ -152,8 +103,8 @@ void ulist(char* IP_ADDRESS, char* GID, struct addrinfo *res){
         }
         printf("Group name: %s", group_name);
         if (group_name[counter] == '\n'){
-            puts(NO_USERS);
             close(tcp_socket);
+            puts(NO_USERS);
             return;
         }
         putchar('\n');
@@ -184,9 +135,113 @@ void ulist(char* IP_ADDRESS, char* GID, struct addrinfo *res){
             puts(user);
         }
     }
-    else{
+    else
         puts(INFO_ERR);
-        puts(status);
-    }
     close(tcp_socket);
 }
+
+void post(char* IP_ADDRESS, char* GID, char* UID, struct addrinfo *res, char *text, char *fname){
+    int text_strlen = strlen(text);
+    if (!(text[0] == '"' && text[text_strlen - 1] == '"')){
+        puts("Incorrect text format: You must add quotation marks (\") around the text. Please try again!");
+        return;
+    }
+    if (text_strlen == 2){
+        puts("The text argument is empty. Please try again!");
+        return;
+    }
+    if (text_strlen > 242){
+        puts("The text message is too big. Please try again!");
+        return;
+    }     
+    char text_parsed[241];
+    memset(text_parsed, 0, 241);
+    sscanf(text, "\"%[^\"]\"", text_parsed);
+    if (!(is_alphanumerical(text_parsed, 0) && is_alphanumerical(fname, 2) && check_login(UID) && check_select(GID)))
+        return;
+    int fname_strlen = strlen(fname);
+    char message[259];
+    memset(message, 0, 259);
+    char text_size[4];
+    memset(text_size, 0, 4);
+    sprintf(text_size, "%d", text_strlen - 2);
+    sprintf(message, "PST %s %s %s %s ", UID, GID, text_size, text_parsed);
+    if (tcp_connect(res) == -1 || tcp_send(message) == -1)
+        return;
+    if (fname_strlen > 0){
+        if (fname[fname_strlen - 4] != '.'){
+            puts("We could not detect a file. Please try again!");
+            return;
+        }
+        char* ext = &(fname[fname_strlen - 3]);
+        if (!is_alphanumerical(ext, 0))
+            return;
+        char file_info[37];
+        memset(file_info, 0, 37);
+        FILE* fp = fopen(fname, "r");
+        if (!fp) {
+            puts(NO_FILE);
+            return;
+        }
+        fseek(fp, 0L, SEEK_END);
+        char fsize[11];
+        memset(fsize, 0, 11);
+        sprintf(fsize, "%d", ftell(fp));
+        sprintf(file_info, "%s %s ", fname, fsize);
+        rewind(fp);
+        if (tcp_send(file_info) == -1){
+            fclose(fp);
+            return;
+        }
+        char data[1024];
+        memset(data, 0, 1024);
+        while(fgets(data, 1024, fp)){
+            if (tcp_send(data) == -1){
+                fclose(fp);
+                return;
+            }
+            memset(data, 0, 1024);
+        }
+    }
+    if (tcp_send("\n") == -1)
+        return;
+    
+    char response[5];
+    memset(response, 0, 5);
+    ssize_t nread = tcp_read(response, 4);
+    if (nread == -1)
+        return;
+    if (!strcmp("ERR\n", response))
+        puts(GEN_ERR);
+    if (strcmp("RPT ", response)){
+        puts(INFO_ERR);
+        return;
+    }
+    char status[5];
+    memset(status, 0, 5);
+    nread = tcp_read(status, 4); 
+    if (nread == -1)
+        return;
+    if (!strcmp("NOK\n", status)){
+        puts(MSG_SEND_FAIL);
+        close(tcp_socket);
+        return;
+    }
+    else {
+        if (!digits_only(status, "message ID")){
+            puts(INFO_ERR);
+            close(tcp_socket);
+            return;
+        }
+        char end[2];
+        memset(end, 0, 2);
+        nread = tcp_read(end, 1);
+        if (nread == -1)
+            return;
+        if (strcmp("\n", end)){
+            printf("Message sent successfully. Message ID: %s\n", status);
+            close(tcp_socket);
+        }
+    }
+}
+

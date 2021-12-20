@@ -16,8 +16,9 @@
 #define GROUPS 3275
 #define USERS 600033
 #define INVALID_CMD "Invalid command. Please try again!"
-#define NO_ALPH1 "The argument doesn't contain only alphanumerical characters, - or _. Please try again!"
-#define NO_ALPH2 "The argument doesn't contain only alphanumerical characters. Please try again!"
+#define NO_ALPH0 "The argument doesn't contain only alphanumerical characters, - or _. Please try again!"
+#define NO_ALPH1 "The argument doesn't contain only alphanumerical characters. Please try again!"
+#define NO_ALPH2 "The argument doesn't contain only alphanumerical characters, ., - or _. Please try again!"
 #define NO_LOGIN "Not logged in. Please try again!"
 #define NO_GROUP "No group selected. Please try again!"
 #define GEN_ERR "The server returned an error. Please try again!"
@@ -45,6 +46,8 @@
 #define UNR_GRP_ERR1 "There was a problem unsubscribing. Please try again!"
 #define GRP_ERR "Either you're not logged in or your user is invalid. Please try again!"
 #define NO_USERS "There are no users registered to this group."
+#define NO_FILE "Input path invalid. Please try again!"
+#define MSG_SEND_FAIL "Message sent unsuccessfully. Please try again!"
 
 /* -------------------- client_main -------------------- */
 int is_alphanumerical(char* s, int flag);
@@ -70,8 +73,10 @@ void my_groups(char* IP_ADDRESS, char* UID, struct addrinfo *res, int fd);
 void show_groups(char* ptr, char* groups);
 
 /* -------------------- client_tcp -------------------- */
-int tcp_send(struct addrinfo *res, char* message);
+int tcp_connect(struct addrinfo *res);
+int tcp_send(char* message);
 ssize_t tcp_read(char* buffer, int size);
 void ulist(char* IP_ADDRESS, char* GID, struct addrinfo *res);
+void post(char* IP_ADDRESS, char* GID, char* UID, struct addrinfo *res, char *text, char *fname);
 
 #endif

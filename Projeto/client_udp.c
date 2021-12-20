@@ -9,7 +9,7 @@ int udp_send_and_receive(int fd, struct addrinfo *res, char* message, char* buff
 	if (bytes == -1){
         puts(SEND_ERR);
         return -1;
-    } 
+    }
 	addrlen = sizeof(addr);
 	bytes = recvfrom(fd, buffer, size, 0, (struct sockaddr*) &addr, &addrlen);
     if (bytes == -1){
