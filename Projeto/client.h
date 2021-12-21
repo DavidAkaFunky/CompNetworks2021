@@ -75,7 +75,7 @@ void show_groups(char* ptr, char* groups);
 /* -------------------- client_tcp -------------------- */
 int tcp_connect(struct addrinfo *res);
 int tcp_send(char* message);
-ssize_t tcp_read(char* buffer, int size);
+int tcp_read(char* buffer, ssize_t size);
 void ulist(char* IP_ADDRESS, char* GID, struct addrinfo *res);
 void post(char* IP_ADDRESS, char* GID, char* UID, struct addrinfo *res, char *text, char *fname);
 

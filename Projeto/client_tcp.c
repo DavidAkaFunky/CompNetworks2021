@@ -13,15 +13,12 @@ int tcp_connect(struct addrinfo *res){
 }
 
 int tcp_send(char* message){
-    ssize_t nleft, nwritten;
-    char *ptr;    
-    
+    ssize_t nleft = strlen(message), nwritten;
+    char *ptr = message;   
     //Caso o servidor não aceite a mensagem completa, manda por packages
-    nleft = sizeof(message);
-    ptr = message;
-    while(nleft > 0) {
+    while (nleft > 0){
         nwritten = write(tcp_socket, ptr, nleft);
-        if (nwritten <= 0) {
+        if (nwritten <= 0){
             puts(SEND_ERR);
             return -1;
         }    
@@ -31,14 +28,24 @@ int tcp_send(char* message){
     return 1;
 }
 
-ssize_t tcp_read(char* buffer, int size){
-    ssize_t nread = read(tcp_socket, buffer, size);
-    if (nread == -1){
-        puts(RECV_ERR);
-        close(tcp_socket);
-        return -1;
+int tcp_read(char* buffer, ssize_t size){
+    ssize_t nleft = size, nread;
+    char *ptr = buffer;
+    while (nleft > 0){
+        printf("nleft = %d\n", nleft);
+        nread = read(tcp_socket, ptr, nleft);
+        if (nread == -1){
+            puts(RECV_ERR);
+            close(tcp_socket);
+            return -1;
+        }
+        else if (nread == 0)
+            break;
+        nleft -= nread;
+        ptr += nread;
+        printf("nleft new = %d\n", nleft);
     }
-    return nread;
+    return 1;
 }
 
 void ulist(char* IP_ADDRESS, char* GID, struct addrinfo *res){
@@ -72,8 +79,7 @@ void ulist(char* IP_ADDRESS, char* GID, struct addrinfo *res){
         if (!strcmp("\n", end)){
             puts(GRP_FAIL);
             return;
-        }
-            
+        }  
         close(tcp_socket);
         return;
     }
@@ -168,6 +174,7 @@ void post(char* IP_ADDRESS, char* GID, char* UID, struct addrinfo *res, char *te
     sprintf(message, "PST %s %s %s %s ", UID, GID, text_size, text_parsed);
     if (tcp_connect(res) == -1 || tcp_send(message) == -1)
         return;
+    puts(message);
     if (fname_strlen > 0){
         if (fname[fname_strlen - 4] != '.'){
             puts("We could not detect a file. Please try again!");
@@ -205,12 +212,12 @@ void post(char* IP_ADDRESS, char* GID, char* UID, struct addrinfo *res, char *te
     }
     if (tcp_send("\n") == -1)
         return;
-    
     char response[5];
     memset(response, 0, 5);
     ssize_t nread = tcp_read(response, 4);
     if (nread == -1)
         return;
+    puts(response);
     if (!strcmp("ERR\n", response))
         puts(GEN_ERR);
     if (strcmp("RPT ", response)){
@@ -219,7 +226,7 @@ void post(char* IP_ADDRESS, char* GID, char* UID, struct addrinfo *res, char *te
     }
     char status[5];
     memset(status, 0, 5);
-    nread = tcp_read(status, 4); 
+    nread = tcp_read(status, 4);
     if (nread == -1)
         return;
     if (!strcmp("NOK\n", status)){
@@ -238,10 +245,11 @@ void post(char* IP_ADDRESS, char* GID, char* UID, struct addrinfo *res, char *te
         nread = tcp_read(end, 1);
         if (nread == -1)
             return;
-        if (strcmp("\n", end)){
+        if (!strcmp("\n", end))
             printf("Message sent successfully. Message ID: %s\n", status);
-            close(tcp_socket);
-        }
+        else
+            puts(INFO_ERR);
+        close(tcp_socket);
     }
 }
 
