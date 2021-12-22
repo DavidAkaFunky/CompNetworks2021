@@ -28,16 +28,16 @@
 #define INFO_ERR "There was an error collecting information from the server. Please try again!"
 #define SOCK_FAIL "Failed creating the socket!"
 #define ADDR_FAIL "Failed getting the address' information!"
-#define REG_USER_SUC "User successfully registered"
-#define REG_USER_DUP "User already registered"
+#define REG_USER_SUC "You have registered successfully!"
+#define REG_USER_DUP "A user with this UID has already been registered. Please try another one!"
 #define REG_USER_FAIL "Registration not accepted (too many users might be registered)."
-#define UNR_USER_SUC "User successfully unregistered"
-#define UNR_USER_FAIL "Unregister request unsuccessful"
-#define LOGIN_SUC "User successfully logged in"
-#define LOGIN_FAIL "Log in unsuccessful"
+#define UNR_USER_SUC "You have unregistered successfully."
+#define UNR_USER_FAIL "Unregister request unsuccessful."
+#define LOGIN_SUC "You are now logged in!"
+#define LOGIN_FAIL "Log in unsuccessful."
 #define LOGIN_ERR "There was an error logging in. Please try again!"
-#define LOGOUT_SUC "User successfully logged out"
-#define LOGOUT_FAIL "Log out unsuccessful"
+#define LOGOUT_SUC "You have logged out succesfully."
+#define LOGOUT_FAIL "Log out unsuccessful."
 #define GRP_FAIL "The group ID does not exist. Please try again!"
 #define REG_GRP_INV "The group name is invalid. Please try again!"
 #define REG_GRP_FULL  "The group database is full. Please try again!"
@@ -47,7 +47,9 @@
 #define GRP_ERR "Either you're not logged in or your user is invalid. Please try again!"
 #define NO_USERS "There are no users registered to this group."
 #define NO_FILE "Input path invalid. Please try again!"
-#define MSG_SEND_FAIL "Message sent unsuccessfully. Please try again!"
+#define ERR_FORMAT "Incorrect text format: You must add quotation marks (\") around the text. Please try again!"
+#define NO_TEXT "The text argument is empty. Please try again!"
+#define MSG_SEND_FAIL "Message sent unsuccessfully. Please confirm that you're subscribed to this group, then try again!"
 
 /* -------------------- client_main -------------------- */
 int is_alphanumerical(char* s, int flag);
@@ -77,6 +79,6 @@ int tcp_connect(struct addrinfo *res);
 int tcp_send(char* message, int size);
 int tcp_read(char* buffer, ssize_t size);
 void ulist(char* IP_ADDRESS, char* GID, struct addrinfo *res);
-void post(char* IP_ADDRESS, char* GID, char* UID, struct addrinfo *res, char *text, char *extra_text, char *fname);
+void post(char* IP_ADDRESS, char* GID, char* UID, struct addrinfo *res, char *text, char *fname);
 
 #endif

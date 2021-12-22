@@ -20,6 +20,8 @@ int udp_send_and_receive(int fd, struct addrinfo *res, char* message, char* buff
 }
 
 void reg(char* IP_ADDRESS, char* UID, char* password, struct addrinfo *res, int fd){
+    if (!(digits_only(UID,"UID") && has_correct_arg_sizes(UID, 5, password, 8) && is_alphanumerical(password, 0)))
+        return;
     char message[20], buffer[BUF_SIZE];
     memset(message, 0, 20);
     memset(buffer, 0, BUF_SIZE);
@@ -39,6 +41,8 @@ void reg(char* IP_ADDRESS, char* UID, char* password, struct addrinfo *res, int 
 }
 
 void unreg(char* IP_ADDRESS, char* UID, char* password, struct addrinfo *res, int fd){
+    if (!(digits_only(UID,"UID") && has_correct_arg_sizes(UID, 5, password, 8) && is_alphanumerical(password, 0)))
+        return;
     char message[20], buffer[BUF_SIZE];
     memset(message, 0, 20);
     memset(buffer, 0, BUF_SIZE);
@@ -57,6 +61,8 @@ void unreg(char* IP_ADDRESS, char* UID, char* password, struct addrinfo *res, in
 }
 
 int login(char* IP_ADDRESS, char* UID, char* password, struct addrinfo *res, int fd){
+    if (!(digits_only(UID,"UID") && has_correct_arg_sizes(UID, 5, password, 8) && is_alphanumerical(password, 0)))
+        return -1;
     char message[20], buffer[BUF_SIZE];
     memset(message, 0, 20);
     memset(buffer, 0, BUF_SIZE);
@@ -149,6 +155,10 @@ void groups(char* IP_ADDRESS, struct addrinfo *res, int fd){
 }
 
 void subscribe(char* IP_ADDRESS, char* UID, char* GID, char* GName, struct addrinfo *res, int fd){
+    if (strlen(GID) == 1)
+        sprintf(GID, "0%c", GID[0]);
+    if (!(is_correct_arg_size(GID, 2) && digits_only(GID,"GID") && strlen(GName) <= 24 && is_alphanumerical(GName, 1)))
+        return;
     char message[38], buffer[BUF_SIZE];
     memset(message, 0, 38);
     memset(buffer, 0, BUF_SIZE);

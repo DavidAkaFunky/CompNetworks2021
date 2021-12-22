@@ -144,35 +144,23 @@ void ulist(char* IP_ADDRESS, char* GID, struct addrinfo *res){
     close(tcp_socket);
 }
 
-void post(char* IP_ADDRESS, char* GID, char* UID, struct addrinfo *res, char *text, char *extra_text,char *fname){
-    strcat(strcat(text, " "),extra_text);
+void post(char* IP_ADDRESS, char* GID, char* UID, struct addrinfo *res, char *text, char *fname){
     //puts(text);
     int text_strlen = strlen(text);
-    if (!(text[0] == '"' && text[text_strlen - 1] == '"')){
-        puts("Incorrect text format: You must add quotation marks (\") around the text. Please try again!");
-        return;
-    }
-    if (text_strlen == 2){
-        puts("The text argument is empty. Please try again!");
-        return;
-    }
-    if (text_strlen > 242){
+    if (text_strlen > 240){
         puts("The text message is too big. Please try again!");
         return;
-    }     
-    char text_parsed[241];
-    memset(text_parsed, 0, 241);
-    sscanf(text, "\"%[^\"]\"", text_parsed);
-    puts(text_parsed);
-    if (!(is_alphanumerical(text_parsed, 0) && is_alphanumerical(fname, 2) && check_login(UID) && check_select(GID)))
+    }
+    if (!(is_alphanumerical(text, 0) && is_alphanumerical(fname, 2) && check_login(UID) && check_select(GID)))
         return;
     int fname_strlen = strlen(fname);
     char message[259];
     memset(message, 0, 259);
     char text_size[4];
     memset(text_size, 0, 4);
-    sprintf(text_size, "%d", text_strlen - 2);
-    sprintf(message, "PST %s %s %s %s", UID, GID, text_size, text_parsed);
+    sprintf(text_size, "%d", text_strlen);
+    sprintf(message, "PST %s %s %s %s", UID, GID, text_size, text);
+    printf("Message = %s\n", message);
     if (tcp_connect(res) == -1 || tcp_send(message,strlen(message)) == -1)
         return;
     if (fname_strlen > 0){
