@@ -9,8 +9,10 @@ int is_alphanumerical(char* s, int flag){
         if (!(isalpha(*s) || isdigit(*s))){
             switch (flag){
                 case 0:
-                    puts(NO_ALPH0);
-                    return 0;
+                    if(!(*s == 32)){
+                        puts(NO_ALPH0);
+                        return 0;
+                    }
                     break;
                 case 1:
                     if(!(*s == 45 || *s == 95)){
@@ -96,7 +98,7 @@ void parse(int udp_socket, char* command, char* UID, char* password, char* GID){
     memset(arg2, 0, SIZE);
     memset(arg3, 0, SIZE);
     sscanf(command, "%s %s %s %s", name, arg1, arg2, arg3);
-    if (strcmp(arg3, "")){ //Isto deve falhar se tivermos espaços depois do arg2? (Perguntar ao prof)
+    if (strcmp(arg3, "") && strcmp("post",name)){ //Isto deve falhar se tivermos espaços depois do arg2? (Perguntar ao prof) //ALTERADO com a mensagem do post pode haver espacos por isso o arg 3 fica obsoleto
         puts("Too many arguments. Please try again!");
         return;
     }
@@ -173,8 +175,8 @@ void parse(int udp_socket, char* command, char* UID, char* password, char* GID){
             return;
         ulist(IP_ADDRESS, GID, res);
     } else if (!strcmp(name, "post")){
-        //Post (TCP): "text" (Verificar as aspas, talvez?), [FName] (Verificar os parênteses, talvez?)
-        post(IP_ADDRESS, GID, UID, res, arg1, arg2);
+        //Post (TCP): "text" (Verificar as aspas, talvez?), [FName] (Verificar os parênteses, talvez?)  //e preciso mandar tbm o argumento 3 no caso do post, que vai ser o resto do text caso haja espacos
+        post(IP_ADDRESS, GID, UID, res, arg1, arg2, arg3);
     } else if (!strcmp(name, "retrieve") || !strcmp(name, "r")){
         //Retrieve (TCP): MID
         if (!has_correct_arg_sizes(arg1, 0/*???*/, arg2, 0))

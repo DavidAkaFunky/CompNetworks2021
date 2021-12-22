@@ -12,16 +12,16 @@ int tcp_connect(struct addrinfo *res){
     return bytes;
 }
 
-int tcp_send(char* message){
-    ssize_t nleft = strlen(message), nwritten;
-    char *ptr = message;   
+int tcp_send(char* message, int size){
+    ssize_t nleft = size, nwritten;
+    char *ptr = message;
     //Caso o servidor não aceite a mensagem completa, manda por packages
     while (nleft > 0){
         nwritten = write(tcp_socket, ptr, nleft);
         if (nwritten <= 0){
             puts(SEND_ERR);
             return -1;
-        }    
+        }
         nleft -= nwritten;
         ptr += nwritten;  
     }
@@ -32,7 +32,6 @@ int tcp_read(char* buffer, ssize_t size){
     ssize_t nleft = size, nread;
     char *ptr = buffer;
     while (nleft > 0){
-        printf("nleft = %d\n", nleft);
         nread = read(tcp_socket, ptr, nleft);
         if (nread == -1){
             puts(RECV_ERR);
@@ -43,7 +42,6 @@ int tcp_read(char* buffer, ssize_t size){
             break;
         nleft -= nread;
         ptr += nread;
-        printf("nleft new = %d\n", nleft);
     }
     return 1;
 }
@@ -52,7 +50,7 @@ void ulist(char* IP_ADDRESS, char* GID, struct addrinfo *res){
     char message[8];
     memset(message, 0, 8);
     sprintf(message,"ULS %s\n", GID);
-    if (tcp_connect(res) == -1 || tcp_send(message) == -1)
+    if (tcp_connect(res) == -1 || tcp_send(message, strlen(message)) == -1)
         return;
     char response[5];
     memset(response, 0, 5);
@@ -146,7 +144,9 @@ void ulist(char* IP_ADDRESS, char* GID, struct addrinfo *res){
     close(tcp_socket);
 }
 
-void post(char* IP_ADDRESS, char* GID, char* UID, struct addrinfo *res, char *text, char *fname){
+void post(char* IP_ADDRESS, char* GID, char* UID, struct addrinfo *res, char *text, char *extra_text,char *fname){
+    strcat(strcat(text, " "),extra_text);
+    //puts(text);
     int text_strlen = strlen(text);
     if (!(text[0] == '"' && text[text_strlen - 1] == '"')){
         puts("Incorrect text format: You must add quotation marks (\") around the text. Please try again!");
@@ -163,6 +163,7 @@ void post(char* IP_ADDRESS, char* GID, char* UID, struct addrinfo *res, char *te
     char text_parsed[241];
     memset(text_parsed, 0, 241);
     sscanf(text, "\"%[^\"]\"", text_parsed);
+    puts(text_parsed);
     if (!(is_alphanumerical(text_parsed, 0) && is_alphanumerical(fname, 2) && check_login(UID) && check_select(GID)))
         return;
     int fname_strlen = strlen(fname);
@@ -171,10 +172,9 @@ void post(char* IP_ADDRESS, char* GID, char* UID, struct addrinfo *res, char *te
     char text_size[4];
     memset(text_size, 0, 4);
     sprintf(text_size, "%d", text_strlen - 2);
-    sprintf(message, "PST %s %s %s %s ", UID, GID, text_size, text_parsed);
-    if (tcp_connect(res) == -1 || tcp_send(message) == -1)
+    sprintf(message, "PST %s %s %s %s", UID, GID, text_size, text_parsed);
+    if (tcp_connect(res) == -1 || tcp_send(message,strlen(message)) == -1)
         return;
-    puts(message);
     if (fname_strlen > 0){
         if (fname[fname_strlen - 4] != '.'){
             puts("We could not detect a file. Please try again!");
@@ -185,39 +185,44 @@ void post(char* IP_ADDRESS, char* GID, char* UID, struct addrinfo *res, char *te
             return;
         char file_info[37];
         memset(file_info, 0, 37);
-        FILE* fp = fopen(fname, "r");
+        FILE* fp = fopen(fname, "rb");
         if (!fp) {
             puts(NO_FILE);
             return;
         }
+        char space[] = " ";
+        if (tcp_send(space,strlen(space)) == -1)
+            return;
         fseek(fp, 0L, SEEK_END);
         char fsize[11];
         memset(fsize, 0, 11);
-        sprintf(fsize, "%d", ftell(fp));
+        sprintf(fsize, "%ld", ftell(fp));
         sprintf(file_info, "%s %s ", fname, fsize);
         rewind(fp);
-        if (tcp_send(file_info) == -1){
+        if (tcp_send(file_info,strlen(file_info)) == -1){
             fclose(fp);
             return;
         }
-        char data[1024];
-        memset(data, 0, 1024);
-        while(fgets(data, 1024, fp)){
-            if (tcp_send(data) == -1){
+        char data[1025];
+        memset(data, 0, 1025);
+        while(1){
+            int n = fread(data, 1, sizeof(data), fp);
+            if (n == 0)
+                break;
+            if (tcp_send(data,n) == -1){
                 fclose(fp);
                 return;
             }
-            memset(data, 0, 1024);
+            memset(data, 0, 1025);
         }
     }
-    if (tcp_send("\n") == -1)
+    if (tcp_send("\n",1) == -1)
         return;
     char response[5];
     memset(response, 0, 5);
     ssize_t nread = tcp_read(response, 4);
     if (nread == -1)
         return;
-    puts(response);
     if (!strcmp("ERR\n", response))
         puts(GEN_ERR);
     if (strcmp("RPT ", response)){
