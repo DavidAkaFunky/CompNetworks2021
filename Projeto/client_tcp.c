@@ -145,7 +145,6 @@ void ulist(char* IP_ADDRESS, char* GID, struct addrinfo *res){
 }
 
 void post(char* IP_ADDRESS, char* GID, char* UID, struct addrinfo *res, char *text, char *fname){
-    //puts(text);
     int text_strlen = strlen(text);
     if (text_strlen > 240){
         puts("The text message is too big. Please try again!");
@@ -160,7 +159,6 @@ void post(char* IP_ADDRESS, char* GID, char* UID, struct addrinfo *res, char *te
     memset(text_size, 0, 4);
     sprintf(text_size, "%d", text_strlen);
     sprintf(message, "PST %s %s %s %s", UID, GID, text_size, text);
-    printf("Message = %s\n", message);
     if (tcp_connect(res) == -1 || tcp_send(message,strlen(message)) == -1)
         return;
     if (fname_strlen > 0){
@@ -181,6 +179,7 @@ void post(char* IP_ADDRESS, char* GID, char* UID, struct addrinfo *res, char *te
         char space[] = " ";
         if (tcp_send(space,strlen(space)) == -1)
             return;
+        
         fseek(fp, 0L, SEEK_END);
         char fsize[11];
         memset(fsize, 0, 11);
