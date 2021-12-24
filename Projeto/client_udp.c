@@ -110,15 +110,15 @@ int logout(char* IP_ADDRESS, char* UID, char* password, struct addrinfo *res, in
 }
 
 void show_groups(char* ptr, char* groups){
-    int n = atoi(groups);
+    int n = atoi(groups), format;
     char group_name[25];
     char mid[5];
     for (int i = 0; i < n; ++i){
         memset(groups, 0, 3);
         memset(group_name, 0, 25);
         memset(mid, 0, 5);
-        sscanf(ptr, " %s %s %s", groups, group_name, mid);
-        if (!(has_correct_arg_sizes(groups, 2, mid, 4) && digits_only(groups, "GID") && strlen(group_name) <= 24 && is_alphanumerical(group_name, 1) && digits_only(mid, "MID"))){
+        format = sscanf(ptr, " %s %s %s", groups, group_name, mid);
+        if (!(format == 3 && has_correct_arg_sizes(groups, 2, mid, 4) && digits_only(groups, "GID") && strlen(group_name) <= 24 && is_alphanumerical(group_name, 1) && digits_only(mid, "MID"))){
             puts(INFO_ERR);
             return;
         }
@@ -141,16 +141,16 @@ void groups(char* IP_ADDRESS, struct addrinfo *res, int fd){
     char response[4], groups[3];
     memset(response, 0, 4);
     memset(groups, 0, 3);
-    sscanf(buffer, "%s %s", response, groups);
     if (!strcmp("ERR\n", buffer)){
         puts(GEN_ERR);
         return;
     }
-    if (!(!strcmp("RGL", response) && (strlen(groups) == 1 || strlen(groups) == 2) && digits_only(groups, "number of groups"))){
+    int format = sscanf(buffer, "%s %s", response, groups);
+    if (!(format == 2 && !strcmp("RGL", response) && (strlen(groups) == 1 || strlen(groups) == 2) && digits_only(groups, "number of groups"))){
         puts(INFO_ERR);
         return;
     }
-    printf("There are %s registered groups:\n", groups);
+    printf("There are %s registered %s:\n", groups, strcmp(groups, "1") ? "groups" : "group");
     show_groups(&(buffer[4+strlen(groups)]), groups);
 }
 
@@ -168,7 +168,7 @@ void subscribe(char* IP_ADDRESS, char* UID, char* GID, char* GName, struct addri
     if (!strcmp("ERR\n", buffer))
         puts(GEN_ERR);
     else if (!strcmp("RGS OK\n",buffer)) 
-        printf("User successfully subscribed to group %s\n", GID);
+        printf("You have successfully subscribed to group %s!\n", GID);
     else if (!strcmp("RGS E_GRP\n",buffer))
         puts(GRP_FAIL);
     else if (!strcmp("RGS E_GNAME\n",buffer))
@@ -183,10 +183,10 @@ void subscribe(char* IP_ADDRESS, char* UID, char* GID, char* GName, struct addri
         memset(cmd2, 0, 4);
         memset(new_GID, 0, 3);
         memset(extra, 0, SIZE);
-        sscanf(buffer, "%s %s %s %s", cmd1, cmd2, new_GID, extra);
-        if (!(!strcmp(cmd1, "RGS") && !strcmp(cmd1, "NEW") && is_correct_arg_size(new_GID, 2) && !strcmp(extra, ""))){
+        int format = sscanf(buffer, "%s %s %s %s", cmd1, cmd2, new_GID, extra);
+        if (!(format == 3 && !strcmp(cmd1, "RGS") && !strcmp(cmd1, "NEW") && is_correct_arg_size(new_GID, 2) && !strcmp(extra, ""))){
             strcpy(GID, new_GID);
-            printf("New group created with GID %s\n", new_GID);
+            printf("New group created with GID %s!\n", new_GID);
         }
         else
             puts(INFO_ERR);
@@ -201,7 +201,7 @@ void unsubscribe(char* IP_ADDRESS, char* UID, char* GID, struct addrinfo *res, i
     if (!strcmp("ERR\n", buffer))
         puts(GEN_ERR);
     else if (!strcmp("RGU OK\n",buffer)) 
-        printf("User successfully unsubscribed from group %s\n", GID);
+        printf("You have successfully unsubscribed from group %s.\n", GID);
     else if (!strcmp("RGU E_USR\n",buffer))
         puts(UNR_GRP_FAIL_USR);
     else if (!strcmp("RGU E_GRP\n",buffer))
@@ -229,11 +229,11 @@ void my_groups(char* IP_ADDRESS, char* UID, struct addrinfo *res, int fd){
     char response[4], groups[3];
     memset(response, 0, 4);
     memset(groups, 0, 3);
-    sscanf(buffer, "%s %s", response, groups);
-    if (!(!strcmp("RGM", response) && (strlen(groups) == 1 || strlen(groups) == 2) && digits_only(groups, "number of groups"))){
+    int format = sscanf(buffer, "%s %s", response, groups);
+    if (!(format == 2 && !strcmp("RGM", response) && (strlen(groups) == 1 || strlen(groups) == 2) && digits_only(groups, "number of groups"))){
         puts(INFO_ERR);
         return;
     }
-    printf("You are subscribed to %s groups:\n", groups);
+    printf("You are subscribed to %s %s:\n", groups, strcmp(groups, "1") ? "groups" : "group");
     show_groups(&(buffer[4+strlen(groups)]), groups);
 }

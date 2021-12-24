@@ -176,15 +176,11 @@ void post(char* IP_ADDRESS, char* GID, char* UID, struct addrinfo *res, char *te
             puts(NO_FILE);
             return;
         }
-        char space[] = " ";
-        if (tcp_send(space,strlen(space)) == -1)
-            return;
-        
         fseek(fp, 0L, SEEK_END);
         char fsize[11];
         memset(fsize, 0, 11);
         sprintf(fsize, "%ld", ftell(fp));
-        sprintf(file_info, "%s %s ", fname, fsize);
+        sprintf(file_info, " %s %s ", fname, fsize);
         rewind(fp);
         if (tcp_send(file_info,strlen(file_info)) == -1){
             fclose(fp);
@@ -196,7 +192,7 @@ void post(char* IP_ADDRESS, char* GID, char* UID, struct addrinfo *res, char *te
             int n = fread(data, 1, sizeof(data), fp);
             if (n == 0)
                 break;
-            if (tcp_send(data,n) == -1){
+            if (tcp_send(data, n) == -1){
                 fclose(fp);
                 return;
             }
