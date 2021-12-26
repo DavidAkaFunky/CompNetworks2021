@@ -189,8 +189,9 @@ void parse(int udp_socket, char* command, char* UID, char* password, char* GID){
         ulist(IP_ADDRESS, GID, res);
     } else if (!strcmp(name, "retrieve") || !strcmp(name, "r")){
         //Retrieve (TCP): MID
-        if (!has_correct_arg_sizes(arg1, 0/*???*/, arg2, 0))
+        if (!(has_correct_arg_sizes(arg1, 4, arg2, 0) && digits_only(arg1, "message ID")))
             return;
+        retrieve(IP_ADDRESS, GID, UID, arg1, res);
     } else
         puts(INVALID_CMD);
 }
@@ -207,5 +208,6 @@ int main(int argc, char* argv[]){
     while(fgets(command, SIZE, stdin)){
         parse(udp_socket, command, UID, password, GID);
         memset(command, 0, SIZE);
+        puts("----------------------------------------");
     }
 }

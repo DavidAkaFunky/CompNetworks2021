@@ -34,7 +34,7 @@
 #define UNR_USER_SUC "You have unregistered successfully."
 #define UNR_USER_FAIL "Unregister request unsuccessful."
 #define LOGIN_SUC "You are now logged in!"
-#define LOGIN_FAIL "Log in unsuccessful."
+#define LOGIN_FAIL "Log in unsuccessful. Please confirm that this user exists and try again!"
 #define LOGIN_ERR "There was an error logging in. Please try again!"
 #define LOGOUT_SUC "You have logged out succesfully."
 #define LOGOUT_FAIL "Log out unsuccessful."
@@ -49,7 +49,13 @@
 #define NO_FILE "Input path invalid. Please try again!"
 #define ERR_FORMAT "Incorrect text format: You must add quotation marks (\") around the text. Please try again!"
 #define NO_TEXT "The text argument is empty. Please try again!"
-#define MSG_SEND_FAIL "Message sent unsuccessfully. Please confirm that you're subscribed to this group, then try again!"
+#define BIG_TEXT "The text message is too big. Please try again!"
+#define ERR_FNAME_LEN "Your file name is over 24 characters. Please try again!"
+#define INV_FILE "The argument does not match a valid file. Please try again!"
+#define MSG_SEND_FAIL "Message sent unsuccessfully. Please confirm that you're logged in and subscribed to this group, then try again!"
+#define NO_MSGS "There are no messages in this group."
+#define RTV_ERR "There was a problem retrieving the messages. Please confirm that you're logged in and subscribed to this group and try again!"
+#define ERR_FILE "There was a problem writing to this file. Please confirm that you have writing permissions for it and try again!"
 
 /* -------------------- client_main -------------------- */
 int is_alphanumerical(char* s, int flag);
@@ -80,5 +86,6 @@ int tcp_send(char* message, int size);
 int tcp_read(char* buffer, ssize_t size);
 void ulist(char* IP_ADDRESS, char* GID, struct addrinfo *res);
 void post(char* IP_ADDRESS, char* GID, char* UID, struct addrinfo *res, char *text, char *fname);
+void retrieve(char* IP_ADDRESS, char* GID, char* UID, char* MID, struct addrinfo *res);
 
 #endif

@@ -46,6 +46,20 @@ int tcp_read(char* buffer, ssize_t size){
     return 1;
 }
 
+int read_space(){
+    char end[2];
+    memset(end, 0, 2);
+    ssize_t nread = tcp_read(end, 1);
+    if (nread == -1)
+        return -1;
+    if (strcmp(" ", end)){
+        puts(INFO_ERR);
+        close(tcp_socket);
+        return -1;
+    }
+    return 0;
+}
+
 void ulist(char* IP_ADDRESS, char* GID, struct addrinfo *res){
     char message[8];
     memset(message, 0, 8);
@@ -105,6 +119,8 @@ void ulist(char* IP_ADDRESS, char* GID, struct addrinfo *res){
             }
             ++counter;    
         }
+        if (counter < 0)
+            return;
         printf("Group name: %s", group_name);
         if (group_name[counter] == '\n'){
             close(tcp_socket);
@@ -147,32 +163,42 @@ void ulist(char* IP_ADDRESS, char* GID, struct addrinfo *res){
 void post(char* IP_ADDRESS, char* GID, char* UID, struct addrinfo *res, char *text, char *fname){
     int text_strlen = strlen(text);
     if (text_strlen > 240){
-        puts("The text message is too big. Please try again!");
+        puts(BIG_TEXT);
         return;
     }
-    if (!(is_alphanumerical(text, 0) && is_alphanumerical(fname, 2) && check_login(UID) && check_select(GID)))
+    if (!(is_alphanumerical(fname, 2) && check_login(UID) && check_select(GID)))
         return;
     int fname_strlen = strlen(fname);
     char message[259];
     memset(message, 0, 259);
-    char text_size[4];
-    memset(text_size, 0, 4);
-    sprintf(text_size, "%d", text_strlen);
-    sprintf(message, "PST %s %s %s %s", UID, GID, text_size, text);
-    if (tcp_connect(res) == -1 || tcp_send(message,strlen(message)) == -1)
+    char textsize[4];
+    memset(textsize, 0, 4);
+    sprintf(textsize, "%d", text_strlen);
+    sprintf(message, "PST %s %s %s %s", UID, GID, textsize, text);
+    puts(message);
+    if (tcp_connect(res) == -1 || tcp_send(message, strlen(message)) == -1)
         return;
+    if (fname_strlen > 24){
+        close(tcp_socket);
+        puts(ERR_FNAME_LEN);
+        return;
+    }
     if (fname_strlen > 0){
         if (fname[fname_strlen - 4] != '.'){
-            puts("We could not detect a file. Please try again!");
+            close(tcp_socket);
+            puts(INV_FILE);
             return;
         }
         char* ext = &(fname[fname_strlen - 3]);
-        if (!is_alphanumerical(ext, 0))
+        if (!is_alphanumerical(ext, 0)){
+            close(tcp_socket);
             return;
+        }
         char file_info[37];
         memset(file_info, 0, 37);
         FILE* fp = fopen(fname, "rb");
         if (!fp) {
+            close(tcp_socket);
             puts(NO_FILE);
             return;
         }
@@ -182,7 +208,8 @@ void post(char* IP_ADDRESS, char* GID, char* UID, struct addrinfo *res, char *te
         sprintf(fsize, "%ld", ftell(fp));
         sprintf(file_info, " %s %s ", fname, fsize);
         rewind(fp);
-        if (tcp_send(file_info,strlen(file_info)) == -1){
+        if (tcp_send(file_info, strlen(file_info)) == -1){
+            close(tcp_socket);
             fclose(fp);
             return;
         }
@@ -193,22 +220,28 @@ void post(char* IP_ADDRESS, char* GID, char* UID, struct addrinfo *res, char *te
             if (n == 0)
                 break;
             if (tcp_send(data, n) == -1){
+                close(tcp_socket);
                 fclose(fp);
                 return;
             }
             memset(data, 0, 1025);
         }
+        fclose(fp);
     }
-    if (tcp_send("\n",1) == -1)
+    if (tcp_send("\n", 1) == -1)
         return;
     char response[5];
     memset(response, 0, 5);
     ssize_t nread = tcp_read(response, 4);
     if (nread == -1)
         return;
-    if (!strcmp("ERR\n", response))
+    if (!strcmp("ERR\n", response)){
+        close(tcp_socket);
         puts(GEN_ERR);
+        return;
+    } 
     if (strcmp("RPT ", response)){
+        close(tcp_socket);
         puts(INFO_ERR);
         return;
     }
@@ -217,11 +250,8 @@ void post(char* IP_ADDRESS, char* GID, char* UID, struct addrinfo *res, char *te
     nread = tcp_read(status, 4);
     if (nread == -1)
         return;
-    if (!strcmp("NOK\n", status)){
+    if (!strcmp("NOK\n", status))
         puts(MSG_SEND_FAIL);
-        close(tcp_socket);
-        return;
-    }
     else {
         if (!digits_only(status, "message ID")){
             puts(INFO_ERR);
@@ -237,7 +267,261 @@ void post(char* IP_ADDRESS, char* GID, char* UID, struct addrinfo *res, char *te
             printf("Message sent successfully. Message ID: %s\n", status);
         else
             puts(INFO_ERR);
-        close(tcp_socket);
     }
+    close(tcp_socket);
 }
 
+void retrieve(char* IP_ADDRESS, char* GID, char* UID, char* MID, struct addrinfo *res){
+    char message[19];
+    memset(message, 0, 19);
+    sprintf(message, "RTV %s %s %s\n", UID, GID, MID);
+    if (tcp_connect(res) == -1 || tcp_send(message, strlen(message)) == -1)
+        return;
+    char response[5];
+    memset(response, 0, 5);
+    ssize_t nread = tcp_read(response, 4);
+    if (nread == -1)
+        return;
+    if (!strcmp("ERR\n", response)){
+        close(tcp_socket);
+        puts(GEN_ERR);
+        return;
+    }
+    if (strcmp("RRT ", response)){
+        close(tcp_socket);
+        puts(INFO_ERR);
+        return;
+    }
+    char status[4];
+    memset(status, 0, 4);
+    nread = tcp_read(status, 3);
+    if (nread == -1)
+        return;
+    char end[2];
+    memset(end, 0, 2);
+    if (!strcmp("EOF", status)){
+        nread = tcp_read(end, 1);
+        if (nread == -1)
+            return;
+        if (!strcmp("\n", end))
+            puts(NO_MSGS);
+        else
+            puts(INFO_ERR);
+    }
+    else if (!strcmp("NOK", status)){
+        nread = tcp_read(end, 1);
+        if (nread == -1)
+            return;
+        if (!strcmp("\n", end))
+            puts(RTV_ERR);
+        else
+            puts(INFO_ERR);
+    }
+    else if (!strcmp("OK ", status)){
+        char n[5];
+        memset(n, 0, 5);
+        int counter = 0;
+        while (1){
+            nread = tcp_read(n + counter, 1);
+            if (nread == -1)
+                return;
+            if (n[counter] == '\n' || n[counter] == ' '){
+                n[counter] = '\0';
+                if (!(counter > 0 && digits_only(n, "number of messages"))){
+                    close(tcp_socket);
+                    puts(INFO_ERR);
+                    return;
+                }   
+                break;
+            }
+            if (counter == 5){
+                close(tcp_socket);
+                puts(INFO_ERR);
+                return;
+            }
+            ++counter;    
+        }
+        if (!strcmp(n, "0")){
+            puts(NO_MSGS);
+            close(tcp_socket);
+            return;
+        }
+        else if (!strcmp(n, "1"))
+            printf("Downloading %s message:\n", n);
+        else
+            printf("Downloading %s messages:\n", n);
+        int messages = atoi(n);
+        int max = messages < 20 ? messages : 20;
+        char rtv_MID[5];
+        char rtv_UID[6];
+        char tsize[4];
+        char text[241];
+        char fname[25];
+        char fsize[11];
+        char data[1025];
+        int i;
+        for (i = 0; i < max; ++i){
+            memset(rtv_MID, 0, 5);
+            nread = tcp_read(rtv_MID, 4);
+            if (nread == -1)
+                return;
+            if (!(is_correct_arg_size(rtv_MID, 4) && digits_only(rtv_MID, "message ID"))){
+                puts(INFO_ERR);
+                close(tcp_socket);
+                return;
+            }
+            if (read_space() == -1)
+                return;
+            memset(rtv_UID, 0, 6);
+            nread = tcp_read(rtv_UID, 5);
+            if (nread == -1)
+                return;
+            if (read_space() == -1)
+                return;
+            if (!(is_correct_arg_size(rtv_UID, 5) && digits_only(rtv_UID, "user ID"))){
+                puts(INFO_ERR);
+                close(tcp_socket);
+                return;
+            }
+            memset(tsize, 0, 4);
+            counter = 0;
+            while (1){
+                nread = tcp_read(tsize + counter, 1);
+                if (nread == -1)
+                    return;
+                if (tsize[counter] == ' '){
+                    tsize[counter] = '\0';
+                    if (!(counter > 0 && digits_only(tsize, "text size"))){
+                        puts(INFO_ERR);
+                        close(tcp_socket);
+                        return;
+                    }   
+                    break;
+                }
+                if (counter == 4){
+                    puts(INFO_ERR);
+                    close(tcp_socket);
+                    return;
+                }
+                ++counter;    
+            }
+            memset(text, 0, 241);
+            tcp_read(text, atoi(tsize));
+            printf("Message ID: %s\nSent by: %s\nMessage size: %d\nMessage: %s", rtv_MID, rtv_UID, atoi(tsize)-1, text);
+            if (read_space() == -1)
+                return;
+            memset(end, 0, 2);
+            nread = tcp_read(end, 1);
+            if (nread == -1)
+                return;
+            if (!strcmp(" ", end)){
+                puts("");
+                continue;
+            } else if (!strcmp("\n", end)){
+                ++i;
+                break;
+            } else if (!strcmp("/", end)){
+                //Tratar do ficheiro
+                if (read_space() == -1)
+                    return;
+                memset(fname, 0, 25);
+                counter = 0;
+                while (1){
+                    nread = tcp_read(fname + counter, 1);
+                    if (nread == -1)
+                        return;
+                    if (fname[counter] == ' '){
+                        fname[counter] = '\0';
+                        if (!(counter > 0 && is_alphanumerical(fname, 2))){
+                            close(tcp_socket);
+                            puts(INFO_ERR);
+                            return;
+                        }   
+                        break;
+                    }
+                    if (counter == 25){
+                        close(tcp_socket);
+                        puts(INFO_ERR);
+                        return;
+                    }
+                    ++counter;    
+                }
+                memset(fsize, 0, 11);
+                counter = 0;
+                while (1){
+                    nread = tcp_read(fsize + counter, 1);
+                    if (nread == -1)
+                        return;
+                    if (fsize[counter] == ' '){
+                        fsize[counter] = '\0';
+                        if (!(counter > 0 && digits_only(fsize, "file size"))){
+                            close(tcp_socket);
+                            puts(INFO_ERR);
+                            return;
+                        }   
+                        break;
+                    }
+                    if (counter == 11){
+                        close(tcp_socket);
+                        puts(INFO_ERR);
+                        return;
+                    }
+                    ++counter;    
+                }
+                FILE* fp = fopen(fname, "wb");
+                if (!fp) {
+                    puts(ERR_FILE);
+                    close(tcp_socket);
+                    return;
+                }
+                int nread;
+                int j;
+                for (j = 0; j < atoi(fsize); ++j){ //porque nao fazer tcp read do tamanho em vez de ciclo ? 
+                    memset(end, 0, 2);
+                    nread = read(tcp_socket, end, 1);
+                    if (nread == -1){
+                        puts(INFO_ERR);
+                        fclose(fp);
+                        close(tcp_socket);
+                        return;
+                    }
+                    if (nread == 0){
+                        ++j;
+                        break;
+                    }
+                    fwrite(end, 1, 1, fp);
+                    //Como 
+                    /*if (end[0] == EOF){
+                        ++i;
+                        break;
+                    }*/
+                }
+                if (j < atoi(fsize)){
+                    printf("i = %d, fsize = %d\n", i, atoi(fsize));
+                    puts(INFO_ERR);
+                    fclose(fp);
+                    close(tcp_socket);
+                    return;
+                }
+                fclose(fp);
+                puts("This message contains a file!");
+                printf("File name: %s\nFile size: %s\n", fname, fsize);
+                if (read_space() == -1)
+                    return;
+                puts("");
+            } else{
+                puts(end);
+                puts(INFO_ERR);
+                close(tcp_socket);
+                return;
+            }
+        }
+        if (i < max){
+            printf("i = %d, max = %d\n", i, max);
+            puts(INFO_ERR);
+        }
+    }
+    else
+        puts(INFO_ERR);
+    close(tcp_socket);
+}
