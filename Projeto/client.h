@@ -15,6 +15,7 @@
 #define BUF_SIZE 128
 #define GROUPS 3275
 #define USERS 600033
+#define ARGV_ERR "You are running the program with incorrect arguments. Please try again!"
 #define INVALID_CMD "Invalid command. Please try again!"
 #define NO_ALPH0 "The argument doesn't contain only alphanumerical characters, - or _. Please try again!"
 #define NO_ALPH1 "The argument doesn't contain only alphanumerical characters. Please try again!"
