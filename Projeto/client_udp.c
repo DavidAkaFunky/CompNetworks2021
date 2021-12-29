@@ -1,11 +1,10 @@
 #include "client.h" 
 
-ssize_t bytes;
 socklen_t addrlen;
 struct sockaddr_in addr;
 
 int udp_send_and_receive(int fd, struct addrinfo *res, char* message, char* buffer, int size){
-    bytes = sendto(fd, message, strlen(message), 0, res -> ai_addr, res -> ai_addrlen);
+    ssize_t bytes = sendto(fd, message, strlen(message), 0, res -> ai_addr, res -> ai_addrlen);
 	if (bytes == -1){
         puts(SEND_ERR);
         return -1;

@@ -1,6 +1,6 @@
 #include "client.h" 
 
-char IP_ADDRESS[512], PORT[10];
+char IP_ADDRESS[512], PORT[6];
 int errcode;
 struct addrinfo hints, *res;
 
@@ -88,6 +88,7 @@ int create_socket(int socktype){
     return sockfd;
 }
 
+//Esta função provavelmente é inútil - Perguntar aos profs!!!
 int get_IP(){
     char part1[20], part2[4], part3[4], part4[4];
     memset(part1, 0, 4);
@@ -95,10 +96,10 @@ int get_IP(){
     memset(part3, 0, 4);
     memset(part4, 0, 4);
     if (sscanf(IP_ADDRESS, "%[^.].%[^.].%[^.].%[^.]", part1, part2, part3, part4) == 4 &&
-        0 <= atoi(part1) && atoi(part1) <= 255 && 0 <= atoi(part2) && atoi(part2) <= 255 &&
-        0 <= atoi(part3) && atoi(part3) <= 255 && 0 <= atoi(part4) && atoi(part4) <= 255)
+        0 < atoi(part1) && atoi(part1) < 255 && 0 < atoi(part2) && atoi(part2) < 255 &&
+        0 < atoi(part3) && atoi(part3) < 255 && 0 < atoi(part4) && atoi(part4) < 255)
             return strlen(part1) <= 3 && strlen(part2) <= 3 && strlen(part3) <= 3 && strlen(part4) <= 3;
-    sprintf(IP_ADDRESS, "%s.ist.utl.pt", IP_ADDRESS); //Como fazer a verificação????
+            
     return 1;
 }
 
@@ -118,15 +119,15 @@ int get_local_IP(){
 }
 
 int parse_argv(int argc, char* argv[]){
-    if (argc < 1 || argc > 5 || strcmp(argv[0], "./user"))
+    if (!(argc == 1 || argc == 3 || argc == 5) || strcmp(argv[0], "./user"))
         return 0;
     memset(IP_ADDRESS, 0, 512);
     memset(PORT, 0, 10);
     if (argc >= 3){
         if (!strcmp(argv[1], "-n")){
             strcpy(IP_ADDRESS, argv[2]);
-            if (!get_IP())
-                return 0;
+            /*if (!get_IP())
+                return 0;*/
             if (argc > 3){
                 if (!strcmp(argv[3], "-p") && digits_only(argv[4], "port number")){
                     strcpy(PORT, argv[4]);
@@ -142,7 +143,7 @@ int parse_argv(int argc, char* argv[]){
             if (argc > 3){
                 if (!strcmp(argv[3], "-n")){
                     strcpy(IP_ADDRESS, argv[4]);
-                    return get_IP();
+                    return 1; /*get_IP();*/
                 }
                 return 0;
             }
@@ -221,6 +222,7 @@ void parse(int udp_socket, char* command, char* UID, char* password, char* GID){
         //Exit (TCP): (nada)
         if (!has_correct_arg_sizes(arg1, 0, arg2, 0))
             return;
+        freeaddrinfo(res);
         exit(EXIT_SUCCESS);
     } else if (!strcmp(name, "groups") || !strcmp(name, "gl")){
         //Groups (UDP): (nada)
@@ -280,5 +282,6 @@ int main(int argc, char* argv[]){
         memset(command, 0, SIZE);
         puts("----------------------------------------");
     }
+    freeaddrinfo(res);
     exit(EXIT_SUCCESS);
 }

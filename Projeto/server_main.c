@@ -1,6 +1,6 @@
 #include "server.h"
 
-char PORT[10];
+char PORT[6];
 bool verbose = false;
 int errcode;
 struct addrinfo hints, *res;
@@ -26,7 +26,7 @@ int recv_udp(char* message){
     nread = recvfrom(udp_socket, message, 128, 0, (struct sockaddr*)&addr, &addrlen);
     if (nread == -1){
         puts(RECV_ERR);
-        exit(EXIT_FAILURE);
+        return -1;
     }
     return nread;
 }
@@ -36,7 +36,7 @@ int send_udp(char* message){
     n = sendto(udp_socket, message, 9, 0, (struct sockaddr*)&addr,addrlen);
     if (n == -1){
         puts(SEND_ERR);
-        exit(EXIT_FAILURE);
+        return -1;
     }
     return n;
 }
@@ -51,14 +51,14 @@ int socket_bind(int socktype){
     memset(&hints, 0, sizeof hints);
     hints.ai_family = AF_INET;
     hints.ai_socktype = socktype;
-    hints.ai_flags=AI_PASSIVE;
+    hints.ai_flags= AI_PASSIVE;
     
-    if(getaddrinfo(NULL, PORT, &hints, &res) != 0){
+    if (getaddrinfo(NULL, PORT, &hints, &res) != 0){
         puts(SOCK_FAIL);
         close(sockfd);
         exit(EXIT_FAILURE);
     }
-    if(bind(sockfd,res->ai_addr,res->ai_addrlen) == -1){
+    if (bind(sockfd,res->ai_addr,res->ai_addrlen) == -1){
         puts(SOCK_FAIL);
         close(sockfd);
         exit(EXIT_FAILURE);
@@ -83,21 +83,21 @@ int parse_argv(int argc, char* argv[]){
             strcpy(PORT, "58026");
             return 1;
         }
-        if (!strcmp(argv[1], "-p") && digits_only(argv[2], "port number")){
+        if (!strcmp(argv[1], "-p") && argc > 2 && digits_only(argv[2], "port number")){
             strcpy(PORT, argv[2]);
-            if (argc >= 4){
+            if (argc > 3){
                 if (!strcmp(argv[3], "-v")){
                     verbose = true;
-                    return 0;
+                    return 1;
                 }
                 return 0;
             }
-            return 0;
+            return 1;
         }
     }
     if (argc == 1){
         strcpy(PORT, "58026");
-        return 0;
+        return 1;
     }
     return 0;
 }
@@ -105,11 +105,8 @@ int parse_argv(int argc, char* argv[]){
 void parse(){
     char message[BUF_SIZE];
     memset(message, 0, BUF_SIZE);
-
-    if (recv_udp(message)){
-        puts("error");
+    if (recv_udp(message) == -1)
         exit(EXIT_FAILURE);
-    }
 
     char name[4];
     char arg1[SIZE];
@@ -208,7 +205,7 @@ int main(int argc, char* argv[]){
         exit(EXIT_FAILURE);
     }
 
-    //Criacao e bind das sockets udp e tcp do servidor
+    //Criacao e bind dos sockets udp e tcp do servidor
     int udp_socket = socket_bind(SOCK_DGRAM);
     int tcp_socket = socket_bind(SOCK_STREAM);
     while (1){
@@ -223,5 +220,6 @@ int main(int argc, char* argv[]){
 
     }
     //memset(command, 0, SIZE);
+    freeaddrinfo(res);
     exit(EXIT_SUCCESS);
 }
