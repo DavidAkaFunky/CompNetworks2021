@@ -11,6 +11,7 @@
 #include <sys/socket.h>
 #include <ctype.h>
 #include <stdbool.h>
+#include <sys/time.h>
 
 #define SIZE 512
 #define BUF_SIZE 128

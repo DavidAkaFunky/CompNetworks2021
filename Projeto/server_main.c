@@ -2,12 +2,11 @@
 
 char PORT[6];
 bool verbose = false;
-int errcode;
-struct addrinfo hints, *res;
-struct sockaddr_in addr;
-socklen_t addrlen;
-ssize_t n , nread;
 int udp_socket, tcp_socket;
+struct addrinfo hints, *res;
+struct sockaddr_in serv_addr, cli_addr;
+socklen_t addrlen;
+ssize_t n, nread;
 
 
 int digits_only(char *s, char* id){
@@ -22,8 +21,8 @@ int digits_only(char *s, char* id){
 }
 
 int recv_udp(char* message){
-    addrlen = sizeof(addr);
-    nread = recvfrom(udp_socket, message, 128, 0, (struct sockaddr*)&addr, &addrlen);
+    addrlen = sizeof(serv_addr);
+    nread = recvfrom(udp_socket, message, 128, 0, (struct sockaddr*)&serv_addr, &addrlen);
     if (nread == -1){
         puts(RECV_ERR);
         return -1;
@@ -32,8 +31,8 @@ int recv_udp(char* message){
 }
 
 int send_udp(char* message){
-    addrlen = sizeof(addr);
-    n = sendto(udp_socket, message, 9, 0, (struct sockaddr*)&addr,addrlen);
+    addrlen = sizeof(serv_addr);
+    n = sendto(udp_socket, message, 9, 0, (struct sockaddr*)&serv_addr,addrlen);
     if (n == -1){
         puts(SEND_ERR);
         return -1;
@@ -48,7 +47,7 @@ int socket_bind(int socktype){
         close(sockfd);
         exit(EXIT_FAILURE);
     }
-    memset(&hints, 0, sizeof hints);
+    bzero(&hints, sizeof hints);
     hints.ai_family = AF_INET;
     hints.ai_socktype = socktype;
     hints.ai_flags= AI_PASSIVE;
@@ -69,7 +68,7 @@ int socket_bind(int socktype){
 int parse_argv(int argc, char* argv[]){
     if (argc < 1 || argc > 4 || strcmp(argv[0], "./DS"))
         return 0;
-    memset(PORT, 0, 10);
+    bzero(PORT, 6);
     if (argc >= 2){
         if (!strcmp(argv[1], "-v")){
             verbose = true;
@@ -102,28 +101,26 @@ int parse_argv(int argc, char* argv[]){
     return 0;
 }
 
-void parse(){
-    char message[BUF_SIZE];
-    memset(message, 0, BUF_SIZE);
+void parse(char* message){
     if (recv_udp(message) == -1)
         exit(EXIT_FAILURE);
-
     char name[4];
     char arg1[SIZE];
     char arg2[SIZE];
     char arg3[SIZE];
-    memset(name, 0, 4);
-    memset(arg1, 0, SIZE);
-    memset(arg2, 0, SIZE);
-    memset(arg3, 0, SIZE);
-    if (sscanf(name, "%s ", message) < 1){
+    bzero(name, 4);
+    bzero(arg1, SIZE);
+    bzero(arg2, SIZE);
+    bzero(arg3, SIZE);
+    if (sscanf(message, "%s ", name) < 1){
         puts(INVALID_CMD);
         return;
     }
-
-    if (!strcmp(name, "PST")){
+    message += strlen(name) + 1;
+    puts(name);
+    /*if (!strcmp(name, "PST")){
         //Post (TCP): "text" (Verificar as aspas, talvez?), [FName] (Verificar os parênteses, talvez?)  //e preciso mandar tbm o argumento 3 no caso do post, que vai ser o resto do text caso haja espacos
-        /*int format = sscanf(command, "\"%[^\"]\" %s %[^\n]", arg1, arg2, arg3);
+        int format = sscanf(command, "\"%[^\"]\" %s %[^\n]", arg1, arg2, arg3);
         if (strcmp(arg3, "")){
             puts("Wrong format! Too many arguments. Please try again!");
             return;
@@ -159,13 +156,13 @@ void parse(){
         /*if (!has_correct_arg_sizes(arg1, 0, arg2, 0))
             return;
         if (logout(IP_ADDRESS, UID, password, res, udp_socket) == 1)
-            memset(UID, 0, 6);*/
+            bzero(UID, 6);*/
     } /*else if (!strcmp(name, "exit")){
         //Exit (TCP): (nada)
         if (!has_correct_arg_sizes(arg1, 0, arg2, 0))                   //o server nao recebe mensagem de exit (?)
             return;
         exit(EXIT_SUCCESS);*/
-    } else if (!strcmp(name, "GLS")){
+    else if (!strcmp(name, "GLS")){
         //Groups (UDP): (nada)
         /*if (!has_correct_arg_sizes(arg1, 0, arg2, 0))
             return;
@@ -206,20 +203,52 @@ int main(int argc, char* argv[]){
     }
 
     //Criacao e bind dos sockets udp e tcp do servidor
-    int udp_socket = socket_bind(SOCK_DGRAM);
-    int tcp_socket = socket_bind(SOCK_STREAM);
-    while (1){
-        //ve se tem uma nova coneccao udp ou tcp com o select() !!
-        //select();
+    udp_socket = socket_bind(SOCK_DGRAM);
+    tcp_socket = socket_bind(SOCK_STREAM);
+    listen(tcp_socket, 10);
+    char message[BUF_SIZE];
+    fd_set rset;
+    int conn_fd;
+    
+    // clear the descriptor set
+    FD_ZERO(&rset);
+ 
+    // get maxfd
+    int maxfd = udp_socket > tcp_socket ? udp_socket + 1 : tcp_socket + 1;
+    while (1) {
+ 
+        // set tcp_socket and udp_socket in readset
+        FD_SET(tcp_socket, &rset);
+        FD_SET(udp_socket, &rset);
+ 
+        // select the ready descriptor
+        int nready = select(maxfd, &rset, NULL, NULL, NULL);
+ 
+        // if tcp socket is readable then handle
+        // it by accepting the connection
+        if (FD_ISSET(tcp_socket, &rset)) {
+            socklen_t len = sizeof(cli_addr);
+            conn_fd = accept(tcp_socket, (struct sockaddr*)&cli_addr, &len);
+            close(tcp_socket);
+            bzero(message, sizeof(message));
+            recv_tcp(message);
+            if (verbose){
+                printf("Message from TCP client:\n%s\n", message);
+            }
+            send_tcp(message);
+            close(conn_fd);
+        }
+        // if udp socket is readable receive the message.
+        if (FD_ISSET(udp_socket, &rset)) {
+            bzero(message, sizeof(message));
+            recv_udp(message);
+            if (verbose){
+                printf("Message from UDP client:\n%s\n", message);
+            }
+            send_udp(message);
+        }
         
-        
-        //NOTA:
-        //a mensagem udp nao pode ser separada por isso é preciso recebe-la inteira e dps tratar da string
-        //se calhar o melhor approach seria ter uma funcao para receber a informacao (recvfrom) e outra para enviar a resposta depois de aplicar a funcao respetiva (com o sendto) 
-        parse();  //teste simplesmente com uma ligacao udp
-
     }
-    //memset(command, 0, SIZE);
     freeaddrinfo(res);
     exit(EXIT_SUCCESS);
 }

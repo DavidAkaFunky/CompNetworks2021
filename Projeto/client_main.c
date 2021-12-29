@@ -1,7 +1,6 @@
 #include "client.h" 
 
 char IP_ADDRESS[512], PORT[6];
-int errcode;
 struct addrinfo hints, *res;
 
 int is_alphanumerical(char* s, int flag){
@@ -78,7 +77,7 @@ int create_socket(int socktype){
         puts(SOCK_FAIL);
         exit(EXIT_FAILURE);
     }
-    memset(&hints, 0, sizeof hints);
+    bzero(&hints, sizeof hints);
     hints.ai_family = AF_INET;
     hints.ai_socktype = socktype;
     if(getaddrinfo(IP_ADDRESS, PORT, &hints, &res) != 0){
@@ -91,10 +90,10 @@ int create_socket(int socktype){
 //Esta função provavelmente é inútil - Perguntar aos profs!!!
 int get_IP(){
     char part1[20], part2[4], part3[4], part4[4];
-    memset(part1, 0, 4);
-    memset(part2, 0, 4);
-    memset(part3, 0, 4);
-    memset(part4, 0, 4);
+    bzero(part1, 4);
+    bzero(part2, 4);
+    bzero(part3, 4);
+    bzero(part4, 4);
     if (sscanf(IP_ADDRESS, "%[^.].%[^.].%[^.].%[^.]", part1, part2, part3, part4) == 4 &&
         0 < atoi(part1) && atoi(part1) < 255 && 0 < atoi(part2) && atoi(part2) < 255 &&
         0 < atoi(part3) && atoi(part3) < 255 && 0 < atoi(part4) && atoi(part4) < 255)
@@ -121,8 +120,8 @@ int get_local_IP(){
 int parse_argv(int argc, char* argv[]){
     if (!(argc == 1 || argc == 3 || argc == 5) || strcmp(argv[0], "./user"))
         return 0;
-    memset(IP_ADDRESS, 0, 512);
-    memset(PORT, 0, 10);
+    bzero(IP_ADDRESS, 512);
+    bzero(PORT, 10);
     if (argc >= 3){
         if (!strcmp(argv[1], "-n")){
             strcpy(IP_ADDRESS, argv[2]);
@@ -163,10 +162,10 @@ void parse(int udp_socket, char* command, char* UID, char* password, char* GID){
     char arg1[SIZE];
     char arg2[SIZE];
     char arg3[SIZE];
-    memset(name, 0, 12);
-    memset(arg1, 0, SIZE);
-    memset(arg2, 0, SIZE);
-    memset(arg3, 0, SIZE);
+    bzero(name, 12);
+    bzero(arg1, SIZE);
+    bzero(arg2, SIZE);
+    bzero(arg3, SIZE);
     if (sscanf(command, "%s ", name) < 1){
         puts(INVALID_CMD);
         return;
@@ -212,7 +211,7 @@ void parse(int udp_socket, char* command, char* UID, char* password, char* GID){
         if (!has_correct_arg_sizes(arg1, 0, arg2, 0))
             return;
         if (logout(IP_ADDRESS, UID, password, res, udp_socket) == 1)
-            memset(UID, 0, 6);
+            bzero(UID, 6);
     } else if (!strcmp(name, "showuid") || !strcmp(name, "su")){
         //displays UID : (nada)
         if (!(has_correct_arg_sizes(arg1, 0, arg2, 0) && check_login(UID)))
@@ -274,12 +273,12 @@ int main(int argc, char* argv[]){
         exit(EXIT_FAILURE);
     }
     int udp_socket = create_socket(SOCK_DGRAM);
-    memset(UID, 0, 6);
-    memset(password, 0, 9);
-    memset(GID, 0, 3);
+    bzero(UID, 6);
+    bzero(password, 9);
+    bzero(GID, 3);
     while(fgets(command, SIZE, stdin)){
         parse(udp_socket, command, UID, password, GID);
-        memset(command, 0, SIZE);
+        bzero(command, SIZE);
         puts("----------------------------------------");
     }
     freeaddrinfo(res);

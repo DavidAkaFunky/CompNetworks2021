@@ -22,8 +22,8 @@ void reg(char* IP_ADDRESS, char* UID, char* password, struct addrinfo *res, int 
     if (!(digits_only(UID,"UID") && has_correct_arg_sizes(UID, 5, password, 8) && is_alphanumerical(password, 0)))
         return;
     char message[20], buffer[BUF_SIZE];
-    memset(message, 0, 20);
-    memset(buffer, 0, BUF_SIZE);
+    bzero(message, 20);
+    bzero(buffer, BUF_SIZE);
     sprintf(message,"REG %s %s\n",UID,password);
     if (udp_send_and_receive(fd, res, message, buffer, BUF_SIZE) == -1)
         return;
@@ -43,8 +43,8 @@ void unreg(char* IP_ADDRESS, char* UID, char* password, struct addrinfo *res, in
     if (!(digits_only(UID,"UID") && has_correct_arg_sizes(UID, 5, password, 8) && is_alphanumerical(password, 0)))
         return;
     char message[20], buffer[BUF_SIZE];
-    memset(message, 0, 20);
-    memset(buffer, 0, BUF_SIZE);
+    bzero(message, 20);
+    bzero(buffer, BUF_SIZE);
     sprintf(message,"UNR %s %s\n", UID, password);
     if (udp_send_and_receive(fd, res, message, buffer, BUF_SIZE) == -1)
         return;
@@ -63,8 +63,8 @@ int login(char* IP_ADDRESS, char* UID, char* password, struct addrinfo *res, int
     if (!(digits_only(UID,"UID") && has_correct_arg_sizes(UID, 5, password, 8) && is_alphanumerical(password, 0)))
         return -1;
     char message[20], buffer[BUF_SIZE];
-    memset(message, 0, 20);
-    memset(buffer, 0, BUF_SIZE);
+    bzero(message, 20);
+    bzero(buffer, BUF_SIZE);
     sprintf(message,"LOG %s %s\n",UID,password);
     if (udp_send_and_receive(fd, res, message, buffer, BUF_SIZE) == -1)
         return -1;
@@ -86,8 +86,8 @@ int login(char* IP_ADDRESS, char* UID, char* password, struct addrinfo *res, int
 
 int logout(char* IP_ADDRESS, char* UID, char* password, struct addrinfo *res, int fd){
     char message[20], buffer[BUF_SIZE];
-    memset(message, 0, 20);
-    memset(buffer, 0, BUF_SIZE);
+    bzero(message, 20);
+    bzero(buffer, BUF_SIZE);
     sprintf(message,"OUT %s %s\n", UID, password);
     if (udp_send_and_receive(fd, res, message, buffer, BUF_SIZE) == -1)
         return -1;
@@ -113,9 +113,9 @@ void show_groups(char* ptr, char* groups){
     char group_name[25];
     char mid[5];
     for (int i = 0; i < n; ++i){
-        memset(groups, 0, 3);
-        memset(group_name, 0, 25);
-        memset(mid, 0, 5);
+        bzero(groups, 3);
+        bzero(group_name, 25);
+        bzero(mid, 5);
         format = sscanf(ptr, " %s %s %s", groups, group_name, mid);
         if (!(format == 3 && has_correct_arg_sizes(groups, 2, mid, 4) && digits_only(groups, "GID") && strlen(group_name) <= 24 && is_alphanumerical(group_name, 1) && digits_only(mid, "MID"))){
             puts(INFO_ERR);
@@ -134,12 +134,12 @@ void show_groups(char* ptr, char* groups){
 
 void groups(char* IP_ADDRESS, struct addrinfo *res, int fd){
     char buffer[GROUPS];
-    memset(buffer, 0, GROUPS);
+    bzero(buffer, GROUPS);
     if (udp_send_and_receive(fd, res, "GLS\n", buffer, GROUPS) == -1)
         return;
     char response[4], groups[3];
-    memset(response, 0, 4);
-    memset(groups, 0, 3);
+    bzero(response, 4);
+    bzero(groups, 3);
     if (!strcmp("ERR\n", buffer)){
         puts(GEN_ERR);
         return;
@@ -159,8 +159,8 @@ void subscribe(char* IP_ADDRESS, char* UID, char* GID, char* GName, struct addri
     if (!(is_correct_arg_size(GID, 2) && digits_only(GID,"GID") && strlen(GName) <= 24 && is_alphanumerical(GName, 1)))
         return;
     char message[38], buffer[BUF_SIZE];
-    memset(message, 0, 38);
-    memset(buffer, 0, BUF_SIZE);
+    bzero(message, 38);
+    bzero(buffer, BUF_SIZE);
     sprintf(message,"GSR %s %s %s\n", UID, GID, GName);
     if (udp_send_and_receive(fd, res, message, buffer, BUF_SIZE) == -1)
         return;
@@ -178,10 +178,10 @@ void subscribe(char* IP_ADDRESS, char* UID, char* GID, char* GName, struct addri
         puts(REG_GRP_ERR1);
     else {
         char cmd1[4], cmd2[4], new_GID[3], extra[SIZE];
-        memset(cmd1, 0, 4);
-        memset(cmd2, 0, 4);
-        memset(new_GID, 0, 3);
-        memset(extra, 0, SIZE);
+        bzero(cmd1, 4);
+        bzero(cmd2, 4);
+        bzero(new_GID, 3);
+        bzero(extra, SIZE);
         int format = sscanf(buffer, "%s %s %s %s", cmd1, cmd2, new_GID, extra);
         if (!(format == 3 && !strcmp(cmd1, "RGS") && !strcmp(cmd1, "NEW") && is_correct_arg_size(new_GID, 2) && !strcmp(extra, ""))){
             strcpy(GID, new_GID);
@@ -213,7 +213,7 @@ void unsubscribe(char* IP_ADDRESS, char* UID, char* GID, struct addrinfo *res, i
 
 void my_groups(char* IP_ADDRESS, char* UID, struct addrinfo *res, int fd){
     char message[12], buffer[GROUPS];
-    memset(buffer, 0, GROUPS);
+    bzero(buffer, GROUPS);
     sprintf(message,"GLM %s\n", UID);
     if (udp_send_and_receive(fd, res, message, buffer, GROUPS) == -1)
         return;
@@ -226,8 +226,8 @@ void my_groups(char* IP_ADDRESS, char* UID, struct addrinfo *res, int fd){
         return;
     }
     char response[4], groups[3];
-    memset(response, 0, 4);
-    memset(groups, 0, 3);
+    bzero(response, 4);
+    bzero(groups, 3);
     int format = sscanf(buffer, "%s %s", response, groups);
     if (!(format == 2 && !strcmp("RGM", response) && (strlen(groups) == 1 || strlen(groups) == 2) && digits_only(groups, "number of groups"))){
         puts(INFO_ERR);

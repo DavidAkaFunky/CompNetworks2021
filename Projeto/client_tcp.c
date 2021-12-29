@@ -48,7 +48,7 @@ int tcp_read(char* buffer, ssize_t size){
 
 int read_space(){
     char end[2];
-    memset(end, 0, 2);
+    bzero(end, 2);
     ssize_t nread = tcp_read(end, 1);
     if (nread == -1)
         return -1;
@@ -62,12 +62,12 @@ int read_space(){
 
 void ulist(char* IP_ADDRESS, char* GID, struct addrinfo *res){
     char message[8];
-    memset(message, 0, 8);
+    bzero(message, 8);
     sprintf(message,"ULS %s\n", GID);
     if (tcp_connect(res) == -1 || tcp_send(message, strlen(message)) == -1)
         return;
     char response[5];
-    memset(response, 0, 5);
+    bzero(response, 5);
     ssize_t nread = tcp_read(response, 4);
     if (nread == -1)
         return;
@@ -78,12 +78,12 @@ void ulist(char* IP_ADDRESS, char* GID, struct addrinfo *res){
         return;
     }
     char status[4];
-    memset(status, 0, 4);
+    bzero(status, 4);
     nread = tcp_read(status, 3);
     if (nread == -1)
         return;
     char end[2];
-    memset(end, 0, 2);
+    bzero(end, 2);
     if (!strcmp("NOK", status)){
         nread = tcp_read(end, 1);
         if (nread == -1)
@@ -97,7 +97,7 @@ void ulist(char* IP_ADDRESS, char* GID, struct addrinfo *res){
     }
     if (!strcmp("OK ", status)){
         char group_name[25];
-        memset(group_name, 0, 25);
+        bzero(group_name, 25);
         int counter = 0;
         while (1){
             nread = tcp_read(group_name + counter, 1);
@@ -130,7 +130,7 @@ void ulist(char* IP_ADDRESS, char* GID, struct addrinfo *res){
         putchar('\n');
         puts("This group contains the following users: ");
         char user[6];
-        memset(user, 0, 6);  
+        bzero(user, 6);  
         while (1){
             nread = tcp_read(user, 5);
             if (nread == -1)
@@ -170,9 +170,9 @@ void post(char* IP_ADDRESS, char* GID, char* UID, struct addrinfo *res, char *te
         return;
     int fname_strlen = strlen(fname);
     char message[259];
-    memset(message, 0, 259);
+    bzero(message, 259);
     char textsize[4];
-    memset(textsize, 0, 4);
+    bzero(textsize, 4);
     sprintf(textsize, "%d", text_strlen);
     sprintf(message, "PST %s %s %s %s", UID, GID, textsize, text);
     if (tcp_connect(res) == -1 || tcp_send(message, strlen(message)) == -1)
@@ -194,7 +194,7 @@ void post(char* IP_ADDRESS, char* GID, char* UID, struct addrinfo *res, char *te
             return;
         }
         char file_info[37];
-        memset(file_info, 0, 37);
+        bzero(file_info, 37);
         FILE* fp = fopen(fname, "rb");
         if (!fp) {
             close(tcp_socket);
@@ -203,7 +203,7 @@ void post(char* IP_ADDRESS, char* GID, char* UID, struct addrinfo *res, char *te
         }
         fseek(fp, 0L, SEEK_END);
         char fsize[11];
-        memset(fsize, 0, 11);
+        bzero(fsize, 11);
         sprintf(fsize, "%ld", ftell(fp));
         sprintf(file_info, " %s %s ", fname, fsize);
         rewind(fp);
@@ -213,9 +213,11 @@ void post(char* IP_ADDRESS, char* GID, char* UID, struct addrinfo *res, char *te
             return;
         }
         char data[1025];
+        long total = 0;
+        int n;
         while (1){
-            memset(data, 0, 1025);
-            int n = fread(data, 1, sizeof(data), fp);
+            bzero(data, 1025);
+            n = fread(data, 1, sizeof(data), fp);
             if (n == 0)
                 break;
             if (tcp_send(data, n) == -1){
@@ -223,13 +225,16 @@ void post(char* IP_ADDRESS, char* GID, char* UID, struct addrinfo *res, char *te
                 fclose(fp);
                 return;
             }
+            total += n;
+            printf("Uploading file: %ld of %s bytes...\r", total, fsize);
         }
+        puts("");
         fclose(fp);
     }
     if (tcp_send("\n", 1) == -1)
         return;
     char response[5];
-    memset(response, 0, 5);
+    bzero(response, 5);
     ssize_t nread = tcp_read(response, 4);
     if (nread == -1)
         return;
@@ -243,26 +248,25 @@ void post(char* IP_ADDRESS, char* GID, char* UID, struct addrinfo *res, char *te
         puts(INFO_ERR);
         return;
     }
-    char status[5];
-    memset(status, 0, 5);
-    nread = tcp_read(status, 4);
+    bzero(response, 5);
+    nread = tcp_read(response, 4);
     if (nread == -1)
         return;
-    if (!strcmp("NOK\n", status))
+    if (!strcmp("NOK\n", response))
         puts(MSG_SEND_FAIL);
     else {
-        if (!digits_only(status, "message ID")){
+        if (!digits_only(response, "message ID")){
             puts(INFO_ERR);
             close(tcp_socket);
             return;
         }
         char end[2];
-        memset(end, 0, 2);
+        bzero(end, 2);
         nread = tcp_read(end, 1);
         if (nread == -1)
             return;
         if (!strcmp("\n", end))
-            printf("Message sent successfully. Message ID: %s\n", status);
+            printf("Message sent successfully. Message ID: %s\n", response);
         else
             puts(INFO_ERR);
     }
@@ -271,12 +275,12 @@ void post(char* IP_ADDRESS, char* GID, char* UID, struct addrinfo *res, char *te
 
 void retrieve(char* IP_ADDRESS, char* GID, char* UID, char* MID, struct addrinfo *res){
     char message[19];
-    memset(message, 0, 19);
+    bzero(message, 19);
     sprintf(message, "RTV %s %s %s\n", UID, GID, MID);
     if (tcp_connect(res) == -1 || tcp_send(message, strlen(message)) == -1)
         return;
     char response[5];
-    memset(response, 0, 5);
+    bzero(response, 5);
     ssize_t nread = tcp_read(response, 4);
     if (nread == -1)
         return;
@@ -291,12 +295,12 @@ void retrieve(char* IP_ADDRESS, char* GID, char* UID, char* MID, struct addrinfo
         return;
     }
     char status[4];
-    memset(status, 0, 4);
+    bzero(status, 4);
     nread = tcp_read(status, 3);
     if (nread == -1)
         return;
     char end[2];
-    memset(end, 0, 2);
+    bzero(end, 2);
     if (!strcmp("EOF", status)){
         nread = tcp_read(end, 1);
         if (nread == -1)
@@ -317,7 +321,7 @@ void retrieve(char* IP_ADDRESS, char* GID, char* UID, char* MID, struct addrinfo
     }
     else if (!strcmp("OK ", status)){
         char n[5];
-        memset(n, 0, 5);
+        bzero(n, 5);
         int counter = 0;
         while (1){
             nread = tcp_read(n + counter, 1);
@@ -351,7 +355,7 @@ void retrieve(char* IP_ADDRESS, char* GID, char* UID, char* MID, struct addrinfo
         int messages = atoi(n), max = messages < 20 ? messages : 20, i, flag = 0;
         char rtv_MID[5], rtv_UID[6], tsize[4], text[241], fname[25], fsize[11];
         for (i = 0; i < max; ++i){
-            memset(&(rtv_MID[flag]), 0, 5-flag);
+            bzero(&(rtv_MID[flag]), 5-flag);
             nread = tcp_read(&(rtv_MID[flag]), 4-flag);
             flag = 0;
             if (nread == -1)
@@ -363,7 +367,7 @@ void retrieve(char* IP_ADDRESS, char* GID, char* UID, char* MID, struct addrinfo
             }
             if (read_space() == -1)
                 return;
-            memset(rtv_UID, 0, 6);
+            bzero(rtv_UID, 6);
             nread = tcp_read(rtv_UID, 5);
             if (nread == -1)
                 return;
@@ -374,7 +378,7 @@ void retrieve(char* IP_ADDRESS, char* GID, char* UID, char* MID, struct addrinfo
                 close(tcp_socket);
                 return;
             }
-            memset(tsize, 0, 4);
+            bzero(tsize, 4);
             counter = 0;
             while (1){
                 nread = tcp_read(tsize + counter, 1);
@@ -396,10 +400,10 @@ void retrieve(char* IP_ADDRESS, char* GID, char* UID, char* MID, struct addrinfo
                 }
                 ++counter;    
             }
-            memset(text, 0, 241);
+            bzero(text, 241);
             tcp_read(text, atoi(tsize));
             printf("Message ID: %s\nSent by: %s\nMessage size: %d\nMessage: %s", rtv_MID, rtv_UID, atoi(tsize)-1, text);
-            memset(end, 0, 2);
+            bzero(end, 2);
             nread = tcp_read(end, 1);
             if (nread == -1)
                 return;
@@ -407,13 +411,13 @@ void retrieve(char* IP_ADDRESS, char* GID, char* UID, char* MID, struct addrinfo
                 ++i;
                 break;
             } else if (!strcmp(" ", end)){
-                memset(end, 0, 2);
+                bzero(end, 2);
                 nread = tcp_read(end, 1);
                 if (!strcmp("/", end)){
                     //Tratar do ficheiro
                     if (read_space() == -1)
                         return;
-                    memset(fname, 0, 25);
+                    bzero(fname, 25);
                     counter = 0;
                     while (1){
                         nread = tcp_read(fname + counter, 1);
@@ -435,7 +439,7 @@ void retrieve(char* IP_ADDRESS, char* GID, char* UID, char* MID, struct addrinfo
                         }
                         ++counter;    
                     }
-                    memset(fsize, 0, 11);
+                    bzero(fsize, 11);
                     counter = 0;
                     while (1){
                         nread = tcp_read(fsize + counter, 1);
@@ -457,6 +461,8 @@ void retrieve(char* IP_ADDRESS, char* GID, char* UID, char* MID, struct addrinfo
                         }
                         ++counter;    
                     }
+                    puts("This message contains a file!");
+                    printf("File name: %s\nFile size: %s bytes\n", fname, fsize);
                     FILE* fp = fopen(fname, "wb");
                     if (!fp) {
                         puts(ERR_FILE);
@@ -464,9 +470,11 @@ void retrieve(char* IP_ADDRESS, char* GID, char* UID, char* MID, struct addrinfo
                         return;
                     }
                     int nread, j;
+                    long total = atoi(fsize);
                     char data[1025];
-                    for (j = atoi(fsize); j > 0;){ //porque nao fazer tcp read do tamanho em vez de ciclo ? 
-                        memset(data, 0, 1025);
+                    for (j = total; j > 0; j -= nread){ //porque nao fazer tcp read do tamanho em vez de ciclo ? 
+                        printf("Downloading file: %ld of %ld bytes...\r", total-j, total);
+                        bzero(data, 1025);
                         nread = read(tcp_socket, end, j < 1024 ? j : 1024);
                         if (nread == -1){
                             puts(INFO_ERR);
@@ -484,12 +492,10 @@ void retrieve(char* IP_ADDRESS, char* GID, char* UID, char* MID, struct addrinfo
                             break;
                         }
                         fwrite(end, 1, nread, fp);
-                        j -= nread;
                     }
+                    puts("");
                     fclose(fp);
-                    puts("This message contains a file!");
-                    printf("File name: %s\nFile size: %s\n", fname, fsize);
-                    memset(end, 0, 2);
+                    bzero(end, 2);
                     nread = tcp_read(end, 1);
                     if (nread == -1)
                         return;
