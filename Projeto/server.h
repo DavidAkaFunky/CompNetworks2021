@@ -13,12 +13,14 @@
 #include <stdbool.h>
 #include <sys/time.h>
 #include <dirent.h>
-
+#include <sys/stat.h>
 
 #define SIZE 512
 #define BUF_SIZE 128
 #define GROUPS 3275
 #define USERS 600033
+#define USERS_FAIL "Failed creating the USERS folder. Please try again!"
+#define GROUPS_FAIL "Failed creating the GROUPS folder. Please try again!"
 #define INVALID_CMD "Invalid command. Please try again!"
 #define ARGV_ERR "You are running the program with incorrect arguments. Please try again!"
 #define SOCK_FAIL "Failed creating the socket!"
@@ -41,10 +43,11 @@ int recv_tcp(char* message);
 int send_tcp(char* message);
 int socket_bind(int socktype);
 int parse_argv(int argc, char* argv[]);
-void parse(char* message, char* response);
+int parse(char* message, char* response);
 int main(int argc, char* argv[]);
 /* -------------------- server_udp --------------------- */
-void reg(char* uid, char* pass, char* response);
+int reg(char* uid, char* pass);
+int unreg(char* uid, char* pass);
 
 /* -------------------- server_tcp --------------------- */
 

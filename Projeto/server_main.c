@@ -73,7 +73,7 @@ int recv_udp(char* message){
 
 int send_udp(char* message){
     addrlen = sizeof(serv_addr);
-    n = sendto(udp_socket, message, 9, 0, (struct sockaddr*)&serv_addr,addrlen);
+    n = sendto(udp_socket, message, strlen(message), 0, (struct sockaddr*)&serv_addr,addrlen);
     if (n == -1){
         puts(SEND_ERR);
         return -1;
@@ -82,11 +82,11 @@ int send_udp(char* message){
 }
 
 int recv_tcp(char* message){
-    return;
+    return -1;
 }
 
 int send_tcp(char* message){
-    return;
+    return -1;
 }
 
 int socket_bind(int socktype){
@@ -150,7 +150,7 @@ int parse_argv(int argc, char* argv[]){
     return 0;
 }
 
-void parse(char* message, char* response){
+int parse(char* message, char* response){
     char name[4];
     char arg1[SIZE];
     char arg2[SIZE];
@@ -161,7 +161,7 @@ void parse(char* message, char* response){
     bzero(arg3, SIZE);
     if (sscanf(message, "%s ", name) < 1){
         puts(INVALID_CMD);
-        return;
+        return 0;
     }
     message += strlen(name) + 1;
     //puts(name);
@@ -186,10 +186,10 @@ void parse(char* message, char* response){
     sscanf(message, "%s %s %[^\n]", arg1, arg2, arg3);
     if (!strcmp(name, "REG")){        
         //Register (UDP): UID (tam 5), pass (tam 8)
-        reg(arg1, arg2, response);
+        return reg(arg1, arg2);
     } else if (!strcmp(name, "UNR")){
         //Unegister (UDP): UID (tam 5), pass (tam 8)
-        //unreg(IP_ADDRESS, arg1, arg2, res, udp_socket);
+        return unreg(arg1, arg2);
     } else if (!strcmp(name, "LOG")){
         //Login (UDP): UID (tam 5), pass (tam 8)
         /*if (login(IP_ADDRESS, arg1, arg2, res, udp_socket) == 1){
@@ -244,13 +244,20 @@ int main(int argc, char* argv[]){
         puts(ARGV_ERR);
         exit(EXIT_FAILURE);
     }
-
+    if (mkdir("USERS", 0700) == -1 && access("USERS", F_OK)){
+        printf(USERS_FAIL);
+        exit(EXIT_FAILURE);
+    }
+    if (mkdir("GROUPS", 0700) == -1 && access("GROUPS", F_OK)){
+        printf(GROUPS_FAIL);
+        exit(EXIT_FAILURE);
+    }
     //Criacao e bind dos sockets udp e tcp do servidor
     udp_socket = socket_bind(SOCK_DGRAM);
     tcp_socket = socket_bind(SOCK_STREAM);
     listen(tcp_socket, 10);
     char message[BUF_SIZE];
-    char response[9];
+    char response[BUF_SIZE];
     fd_set rset;
     int conn_fd;
     
@@ -281,7 +288,7 @@ int main(int argc, char* argv[]){
                 printf("Message from TCP client:\n%s\n", message);
                 puts("----------------------------------------");
             }
-            send_tcp(message);
+            send_tcp("ERR\n");
             close(conn_fd);
         }
         // if udp socket is readable receive the message.
@@ -293,8 +300,8 @@ int main(int argc, char* argv[]){
                 printf("Message from UDP client:\n%s\n", message);
                 puts("----------------------------------------");
             }
-            parse(message,response);
-            send_udp(response);
+            if (!parse(message, response))
+                send_udp("ERR\n");
         }
         
     }

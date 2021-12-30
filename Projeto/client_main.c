@@ -121,7 +121,7 @@ int parse_argv(int argc, char* argv[]){
     if (!(argc == 1 || argc == 3 || argc == 5) || strcmp(argv[0], "./user"))
         return 0;
     bzero(IP_ADDRESS, 512);
-    bzero(PORT, 10);
+    bzero(PORT, 6);
     if (argc >= 3){
         if (!strcmp(argv[1], "-n")){
             strcpy(IP_ADDRESS, argv[2]);
