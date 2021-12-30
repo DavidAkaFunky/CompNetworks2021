@@ -49,6 +49,7 @@ int main(int argc, char* argv[]);
 int reg(char* uid, char* pass);
 int unreg(char* uid, char* pass);
 int login(char* uid, char* pass);
+int logout(char* uid, char* pass);
 
 /* -------------------- server_tcp --------------------- */
 

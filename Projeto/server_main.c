@@ -195,10 +195,7 @@ int parse(char* message, char* response){
         return login(arg1, arg2);
     } else if (!strcmp(name, "OUT")){
         //Logout (UDP): (nada)
-        /*if (!has_correct_arg_sizes(arg1, 0, arg2, 0))
-            return;
-        if (logout(IP_ADDRESS, UID, password, res, udp_socket) == 1)
-            bzero(UID, 6);*/
+        return logout(arg1,arg2);
     } /*else if (!strcmp(name, "exit")){
         //Exit (TCP): (nada)
         if (!has_correct_arg_sizes(arg1, 0, arg2, 0))                   //o server nao recebe mensagem de exit (?)
