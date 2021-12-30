@@ -57,8 +57,8 @@ int unreg(char* uid, char* pass){
     return 1;
 }
 
-/*
-int log(char* uid, char* pass){
+
+int login(char* uid, char* pass){
     char path[12];
     bzero(path, 12);
     sprintf(path,"USERS/%s",uid);
@@ -73,15 +73,16 @@ int log(char* uid, char* pass){
     }
     //verifies id the password is correct from the uid_pass.txt
 
-        //create a txt file with his log
-        FILE *fp;
-        char filepath[26];
-        bzero(filepath, 26);
-        sprintf(filepath,"%s/%s_login.txt",path,uid);
-        mkdir(path, 0700);
-        fp = fopen(filepath, "w");
-        fprintf(fp,"%s",pass);
-        fclose(fp);
+    //create a txt file with his log
+    FILE *fp;
+    char filepath[26];
+    bzero(filepath, 26);
+    sprintf(filepath,"%s/%s_login.txt",path,uid);
+    mkdir(path, 0700);
+    fp = fopen(filepath, "w");
+    fprintf(fp,"%s",pass);
+    fclose(fp);
+
     send_udp("RRG OK\n");
     return 1;
-}*/
+}

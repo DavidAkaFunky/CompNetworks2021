@@ -192,10 +192,7 @@ int parse(char* message, char* response){
         return unreg(arg1, arg2);
     } else if (!strcmp(name, "LOG")){
         //Login (UDP): UID (tam 5), pass (tam 8)
-        /*if (login(IP_ADDRESS, arg1, arg2, res, udp_socket) == 1){
-            strcpy(UID, arg1);
-            strcpy(password, arg2);
-        }*/
+        return login(arg1, arg2);
     } else if (!strcmp(name, "OUT")){
         //Logout (UDP): (nada)
         /*if (!has_correct_arg_sizes(arg1, 0, arg2, 0))

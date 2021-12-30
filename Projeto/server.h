@@ -48,6 +48,7 @@ int main(int argc, char* argv[]);
 /* -------------------- server_udp --------------------- */
 int reg(char* uid, char* pass);
 int unreg(char* uid, char* pass);
+int login(char* uid, char* pass);
 
 /* -------------------- server_tcp --------------------- */
 
