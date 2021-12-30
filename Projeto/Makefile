@@ -5,8 +5,8 @@ all: user DS
 user: client_main.o client_tcp.o client_udp.o
 	gcc -o user client_main.o client_tcp.o client_udp.o
 
-DS: server_main.o
-	gcc -o DS server_main.o
+DS: server_main.o server_udp.o
+	gcc -o DS server_main.o server_udp.o
 
 clean:
 	rm *.o user DS

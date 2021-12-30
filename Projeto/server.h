@@ -12,6 +12,8 @@
 #include <ctype.h>
 #include <stdbool.h>
 #include <sys/time.h>
+#include <dirent.h>
+
 
 #define SIZE 512
 #define BUF_SIZE 128
@@ -22,15 +24,27 @@
 #define SOCK_FAIL "Failed creating the socket!"
 #define RECV_ERR "There was an error receiving information from the client. Please try again!"
 #define SEND_ERR "There was an error sending information from the server. Please try again!"
+#define NO_ALPH0 "The argument doesn't contain only alphanumerical characters, - or _. Please try again!"
+#define NO_ALPH1 "The argument doesn't contain only alphanumerical characters. Please try again!"
+#define NO_ALPH2 "The argument doesn't contain only alphanumerical characters, ., - or _. Please try again!"
 
 
 /* -------------------- server_main -------------------- */
-int recv_udp();
+int digits_only(char *s, char* id);
+int is_alphanumerical(char* s, int flag);
+int is_correct_arg_size(char* arg, int size);
+int has_correct_arg_sizes(char* arg1, int size1, char* arg2, int size2);
+
+int recv_udp(char* message);
+int send_udp(char* message);
+int recv_tcp(char* message);
+int send_tcp(char* message);
 int socket_bind(int socktype);
 int parse_argv(int argc, char* argv[]);
-void parse();
+void parse(char* message, char* response);
 int main(int argc, char* argv[]);
 /* -------------------- server_udp --------------------- */
+void reg(char* uid, char* pass, char* response);
 
 /* -------------------- server_tcp --------------------- */
 

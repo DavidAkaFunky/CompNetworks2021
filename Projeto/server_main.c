@@ -4,7 +4,7 @@ char PORT[6];
 bool verbose = false;
 int udp_socket, tcp_socket;
 struct addrinfo hints, *res;
-struct sockaddr_in serv_addr, cli_addr;
+struct sockaddr_in serv_addr;
 socklen_t addrlen;
 ssize_t n, nread;
 
@@ -18,6 +18,47 @@ int digits_only(char *s, char* id){
         s++;
     }
     return 1;
+}
+
+int is_alphanumerical(char* s, int flag){
+    while (*s) {
+        if (!(isalpha(*s) || isdigit(*s))){
+            switch (flag){
+                case 0:
+                    if(!(*s == 32)){
+                        puts(NO_ALPH0);
+                        return 0;
+                    }
+                    break;
+                case 1:
+                    if(!(*s == 45 || *s == 95)){
+                        puts(NO_ALPH1);
+                        return 0;
+                    }
+                    break;
+                case 2:
+                    if(!(*s == 45 || *s == 46 || *s == 95)){
+                        puts(NO_ALPH2);
+                        return 0;
+                    }
+                    break;
+            }
+        }
+        s++;
+    }
+    return 1;
+}
+
+int is_correct_arg_size(char* arg, int size){
+    if (strlen(arg) != size){
+        printf("%s's size is not %d. Please try again!\n", arg, size);
+        return 0;
+    }
+    return 1;
+}
+
+int has_correct_arg_sizes(char* arg1, int size1, char* arg2, int size2){
+    return is_correct_arg_size(arg1, size1) && is_correct_arg_size(arg2, size2);
 }
 
 int recv_udp(char* message){
@@ -38,6 +79,14 @@ int send_udp(char* message){
         return -1;
     }
     return n;
+}
+
+int recv_tcp(char* message){
+    return;
+}
+
+int send_tcp(char* message){
+    return;
 }
 
 int socket_bind(int socktype){
@@ -101,9 +150,7 @@ int parse_argv(int argc, char* argv[]){
     return 0;
 }
 
-void parse(char* message){
-    if (recv_udp(message) == -1)
-        exit(EXIT_FAILURE);
+void parse(char* message, char* response){
     char name[4];
     char arg1[SIZE];
     char arg2[SIZE];
@@ -117,7 +164,7 @@ void parse(char* message){
         return;
     }
     message += strlen(name) + 1;
-    puts(name);
+    //puts(name);
     /*if (!strcmp(name, "PST")){
         //Post (TCP): "text" (Verificar as aspas, talvez?), [FName] (Verificar os parênteses, talvez?)  //e preciso mandar tbm o argumento 3 no caso do post, que vai ser o resto do text caso haja espacos
         int format = sscanf(command, "\"%[^\"]\" %s %[^\n]", arg1, arg2, arg3);
@@ -136,12 +183,10 @@ void parse(char* message){
         //post(IP_ADDRESS, GID, UID, res, arg1, arg2);
         return;
     }*/
-    if (!strcmp(name, "REG")){
-        puts("Recebeu comando!");
-        char teste[] = "funciona\n";
-        send_udp(teste);
+    sscanf(message, "%s %s %[^\n]", arg1, arg2, arg3);
+    if (!strcmp(name, "REG")){        
         //Register (UDP): UID (tam 5), pass (tam 8)
-        //reg(IP_ADDRESS, arg1, arg2, res, udp_socket);
+        reg(arg1, arg2, response);
     } else if (!strcmp(name, "UNR")){
         //Unegister (UDP): UID (tam 5), pass (tam 8)
         //unreg(IP_ADDRESS, arg1, arg2, res, udp_socket);
@@ -192,8 +237,6 @@ void parse(char* message){
         retrieve(IP_ADDRESS, GID, UID, arg1, res);*/
     } else
         puts(INVALID_CMD);
-    puts("----------------------------------------"); //repetir em todos os ifs
-
 }
 
 int main(int argc, char* argv[]){
@@ -207,6 +250,7 @@ int main(int argc, char* argv[]){
     tcp_socket = socket_bind(SOCK_STREAM);
     listen(tcp_socket, 10);
     char message[BUF_SIZE];
+    char response[9];
     fd_set rset;
     int conn_fd;
     
@@ -227,13 +271,15 @@ int main(int argc, char* argv[]){
         // if tcp socket is readable then handle
         // it by accepting the connection
         if (FD_ISSET(tcp_socket, &rset)) {
-            socklen_t len = sizeof(cli_addr);
-            conn_fd = accept(tcp_socket, (struct sockaddr*)&cli_addr, &len);
+            socklen_t len = sizeof(serv_addr);
+            conn_fd = accept(tcp_socket, (struct sockaddr*)&serv_addr, &len);
             close(tcp_socket);
             bzero(message, sizeof(message));
+            bzero(response, sizeof(response));
             recv_tcp(message);
             if (verbose){
                 printf("Message from TCP client:\n%s\n", message);
+                puts("----------------------------------------");
             }
             send_tcp(message);
             close(conn_fd);
@@ -241,11 +287,14 @@ int main(int argc, char* argv[]){
         // if udp socket is readable receive the message.
         if (FD_ISSET(udp_socket, &rset)) {
             bzero(message, sizeof(message));
+            bzero(response, sizeof(response));
             recv_udp(message);
             if (verbose){
                 printf("Message from UDP client:\n%s\n", message);
+                puts("----------------------------------------");
             }
-            send_udp(message);
+            parse(message,response);
+            send_udp(response);
         }
         
     }
