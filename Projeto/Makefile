@@ -10,4 +10,4 @@ DS: Server/server_main.o Server/server_udp.o
 
 clean:
 	rm -f Client/*.o Server/*.o user DS 
-	rm -rf GROUPS SERVERS
+	rm -rf GROUPS USERS
