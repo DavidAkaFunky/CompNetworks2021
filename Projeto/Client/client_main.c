@@ -55,16 +55,16 @@ int digits_only(char *s, char* id){
     return 1;
 }
 
-int check_login(char *UID){
-    if (strlen(UID) != 5){
+int check_login(char *uid){
+    if (strlen(uid) != 5){
         puts(NO_LOGIN);
         return 0;
     }
     return 1;
 }
 
-int check_select(char *GID){
-    if (strlen(GID) != 2){
+int check_select(char *gid){
+    if (strlen(gid) != 2){
         puts(NO_GROUP);
         return 0;
     }
@@ -157,7 +157,7 @@ int parse_argv(int argc, char* argv[]){
     return 0;
 }
 
-void parse(int udp_socket, char* command, char* UID, char* password, char* GID){
+void parse(int udp_socket, char* command, char* uid, char* password, char* gid){
     char name[12]; //The largest command name has 11 characters '\0'
     char arg1[SIZE];
     char arg2[SIZE];
@@ -186,7 +186,7 @@ void parse(int udp_socket, char* command, char* UID, char* password, char* GID){
             puts(NO_TEXT);
             return;
         }
-        post(IP_ADDRESS, GID, UID, res, arg1, arg2);
+        post(IP_ADDRESS, gid, uid, res, arg1, arg2);
         return;
     }
     sscanf(command, "%s %s %[^\n]", arg1, arg2, arg3);
@@ -195,33 +195,34 @@ void parse(int udp_socket, char* command, char* UID, char* password, char* GID){
         return;
     }
     if (!strcmp(name, "reg")){
-        //Register (UDP): UID (tam 5), pass (tam 8)
+        //Register (UDP): uid (tam 5), pass (tam 8)
         reg(IP_ADDRESS, arg1, arg2, res, udp_socket);
     } else if (!strcmp(name, "unregister") || !strcmp(name, "unr")){
-        //Unegister (UDP): UID (tam 5), pass (tam 8)
+        //Unegister (UDP): uid (tam 5), pass (tam 8)
         unreg(IP_ADDRESS, arg1, arg2, res, udp_socket);
     } else if (!strcmp(name, "login")){
-        //Login (UDP): UID (tam 5), pass (tam 8)
+        //Login (UDP): uid (tam 5), pass (tam 8)
         if (login(IP_ADDRESS, arg1, arg2, res, udp_socket) == 1){
-            strcpy(UID, arg1);
+            strcpy(uid, arg1);
             strcpy(password, arg2);
         }
     } else if (!strcmp(name, "logout")){
         //Logout (UDP): (nada)
-        if (!has_correct_arg_sizes(arg1, 0, arg2, 0))
+        if (!(has_correct_arg_sizes(arg1, 0, arg2, 0) && is_correct_arg_size(uid, 5)))
             return;
-        if (logout(IP_ADDRESS, UID, password, res, udp_socket) == 1)
-            bzero(UID, 6);
+        if (logout(IP_ADDRESS, uid, password, res, udp_socket) == 1)
+            bzero(uid, 6);
     } else if (!strcmp(name, "showuid") || !strcmp(name, "su")){
-        //displays UID : (nada)
-        if (!(has_correct_arg_sizes(arg1, 0, arg2, 0) && check_login(UID)))
+        //displays uid : (nada)
+        if (!(has_correct_arg_sizes(arg1, 0, arg2, 0) && check_login(uid)))
             return;
-        printf("The UID selected is %s.\n",UID);
+        printf("The uid selected is %s.\n",uid);
     } else if (!strcmp(name, "exit")){
         //Exit (TCP): (nada)
         if (!has_correct_arg_sizes(arg1, 0, arg2, 0))
             return;
         freeaddrinfo(res);
+        logout(IP_ADDRESS, uid, password, res, udp_socket);
         exit(EXIT_SUCCESS);
     } else if (!strcmp(name, "groups") || !strcmp(name, "gl")){
         //Groups (UDP): (nada)
@@ -229,55 +230,55 @@ void parse(int udp_socket, char* command, char* UID, char* password, char* GID){
             return;
         groups(IP_ADDRESS, res, udp_socket);
     } else if (!strcmp(name, "subscribe") || !strcmp(name, "s")){
-        //Subscribe (UDP): GID (tam 2), GName (tam 24)
-        subscribe(IP_ADDRESS, UID, arg1, arg2, res, udp_socket);
+        //Subscribe (UDP): gid (tam 2), group_name (tam 24)
+        subscribe(IP_ADDRESS, uid, arg1, arg2, res, udp_socket);
     } else if (!strcmp(name, "unsubscribe") || !strcmp(name, "u")){
-        //Unsubscribe (UDP): GID (tam 2)
-        if (!(has_correct_arg_sizes(arg1, 2, arg2, 0) && digits_only(arg1, "GID")))
+        //Unsubscribe (UDP): gid (tam 2)
+        if (!(has_correct_arg_sizes(arg1, 2, arg2, 0) && digits_only(arg1, "gid")))
             return;
-        unsubscribe(IP_ADDRESS, UID, arg1, res, udp_socket);
+        unsubscribe(IP_ADDRESS, uid, arg1, res, udp_socket);
     } else if (!strcmp(name, "my_groups") || !strcmp(name, "mgl")){
         //My groups (UDP): (nada)
         if (!has_correct_arg_sizes(arg1, 0, arg2, 0))
             return;
-        my_groups(IP_ADDRESS, UID, res, udp_socket);
+        my_groups(IP_ADDRESS, uid, res, udp_socket);
     } else if (!strcmp(name, "select") || !strcmp(name, "sag")){
-        //Select: GID (tam 2)
-        if (!(has_correct_arg_sizes(arg1, 2, arg2, 0) && digits_only(arg1,"GID") && check_login(UID)))
+        //Select: gid (tam 2)
+        if (!(has_correct_arg_sizes(arg1, 2, arg2, 0) && digits_only(arg1,"gid") && check_login(uid)))
             return;
-        strcpy(GID, arg1);
-        printf("Group %s sucessfully selected.\n", GID);
+        strcpy(gid, arg1);
+        printf("Group %s sucessfully selected.\n", gid);
     } else if (!strcmp(name, "showgid") || !strcmp(name, "sg")){
         //displays selected group : (nada)
-        if (!(has_correct_arg_sizes(arg1, 0, arg2, 0) && check_login(UID) && check_select(GID)))
+        if (!(has_correct_arg_sizes(arg1, 0, arg2, 0) && check_login(uid) && check_select(gid)))
             return;
-        printf("The group selected is %s.\n", GID);
+        printf("The group selected is %s.\n", gid);
     } else if (!strcmp(name, "ulist") || !strcmp(name, "ul")){
         //User list (TCP): (nada)
-        if (!(has_correct_arg_sizes(arg1, 0, arg2, 0) && check_login(UID) && check_select(GID)))
+        if (!(has_correct_arg_sizes(arg1, 0, arg2, 0) && check_login(uid) && check_select(gid)))
             return;
-        ulist(IP_ADDRESS, GID, res);
+        ulist(IP_ADDRESS, gid, res);
     } else if (!strcmp(name, "retrieve") || !strcmp(name, "r")){
         //Retrieve (TCP): MID
         if (!(has_correct_arg_sizes(arg1, 4, arg2, 0) && digits_only(arg1, "message ID")))
             return;
-        retrieve(IP_ADDRESS, GID, UID, arg1, res);
+        retrieve(IP_ADDRESS, gid, uid, arg1, res);
     } else
         puts(INVALID_CMD);
 }
 
 int main(int argc, char* argv[]){
-    char command[SIZE], UID[6], password[9], GID[3];
+    char command[SIZE], uid[6], password[9], gid[3];
     if (!parse_argv(argc, argv)){
         puts(ARGV_ERR);
         exit(EXIT_FAILURE);
     }
     int udp_socket = create_socket(SOCK_DGRAM);
-    bzero(UID, 6);
+    bzero(uid, 6);
     bzero(password, 9);
-    bzero(GID, 3);
+    bzero(gid, 3);
     while(fgets(command, SIZE, stdin)){
-        parse(udp_socket, command, UID, password, GID);
+        parse(udp_socket, command, uid, password, gid);
         bzero(command, SIZE);
         puts("----------------------------------------");
     }

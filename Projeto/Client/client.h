@@ -30,7 +30,7 @@
 #define SOCK_FAIL "Failed creating the socket!"
 #define ADDR_FAIL "Failed getting the address' information!"
 #define REG_USER_SUC "You have registered successfully!"
-#define REG_USER_DUP "A user with this UID has already been registered. Please try another one!"
+#define REG_USER_DUP "A user with this uid has already been registered. Please try another one!"
 #define REG_USER_FAIL "Registration not accepted (too many users might be registered)."
 #define UNR_USER_SUC "You have unregistered successfully."
 #define UNR_USER_FAIL "Unregister request unsuccessful."
@@ -42,7 +42,7 @@
 #define GRP_FAIL "The group ID does not exist. Please try again!"
 #define REG_GRP_INV "The group name is invalid. Please try again!"
 #define REG_GRP_FULL  "The group database is full. Please try again!"
-#define REG_GRP_ERR1 "There was a problem subscribing. Please confirm that you're logged in and try again!"
+#define REG_GRP_ERR1 "There was a problem subscribing. Either you're not logged in or there's a group with the given ID but a different name. Please try again!"
 #define UNR_GRP_FAIL_USR "The user ID does not exist. Please try again!"
 #define UNR_GRP_ERR1 "There was a problem unsubscribing. Please confirm that you're logged in and try again!"
 #define GRP_ERR "Either you're not logged in or your user is invalid. Please try again!"
@@ -63,30 +63,30 @@ int is_alphanumerical(char* s, int flag);
 int is_correct_arg_size(char* arg, int size);
 int has_correct_arg_sizes(char* arg1, int size1, char* arg2, int size2);
 int digits_only(char *s, char* id);
-int check_login(char *UID);
-int check_select(char *GID);
+int check_login(char *uid);
+int check_select(char *gid);
 void parse(int udp_socket, char* command, char* uid, char* password, char* gid);
 int main(int argc, char* argv[]);
 int create_socket(int socktype);
 
 /* -------------------- client_udp -------------------- */
 int udp_send_and_receive(int fd, struct addrinfo *res, char* message, char* buffer, int size);
-void reg(char* IP_ADDRESS, char* UID, char* password, struct addrinfo *res, int fd);
-void unreg(char* IP_ADDRESS, char* UID, char* password, struct addrinfo *res, int fd);
-int login(char* IP_ADDRESS, char* UID, char* password, struct addrinfo *res, int fd);
-int logout(char* IP_ADDRESS, char* UID, char* password, struct addrinfo *res, int fd);
+void reg(char* IP_ADDRESS, char* uid, char* password, struct addrinfo *res, int fd);
+void unreg(char* IP_ADDRESS, char* uid, char* password, struct addrinfo *res, int fd);
+int login(char* IP_ADDRESS, char* uid, char* password, struct addrinfo *res, int fd);
+int logout(char* IP_ADDRESS, char* uid, char* password, struct addrinfo *res, int fd);
 void groups(char* IP_ADDRESS, struct addrinfo *res, int fd);
-void subscribe(char* IP_ADDRESS, char* UID, char* GID, char* GName, struct addrinfo *res, int fd);
-void unsubscribe(char* IP_ADDRESS, char* UID, char* GID, struct addrinfo *res, int fd);
-void my_groups(char* IP_ADDRESS, char* UID, struct addrinfo *res, int fd);
+void subscribe(char* IP_ADDRESS, char* uid, char* gid, char* group_name, struct addrinfo *res, int fd);
+void unsubscribe(char* IP_ADDRESS, char* uid, char* gid, struct addrinfo *res, int fd);
+void my_groups(char* IP_ADDRESS, char* uid, struct addrinfo *res, int fd);
 void show_groups(char* ptr, char* groups);
 
 /* -------------------- client_tcp -------------------- */
 int tcp_connect(struct addrinfo *res);
 int tcp_send(char* message, int size);
 int tcp_read(char* buffer, ssize_t size);
-void ulist(char* IP_ADDRESS, char* GID, struct addrinfo *res);
-void post(char* IP_ADDRESS, char* GID, char* UID, struct addrinfo *res, char *text, char *fname);
-void retrieve(char* IP_ADDRESS, char* GID, char* UID, char* MID, struct addrinfo *res);
+void ulist(char* IP_ADDRESS, char* gid, struct addrinfo *res);
+void post(char* IP_ADDRESS, char* gid, char* uid, struct addrinfo *res, char *text, char *fname);
+void retrieve(char* IP_ADDRESS, char* gid, char* uid, char* MID, struct addrinfo *res);
 
 #endif

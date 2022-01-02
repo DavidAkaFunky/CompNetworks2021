@@ -43,14 +43,15 @@ int recv_tcp(char* message);
 int send_tcp(char* message);
 int socket_bind(int socktype);
 int parse_argv(int argc, char* argv[]);
-int parse(char* message, char* response);
+int parse(char* message, char* response, int* global_gid);
 int main(int argc, char* argv[]);
+
 /* -------------------- server_udp --------------------- */
 int reg(char* uid, char* pass);
 int unreg(char* uid, char* pass);
 int login(char* uid, char* pass);
 int logout(char* uid, char* pass);
-
+void subscribe(char* uid, char* gid, char* group_name, int* global_gid);
 /* -------------------- server_tcp --------------------- */
 
 

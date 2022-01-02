@@ -60,10 +60,10 @@ int read_space(){
     return 0;
 }
 
-void ulist(char* IP_ADDRESS, char* GID, struct addrinfo *res){
+void ulist(char* IP_ADDRESS, char* gid, struct addrinfo *res){
     char message[8];
     bzero(message, 8);
-    sprintf(message,"ULS %s\n", GID);
+    sprintf(message,"ULS %s\n", gid);
     if (tcp_connect(res) == -1 || tcp_send(message, strlen(message)) == -1)
         return;
     char response[5];
@@ -160,13 +160,13 @@ void ulist(char* IP_ADDRESS, char* GID, struct addrinfo *res){
     close(tcp_socket);
 }
 
-void post(char* IP_ADDRESS, char* GID, char* UID, struct addrinfo *res, char *text, char *fname){
+void post(char* IP_ADDRESS, char* gid, char* uid, struct addrinfo *res, char *text, char *fname){
     int text_strlen = strlen(text);
     if (text_strlen > 240){
         puts(BIG_TEXT);
         return;
     }
-    if (!(is_alphanumerical(fname, 2) && check_login(UID) && check_select(GID)))
+    if (!(is_alphanumerical(fname, 2) && check_login(uid) && check_select(gid)))
         return;
     int fname_strlen = strlen(fname);
     char message[259];
@@ -174,7 +174,7 @@ void post(char* IP_ADDRESS, char* GID, char* UID, struct addrinfo *res, char *te
     char textsize[4];
     bzero(textsize, 4);
     sprintf(textsize, "%d", text_strlen);
-    sprintf(message, "PST %s %s %s %s", UID, GID, textsize, text);
+    sprintf(message, "PST %s %s %s %s", uid, gid, textsize, text);
     if (tcp_connect(res) == -1 || tcp_send(message, strlen(message)) == -1)
         return;
     if (fname_strlen > 24){
@@ -273,10 +273,10 @@ void post(char* IP_ADDRESS, char* GID, char* UID, struct addrinfo *res, char *te
     close(tcp_socket);
 }
 
-void retrieve(char* IP_ADDRESS, char* GID, char* UID, char* MID, struct addrinfo *res){
+void retrieve(char* IP_ADDRESS, char* gid, char* uid, char* MID, struct addrinfo *res){
     char message[19];
     bzero(message, 19);
-    sprintf(message, "RTV %s %s %s\n", UID, GID, MID);
+    sprintf(message, "RTV %s %s %s\n", uid, gid, MID);
     if (tcp_connect(res) == -1 || tcp_send(message, strlen(message)) == -1)
         return;
     char response[5];
@@ -353,7 +353,7 @@ void retrieve(char* IP_ADDRESS, char* GID, char* UID, char* MID, struct addrinfo
         else
             printf("Downloading %s messages:\n", n);
         int messages = atoi(n), max = messages < 20 ? messages : 20, i, flag = 0;
-        char rtv_MID[5], rtv_UID[6], tsize[4], text[241], fname[25], fsize[11];
+        char rtv_MID[5], rtv_uid[6], tsize[4], text[241], fname[25], fsize[11];
         for (i = 0; i < max; ++i){
             bzero(&(rtv_MID[flag]), 5-flag);
             nread = tcp_read(&(rtv_MID[flag]), 4-flag);
@@ -367,13 +367,13 @@ void retrieve(char* IP_ADDRESS, char* GID, char* UID, char* MID, struct addrinfo
             }
             if (read_space() == -1)
                 return;
-            bzero(rtv_UID, 6);
-            nread = tcp_read(rtv_UID, 5);
+            bzero(rtv_uid, 6);
+            nread = tcp_read(rtv_uid, 5);
             if (nread == -1)
                 return;
             if (read_space() == -1)
                 return;
-            if (!(is_correct_arg_size(rtv_UID, 5) && digits_only(rtv_UID, "user ID"))){
+            if (!(is_correct_arg_size(rtv_uid, 5) && digits_only(rtv_uid, "user ID"))){
                 puts(INFO_ERR);
                 close(tcp_socket);
                 return;
@@ -402,7 +402,7 @@ void retrieve(char* IP_ADDRESS, char* GID, char* UID, char* MID, struct addrinfo
             }
             bzero(text, 241);
             tcp_read(text, atoi(tsize));
-            printf("Message ID: %s\nSent by: %s\nMessage size: %d\nMessage: %s", rtv_MID, rtv_UID, atoi(tsize)-1, text);
+            printf("Message ID: %s\nSent by: %s\nMessage size: %d\nMessage: %s", rtv_MID, rtv_uid, atoi(tsize)-1, text);
             bzero(end, 2);
             nread = tcp_read(end, 1);
             if (nread == -1)

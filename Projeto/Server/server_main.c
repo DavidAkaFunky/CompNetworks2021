@@ -72,6 +72,7 @@ int recv_udp(char* message){
 }
 
 int send_udp(char* message){
+    printf("Message: %s\n", message);
     addrlen = sizeof(serv_addr);
     n = sendto(udp_socket, message, strlen(message), 0, (struct sockaddr*)&serv_addr,addrlen);
     if (n == -1){
@@ -150,15 +151,17 @@ int parse_argv(int argc, char* argv[]){
     return 0;
 }
 
-int parse(char* message, char* response){
+int parse(char* message, char* response, int* global_gid){
     char name[4];
     char arg1[SIZE];
     char arg2[SIZE];
     char arg3[SIZE];
+    char arg4[SIZE];
     bzero(name, 4);
     bzero(arg1, SIZE);
     bzero(arg2, SIZE);
     bzero(arg3, SIZE);
+    bzero(arg4, SIZE);
     if (sscanf(message, "%s ", name) < 1){
         puts(INVALID_CMD);
         return 0;
@@ -180,21 +183,31 @@ int parse(char* message, char* response){
             puts(NO_TEXT);
             return;
         }
-        //post(IP_ADDRESS, GID, UID, res, arg1, arg2);
+        //post(IP_ADDRESS, gid, uid, res, arg1, arg2);
         return;
     }*/
-    sscanf(message, "%s %s %[^\n]", arg1, arg2, arg3);
+    sscanf(message, "%s %s %s %[^\n]", arg1, arg2, arg3, arg4);
+    if (strcmp(arg4, ""))
+        return 0;
     if (!strcmp(name, "REG")){        
-        //Register (UDP): UID (tam 5), pass (tam 8)
+        //Register (UDP): uid (tam 5), pass (tam 8)
+        if (strcmp(arg3, ""))
+            return 0;
         return reg(arg1, arg2);
     } else if (!strcmp(name, "UNR")){
-        //Unegister (UDP): UID (tam 5), pass (tam 8)
+        //Unegister (UDP): uid (tam 5), pass (tam 8)
+        if (strcmp(arg3, ""))
+            return 0;
         return unreg(arg1, arg2);
     } else if (!strcmp(name, "LOG")){
-        //Login (UDP): UID (tam 5), pass (tam 8)
+        //Login (UDP): uid (tam 5), pass (tam 8)
+        if (strcmp(arg3, ""))
+            return 0;
         return login(arg1, arg2);
     } else if (!strcmp(name, "OUT")){
         //Logout (UDP): (nada)
+        if (strcmp(arg3, ""))
+            return 0;
         return logout(arg1,arg2);
     } /*else if (!strcmp(name, "exit")){
         //Exit (TCP): (nada)
@@ -207,28 +220,29 @@ int parse(char* message, char* response){
             return;
         groups(IP_ADDRESS, res, udp_socket);*/
     } else if (!strcmp(name, "GSR")){
-        //Subscribe (UDP): GID (tam 2), GName (tam 24)
-        //subscribe(IP_ADDRESS, UID, arg1, arg2, res, udp_socket);
+        //Subscribe (UDP): gid (tam 2), group_name (tam 24)
+        subscribe(arg1, arg2, arg3, global_gid);
+        return 1;
     } else if (!strcmp(name, "GUR")){
-        //Unsubscribe (UDP): GID (tam 2)
-        /*if (!(has_correct_arg_sizes(arg1, 2, arg2, 0) && digits_only(arg1, "GID")))
+        //Unsubscribe (UDP): gid (tam 2)
+        /*if (!(has_correct_arg_sizes(arg1, 2, arg2, 0) && digits_only(arg1, "gid")))
             return;
-        unsubscribe(IP_ADDRESS, UID, arg1, res, udp_socket);*/
+        unsubscribe(IP_ADDRESS, uid, arg1, res, udp_socket);*/
     } else if (!strcmp(name, "GLM")){
         //My groups (UDP): (nada)
         /*if (!has_correct_arg_sizes(arg1, 0, arg2, 0))
             return;
-        my_groups(IP_ADDRESS, UID, res, udp_socket);*/
+        my_groups(IP_ADDRESS, uid, res, udp_socket);*/
     } else if (!strcmp(name, "ULS")){
         //User list (TCP): (nada)
-        /*if (!(has_correct_arg_sizes(arg1, 0, arg2, 0) && check_login(UID) && check_select(GID)))
+        /*if (!(has_correct_arg_sizes(arg1, 0, arg2, 0) && check_login(uid) && check_select(gid)))
             return;
-        ulist(IP_ADDRESS, GID, res);*/
+        ulist(IP_ADDRESS, gid, res);*/
     } else if (!strcmp(name, "RTV")){
         //Retrieve (TCP): MID
         /*if (!(has_correct_arg_sizes(arg1, 4, arg2, 0) && digits_only(arg1, "message ID")))
             return;
-        retrieve(IP_ADDRESS, GID, UID, arg1, res);*/
+        retrieve(IP_ADDRESS, gid, uid, arg1, res);*/
     } else
         puts(INVALID_CMD);
 }
@@ -253,7 +267,7 @@ int main(int argc, char* argv[]){
     char message[BUF_SIZE];
     char response[BUF_SIZE];
     fd_set rset;
-    int conn_fd;
+    int conn_fd, global_gid = 0;
     
     // clear the descriptor set
     FD_ZERO(&rset);
@@ -294,7 +308,7 @@ int main(int argc, char* argv[]){
                 printf("Message from UDP client:\n%s\n", message);
                 puts("----------------------------------------");
             }
-            if (!parse(message, response))
+            if (!parse(message, response, &global_gid))
                 send_udp("ERR\n");
         }
         
