@@ -239,7 +239,7 @@ void parse(int udp_socket, char* command, char* uid, char* password, char* gid){
         unsubscribe(IP_ADDRESS, uid, arg1, res, udp_socket);
     } else if (!strcmp(name, "my_groups") || !strcmp(name, "mgl")){
         //My groups (UDP): (nada)
-        if (!has_correct_arg_sizes(arg1, 0, arg2, 0))
+        if (!(check_login(uid) && has_correct_arg_sizes(arg1, 0, arg2, 0)))
             return;
         my_groups(IP_ADDRESS, uid, res, udp_socket);
     } else if (!strcmp(name, "select") || !strcmp(name, "sag")){

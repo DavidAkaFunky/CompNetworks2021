@@ -151,7 +151,7 @@ int parse_argv(int argc, char* argv[]){
     return 0;
 }
 
-int parse(char* message, char* response, int* global_gid){
+int parse(char* message, char* response){
     char name[4];
     char arg1[SIZE];
     char arg2[SIZE];
@@ -191,24 +191,16 @@ int parse(char* message, char* response, int* global_gid){
         return 0;
     if (!strcmp(name, "REG")){        
         //Register (UDP): uid (tam 5), pass (tam 8)
-        if (strcmp(arg3, ""))
-            return 0;
-        return reg(arg1, arg2);
+        return !strcmp(arg3, "") && reg(arg1, arg2);
     } else if (!strcmp(name, "UNR")){
         //Unegister (UDP): uid (tam 5), pass (tam 8)
-        if (strcmp(arg3, ""))
-            return 0;
-        return unreg(arg1, arg2);
+        return !strcmp(arg3, "") && unreg(arg1, arg2);
     } else if (!strcmp(name, "LOG")){
         //Login (UDP): uid (tam 5), pass (tam 8)
-        if (strcmp(arg3, ""))
-            return 0;
-        return login(arg1, arg2);
+        return !strcmp(arg3, "") && login(arg1, arg2);
     } else if (!strcmp(name, "OUT")){
         //Logout (UDP): (nada)
-        if (strcmp(arg3, ""))
-            return 0;
-        return logout(arg1,arg2);
+        return !strcmp(arg3, "") && logout(arg1,arg2);
     } /*else if (!strcmp(name, "exit")){
         //Exit (TCP): (nada)
         if (!has_correct_arg_sizes(arg1, 0, arg2, 0))                   //o server nao recebe mensagem de exit (?)
@@ -216,13 +208,10 @@ int parse(char* message, char* response, int* global_gid){
         exit(EXIT_SUCCESS);*/
     else if (!strcmp(name, "GLS")){
         //Groups (UDP): (nada)
-        /*if (!has_correct_arg_sizes(arg1, 0, arg2, 0))
-            return;
-        groups(IP_ADDRESS, res, udp_socket);*/
+        return !strcmp(arg1, "") && groups();
     } else if (!strcmp(name, "GSR")){
         //Subscribe (UDP): gid (tam 2), group_name (tam 24)
-        subscribe(arg1, arg2, arg3, global_gid);
-        return 1;
+        return subscribe(arg1, arg2, arg3);
     } else if (!strcmp(name, "GUR")){
         //Unsubscribe (UDP): gid (tam 2)
         /*if (!(has_correct_arg_sizes(arg1, 2, arg2, 0) && digits_only(arg1, "gid")))
@@ -230,9 +219,7 @@ int parse(char* message, char* response, int* global_gid){
         unsubscribe(IP_ADDRESS, uid, arg1, res, udp_socket);*/
     } else if (!strcmp(name, "GLM")){
         //My groups (UDP): (nada)
-        /*if (!has_correct_arg_sizes(arg1, 0, arg2, 0))
-            return;
-        my_groups(IP_ADDRESS, uid, res, udp_socket);*/
+        return !strcmp(arg2, "") && my_groups(arg1);
     } else if (!strcmp(name, "ULS")){
         //User list (TCP): (nada)
         /*if (!(has_correct_arg_sizes(arg1, 0, arg2, 0) && check_login(uid) && check_select(gid)))
@@ -267,8 +254,8 @@ int main(int argc, char* argv[]){
     char message[BUF_SIZE];
     char response[BUF_SIZE];
     fd_set rset;
-    int conn_fd, global_gid = 0;
-    
+    int conn_fd;
+
     // clear the descriptor set
     FD_ZERO(&rset);
  
@@ -308,7 +295,7 @@ int main(int argc, char* argv[]){
                 printf("Message from UDP client:\n%s\n", message);
                 puts("----------------------------------------");
             }
-            if (!parse(message, response, &global_gid))
+            if (!parse(message, response))
                 send_udp("ERR\n");
         }
         

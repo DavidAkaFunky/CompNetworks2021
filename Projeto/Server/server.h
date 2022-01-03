@@ -30,6 +30,11 @@
 #define NO_ALPH1 "The argument doesn't contain only alphanumerical characters. Please try again!"
 #define NO_ALPH2 "The argument doesn't contain only alphanumerical characters, ., - or _. Please try again!"
 
+typedef struct{
+    char group_name[25];
+    char gid[3];
+    char last_msg[5];
+} group;
 
 /* -------------------- server_main -------------------- */
 int digits_only(char *s, char* id);
@@ -43,7 +48,7 @@ int recv_tcp(char* message);
 int send_tcp(char* message);
 int socket_bind(int socktype);
 int parse_argv(int argc, char* argv[]);
-int parse(char* message, char* response, int* global_gid);
+int parse(char* message, char* response);
 int main(int argc, char* argv[]);
 
 /* -------------------- server_udp --------------------- */
@@ -51,7 +56,13 @@ int reg(char* uid, char* pass);
 int unreg(char* uid, char* pass);
 int login(char* uid, char* pass);
 int logout(char* uid, char* pass);
-void subscribe(char* uid, char* gid, char* group_name, int* global_gid);
+void find_last_message(char* gid, char* last_msg);
+int comparer(const void* x1, const void* x2);
+int list_groups_dir(group* list, bool my_groups, char* uid);
+void send_groups(group* list, int groups, char* message);
+int groups();
+int my_groups(char* uid);
+int subscribe(char* uid, char* gid, char* group_name);
 /* -------------------- server_tcp --------------------- */
 
 

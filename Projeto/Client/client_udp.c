@@ -149,8 +149,13 @@ void groups(char* IP_ADDRESS, struct addrinfo *res, int fd){
         puts(INFO_ERR);
         return;
     }
-    printf("There are %s registered %s:\n", groups, strcmp(groups, "1") ? "groups" : "group");
-    show_groups(&(buffer[4+strlen(groups)]), groups);
+    if (!strcmp(groups, "0")){
+        puts(NO_GROUPS);
+    }
+    else{
+        printf("There %s %s registered %s:\n", strcmp(groups, "1") ? "are" : "is", groups, strcmp(groups, "1") ? "groups" : "group");
+        show_groups(&(buffer[4+strlen(groups)]), groups);
+    }
 }
 
 void subscribe(char* IP_ADDRESS, char* uid, char* gid, char* group_name, struct addrinfo *res, int fd){
