@@ -214,9 +214,7 @@ int parse(char* message, char* response){
         return subscribe(arg1, arg2, arg3);
     } else if (!strcmp(name, "GUR")){
         //Unsubscribe (UDP): gid (tam 2)
-        /*if (!(has_correct_arg_sizes(arg1, 2, arg2, 0) && digits_only(arg1, "gid")))
-            return;
-        unsubscribe(IP_ADDRESS, uid, arg1, res, udp_socket);*/
+        return unsubscribe(arg1, arg2);
     } else if (!strcmp(name, "GLM")){
         //My groups (UDP): (nada)
         return !strcmp(arg2, "") && my_groups(arg1);

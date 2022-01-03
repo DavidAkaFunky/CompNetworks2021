@@ -161,8 +161,10 @@ void groups(char* IP_ADDRESS, struct addrinfo *res, int fd){
 void subscribe(char* IP_ADDRESS, char* uid, char* gid, char* group_name, struct addrinfo *res, int fd){
     if (strlen(gid) == 1)
         sprintf(gid, "0%c", gid[0]);
-    if (!(digits_only(uid,"uid") && digits_only(gid,"gid") && has_correct_arg_sizes(uid, 5, gid, 2) && strlen(group_name) <= 24 && is_alphanumerical(group_name, 1)))
+    if (!(digits_only(uid,"uid") && digits_only(gid,"gid") && has_correct_arg_sizes(uid, 5, gid, 2) && strlen(group_name) <= 24 && is_alphanumerical(group_name, 1) && strlen(group_name) >= 1)){
+        puts("One or more arguments are invalid. Please try again!");
         return;
+    }
     char message[38], buffer[BUF_SIZE];
     bzero(message, 38);
     bzero(buffer, BUF_SIZE);
@@ -175,7 +177,7 @@ void subscribe(char* IP_ADDRESS, char* uid, char* gid, char* group_name, struct 
         printf("You have successfully subscribed to group %s!\n", gid);
     else if (!strcmp("RGS E_GRP\n",buffer))
         puts(GRP_FAIL);
-    else if (!strcmp("RGS E_group_name\n",buffer))
+    else if (!strcmp("RGS E_GNAME\n",buffer))
         puts(REG_GRP_INV);
     else if (!strcmp("RGS E_FULL\n",buffer))
         puts(REG_GRP_FULL);

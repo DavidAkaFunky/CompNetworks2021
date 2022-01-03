@@ -393,3 +393,37 @@ int subscribe(char* uid, char* gid, char* group_name){
         send_udp("RGS OK\n");
     }
 }
+
+int unsubscribe(char* uid, char* gid){
+    int new_gid = max_gid();
+
+    if (strlen(gid) == 1)
+        sprintf(gid, "0%c", gid[0]);
+
+    char uid_path[12];
+    bzero(uid_path, 12);
+    sprintf(uid_path,"USERS/%s",uid);
+
+    //Check if the UID is well-formatted and is registered
+    if (!(digits_only(uid,"uid") && is_correct_arg_size(uid, 5)) || access(uid_path, F_OK) == -1){
+        send_udp("RGU E_USR\n");
+        return 1;
+    }
+
+    //Check if the GID is well-formatted and is registered
+    if (!(digits_only(gid,"gid") && is_correct_arg_size(gid, 2)) || atoi(gid) > new_gid){
+        send_udp("RGU E_GRP\n");
+        return 1;
+    }
+
+    //if the group exists delete the uid file
+    char file_path[22];
+    bzero(file_path, 22);
+    sprintf(file_path,"GROUPS/%s/%s.txt",gid,uid);
+
+    if (access(file_path, F_OK) || remove(file_path)){
+        send_udp("RGU NOK\n");
+        return 1;
+    }
+    send_udp("RGU OK\n");
+}

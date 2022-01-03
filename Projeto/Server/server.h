@@ -63,8 +63,7 @@ void send_groups(group* list, int groups, char* message);
 int groups();
 int my_groups(char* uid);
 int subscribe(char* uid, char* gid, char* group_name);
+int unsubscribe(char* uid, char* gid);
 /* -------------------- server_tcp --------------------- */
-
-
 
 #endif
