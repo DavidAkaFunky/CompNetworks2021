@@ -1,59 +1,5 @@
-#include "client.h" 
-
-char IP_ADDRESS[512], PORT[6];
-struct addrinfo hints, *res;
-
-int is_alphanumerical(char* s, int flag){
-    while (*s) {
-        if (!(isalpha(*s) || isdigit(*s))){
-            switch (flag){
-                case 0:
-                    if(!(*s == 32)){
-                        puts(NO_ALPH0);
-                        return 0;
-                    }
-                    break;
-                case 1:
-                    if(!(*s == 45 || *s == 95)){
-                        puts(NO_ALPH1);
-                        return 0;
-                    }
-                    break;
-                case 2:
-                    if(!(*s == 45 || *s == 46 || *s == 95)){
-                        puts(NO_ALPH2);
-                        return 0;
-                    }
-                    break;
-            }
-        }
-        s++;
-    }
-    return 1;
-}
-
-int is_correct_arg_size(char* arg, int size){
-    if (strlen(arg) != size){
-        printf("%s's size is not %d. Please try again!\n", arg, size);
-        return 0;
-    }
-    return 1;
-}
-
-int has_correct_arg_sizes(char* arg1, int size1, char* arg2, int size2){
-    return is_correct_arg_size(arg1, size1) && is_correct_arg_size(arg2, size2);
-}
-
-int digits_only(char *s, char* id){
-    while (*s) {
-        if (!isdigit(*s)){
-            printf("The %s has a non-numeric character. Please try again!\n", id);
-            return 0;
-        }
-        s++;
-    }
-    return 1;
-}
+#include "client.h"
+#include "../common.h"
 
 int check_login(char *uid){
     if (strlen(uid) != 5){
@@ -71,16 +17,17 @@ int check_select(char *gid){
     return 1;
 }
 
-int create_socket(int socktype){
+int create_socket(struct addrinfo **res, int socktype, char* IP_ADDRESS, char* PORT){
     int sockfd = socket(AF_INET,socktype,0);
     if (sockfd == -1){
         puts(SOCK_FAIL);
         exit(EXIT_FAILURE);
     }
+    struct addrinfo hints;
     bzero(&hints, sizeof hints);
     hints.ai_family = AF_INET;
     hints.ai_socktype = socktype;
-    if(getaddrinfo(IP_ADDRESS, PORT, &hints, &res) != 0){
+    if(getaddrinfo(IP_ADDRESS, PORT, &hints, res) != 0){
         puts(ADDR_FAIL);
         exit(EXIT_FAILURE);
     }
@@ -88,7 +35,7 @@ int create_socket(int socktype){
 }
 
 //Esta função provavelmente é inútil - Perguntar aos profs!!!
-int get_IP(){
+int get_IP(char* IP_ADDRESS){
     char part1[20], part2[4], part3[4], part4[4];
     bzero(part1, 4);
     bzero(part2, 4);
@@ -102,7 +49,7 @@ int get_IP(){
     return 1;
 }
 
-int get_local_IP(){
+int get_local_IP(char* IP_ADDRESS){
     char hostbuffer[256];
     
     int hostname = gethostname(hostbuffer, sizeof(hostbuffer));
@@ -117,7 +64,7 @@ int get_local_IP(){
     return IP_ADDRESS != NULL;
 }
 
-int parse_argv(int argc, char* argv[]){
+int parse_argv(char* IP_ADDRESS, char* PORT, int argc, char** argv){
     if (!(argc == 1 || argc == 3 || argc == 5) || strcmp(argv[0], "./user"))
         return 0;
     bzero(IP_ADDRESS, 512);
@@ -146,18 +93,18 @@ int parse_argv(int argc, char* argv[]){
                 }
                 return 0;
             }
-            return get_local_IP();
+            return get_local_IP(IP_ADDRESS);
         }
     }
     
     if (argc == 1){
         strcpy(PORT, "58026");
-        return get_local_IP();
+        return get_local_IP(IP_ADDRESS);
     }
     return 0;
 }
 
-void parse(int udp_socket, char* command, char* uid, char* password, char* gid){
+void parse(int udp_socket, int tcp_socket, struct addrinfo *res, char* IP_ADDRESS, char* PORT, char* command, char* uid, char* password, char* gid){
     char name[12]; //The largest command name has 11 characters '\0'
     char arg1[SIZE];
     char arg2[SIZE];
@@ -179,14 +126,15 @@ void parse(int udp_socket, char* command, char* uid, char* password, char* gid){
             return;
         }
         if (format == -1){
-            puts(ERR_FORMAT);
+            puts(FORMAT_ERR);
             return;
         }
         if (format == 0){
             puts(NO_TEXT);
             return;
         }
-        post(IP_ADDRESS, gid, uid, res, arg1, arg2);
+        post(IP_ADDRESS, PORT, gid, uid, res, arg1, arg2, tcp_socket);
+        close(tcp_socket);
         return;
     }
     sscanf(command, "%s %s %[^\n]", arg1, arg2, arg3);
@@ -257,28 +205,35 @@ void parse(int udp_socket, char* command, char* uid, char* password, char* gid){
         //User list (TCP): (nada)
         if (!(has_correct_arg_sizes(arg1, 0, arg2, 0) && check_login(uid) && check_select(gid)))
             return;
-        ulist(IP_ADDRESS, gid, res);
+        ulist(IP_ADDRESS, PORT, gid, res, tcp_socket);
+        close(tcp_socket);
     } else if (!strcmp(name, "retrieve") || !strcmp(name, "r")){
         //Retrieve (TCP): MID
         if (!(has_correct_arg_sizes(arg1, 4, arg2, 0) && digits_only(arg1, "message ID")))
             return;
-        retrieve(IP_ADDRESS, gid, uid, arg1, res);
+        retrieve(IP_ADDRESS, PORT, gid, uid, arg1, res, tcp_socket);
+        close(tcp_socket);
     } else
         puts(INVALID_CMD);
 }
 
-int main(int argc, char* argv[]){
-    char command[SIZE], uid[6], password[9], gid[3];
-    if (!parse_argv(argc, argv)){
+int main(int argc, char** argv){
+    char command[SIZE], uid[6], password[9], gid[3], IP_ADDRESS[512], PORT[6];
+    if (!parse_argv(IP_ADDRESS, PORT, argc, argv)){
         puts(ARGV_ERR);
         exit(EXIT_FAILURE);
     }
-    int udp_socket = create_socket(SOCK_DGRAM);
+    struct addrinfo *res;
+    int udp_socket = create_socket(&res, SOCK_DGRAM, IP_ADDRESS, PORT), tcp_socket;
     bzero(uid, 6);
     bzero(password, 9);
     bzero(gid, 3);
+    if (mkdir("DOWNLOADS", 0700) == -1 && access("DOWNLOADS", F_OK)){
+        puts(DOWNLOADS_FAIL);
+        exit(EXIT_FAILURE);
+    }
     while(fgets(command, SIZE, stdin)){
-        parse(udp_socket, command, uid, password, gid);
+        parse(udp_socket, tcp_socket, res, IP_ADDRESS, PORT, command, uid, password, gid);
         bzero(command, SIZE);
         puts("----------------------------------------");
     }

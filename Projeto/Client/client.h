@@ -9,25 +9,17 @@
 #include <arpa/inet.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
 #include <ctype.h>
+#include <dirent.h>
 
-#define SIZE 512
-#define BUF_SIZE 128
-#define GROUPS 3275
-#define USERS 600033
-#define ARGV_ERR "You are running the program with incorrect arguments. Please try again!"
-#define INVALID_CMD "Invalid command. Please try again!"
-#define NO_ALPH0 "The argument doesn't contain only alphanumerical characters, - or _. Please try again!"
-#define NO_ALPH1 "The argument doesn't contain only alphanumerical characters. Please try again!"
-#define NO_ALPH2 "The argument doesn't contain only alphanumerical characters, ., - or _. Please try again!"
+#define DOWNLOADS_FAIL "Failed creating the DOWNLOADS folder. Please try again!"
 #define NO_LOGIN "Not logged in. Please try again!"
 #define NO_GROUP "No group selected. Please try again!"
 #define GEN_ERR "The server returned an error. Please try again!"
 #define CONN_ERR "There was an error conecting to the server. Please try again!"
-#define SEND_ERR "There was an error sending information from the server. Please try again!"
-#define RECV_ERR "There was an error receiving information from the server. Please try again!"
+#define SEND_ERR "There was an error sending information to the server. Please try again!"
 #define INFO_ERR "There was an error collecting information from the server. Please try again!"
-#define SOCK_FAIL "Failed creating the socket!"
 #define ADDR_FAIL "Failed getting the address' information!"
 #define REG_USER_SUC "You have registered successfully!"
 #define REG_USER_DUP "A user with this uid has already been registered. Please try another one!"
@@ -49,26 +41,27 @@
 #define NO_USERS "There are no users registered to this group."
 #define NO_GROUPS "There are no registered groups."
 #define NO_FILE "Input path invalid. Please try again!"
-#define ERR_FORMAT "Incorrect text format: You must add quotation marks (\") around the text. Please try again!"
+#define FORMAT_ERR "Incorrect text format: You must add quotation marks (\") around the text. Please try again!"
 #define NO_TEXT "The text argument is empty. Please try again!"
 #define BIG_TEXT "The text message is too big. Please try again!"
-#define ERR_FNAME_LEN "Your file name is over 24 characters. Please try again!"
+#define FNAME_LEN_ERR "Your file name is over 24 characters. Please try again!"
 #define INV_FILE "The argument does not match a valid file. Please try again!"
 #define MSG_SEND_FAIL "Message sent unsuccessfully. Please confirm that you're logged in and subscribed to this group, then try again!"
+#define FILE_DOWN_SUC "\nFile successfully downloaded!"
+#define FILE_UP_SUC "\nFile successfully uploaded!"
 #define NO_MSGS "There are no messages in this group."
 #define RTV_ERR "There was a problem retrieving the messages. Please confirm that you're logged in and subscribed to this group and try again!"
 #define ERR_FILE "There was a problem writing to this file. Please confirm that you have writing permissions for it and try again!"
 
 /* -------------------- client_main -------------------- */
-int is_alphanumerical(char* s, int flag);
-int is_correct_arg_size(char* arg, int size);
-int has_correct_arg_sizes(char* arg1, int size1, char* arg2, int size2);
-int digits_only(char *s, char* id);
 int check_login(char *uid);
 int check_select(char *gid);
-void parse(int udp_socket, char* command, char* uid, char* password, char* gid);
-int main(int argc, char* argv[]);
-int create_socket(int socktype);
+int create_socket(struct addrinfo **res, int socktype, char* IP_ADDRESS, char* PORT);
+int get_IP(char* IP_ADDRESS);
+int get_local_IP(char* IP_ADDRESS);
+int parse_argv(char* IP_ADDRESS, char* PORT, int argc, char** argv);
+void parse(int udp_socket, int tcp_socket, struct addrinfo *res, char* IP_ADDRESS, char* PORT, char* command, char* uid, char* password, char* gid);
+int main(int argc, char** argv);
 
 /* -------------------- client_udp -------------------- */
 int udp_send_and_receive(int fd, struct addrinfo *res, char* message, char* buffer, int size);
@@ -83,11 +76,13 @@ void my_groups(char* IP_ADDRESS, char* uid, struct addrinfo *res, int fd);
 void show_groups(char* ptr, char* groups);
 
 /* -------------------- client_tcp -------------------- */
-int tcp_connect(struct addrinfo *res);
-int tcp_send(char* message, int size);
-int tcp_read(char* buffer, ssize_t size);
-void ulist(char* IP_ADDRESS, char* gid, struct addrinfo *res);
-void post(char* IP_ADDRESS, char* gid, char* uid, struct addrinfo *res, char *text, char *fname);
-void retrieve(char* IP_ADDRESS, char* gid, char* uid, char* MID, struct addrinfo *res);
+int tcp_connect(char* IP_ADDRESS, char* PORT, int* fd, struct addrinfo *res);
+int tcp_send(int fd, char* message, int size);
+int tcp_read(int fd, char* buffer, ssize_t size);
+int read_space(int tcp_socket);
+void ulist(char* IP_ADDRESS, char* PORT, char* gid, struct addrinfo *res, int tcp_socket);
+int upload_file(int tcp_socket, char* fname);
+void post(char* IP_ADDRESS, char* PORT, char* gid, char* uid, struct addrinfo *res, char *text, char *fname, int tcp_socket);
+void retrieve(char* IP_ADDRESS, char* PORT, char* gid, char* uid, char* MID, struct addrinfo *res, int tcp_socket);
 
 #endif

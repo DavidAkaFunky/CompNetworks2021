@@ -1,69 +1,12 @@
 #include "server.h"
+#include "../common.h"
 
-char PORT[6];
-bool verbose = false;
-int udp_socket, tcp_socket;
-struct addrinfo hints, *res;
 struct sockaddr_in serv_addr;
-socklen_t addrlen;
-ssize_t n, nread;
 
 
-int digits_only(char *s, char* id){
-    while (*s) {
-        if (!isdigit(*s)){
-            printf("The %s has a non-numeric character. Please try again!\n", id);
-            return 0;
-        }
-        s++;
-    }
-    return 1;
-}
-
-int is_alphanumerical(char* s, int flag){
-    while (*s) {
-        if (!(isalpha(*s) || isdigit(*s))){
-            switch (flag){
-                case 0:
-                    if(!(*s == 32)){
-                        puts(NO_ALPH0);
-                        return 0;
-                    }
-                    break;
-                case 1:
-                    if(!(*s == 45 || *s == 95)){
-                        puts(NO_ALPH1);
-                        return 0;
-                    }
-                    break;
-                case 2:
-                    if(!(*s == 45 || *s == 46 || *s == 95)){
-                        puts(NO_ALPH2);
-                        return 0;
-                    }
-                    break;
-            }
-        }
-        s++;
-    }
-    return 1;
-}
-
-int is_correct_arg_size(char* arg, int size){
-    if (strlen(arg) != size){
-        printf("%s's size is not %d. Please try again!\n", arg, size);
-        return 0;
-    }
-    return 1;
-}
-
-int has_correct_arg_sizes(char* arg1, int size1, char* arg2, int size2){
-    return is_correct_arg_size(arg1, size1) && is_correct_arg_size(arg2, size2);
-}
-
-int recv_udp(char* message){
-    addrlen = sizeof(serv_addr);
-    nread = recvfrom(udp_socket, message, 128, 0, (struct sockaddr*)&serv_addr, &addrlen);
+int recv_udp(int udp_socket, char* message){
+    socklen_t addrlen = sizeof(serv_addr);
+    ssize_t nread = recvfrom(udp_socket, message, 128, 0, (struct sockaddr*)&serv_addr, &addrlen);
     if (nread == -1){
         puts(RECV_ERR);
         return -1;
@@ -71,10 +14,10 @@ int recv_udp(char* message){
     return nread;
 }
 
-int send_udp(char* message){
+int send_udp(int udp_socket, char* message){
     printf("Message: %s\n", message);
-    addrlen = sizeof(serv_addr);
-    n = sendto(udp_socket, message, strlen(message), 0, (struct sockaddr*)&serv_addr,addrlen);
+    socklen_t addrlen = sizeof(serv_addr);
+    ssize_t n = sendto(udp_socket, message, strlen(message), 0, (struct sockaddr*)&serv_addr,addrlen);
     if (n == -1){
         puts(SEND_ERR);
         return -1;
@@ -82,32 +25,33 @@ int send_udp(char* message){
     return n;
 }
 
-int recv_tcp(char* message){
+int recv_tcp(int tcp_socket, char* message){
     return -1;
 }
 
-int send_tcp(char* message){
+int send_tcp(int tcp_socket, char* message){
     return -1;
 }
 
-int socket_bind(int socktype){
+int socket_bind(int socktype, char* PORT, struct addrinfo** res){
     int sockfd = socket(AF_INET,socktype,0);
     if (sockfd == -1){
         puts(SOCK_FAIL);
         close(sockfd);
         exit(EXIT_FAILURE);
     }
+    struct addrinfo hints;
     bzero(&hints, sizeof hints);
     hints.ai_family = AF_INET;
     hints.ai_socktype = socktype;
     hints.ai_flags= AI_PASSIVE;
     
-    if (getaddrinfo(NULL, PORT, &hints, &res) != 0){
+    if (getaddrinfo(NULL, PORT, &hints, res) != 0){
         puts(SOCK_FAIL);
         close(sockfd);
         exit(EXIT_FAILURE);
     }
-    if (bind(sockfd,res->ai_addr,res->ai_addrlen) == -1){
+    if (bind(sockfd,(*res)->ai_addr,(*res)->ai_addrlen) == -1){
         puts(SOCK_FAIL);
         close(sockfd);
         exit(EXIT_FAILURE);
@@ -115,13 +59,13 @@ int socket_bind(int socktype){
     return sockfd;
 }
 
-int parse_argv(int argc, char* argv[]){
+int parse_argv(int argc, char** argv, char* PORT, bool* verbose){
     if (argc < 1 || argc > 4 || strcmp(argv[0], "./DS"))
         return 0;
     bzero(PORT, 6);
     if (argc >= 2){
         if (!strcmp(argv[1], "-v")){
-            verbose = true;
+            *verbose = true;
             if (argc > 2){
                 if (!strcmp(argv[2], "-p") && digits_only(argv[3], "port number")){
                     strcpy(PORT, argv[3]);
@@ -136,7 +80,7 @@ int parse_argv(int argc, char* argv[]){
             strcpy(PORT, argv[2]);
             if (argc > 3){
                 if (!strcmp(argv[3], "-v")){
-                    verbose = true;
+                    *verbose = true;
                     return 1;
                 }
                 return 0;
@@ -151,7 +95,7 @@ int parse_argv(int argc, char* argv[]){
     return 0;
 }
 
-int parse(char* message, char* response){
+int parse(int udp_socket, char* message, char* response){
     char name[4];
     char arg1[SIZE];
     char arg2[SIZE];
@@ -162,45 +106,23 @@ int parse(char* message, char* response){
     bzero(arg2, SIZE);
     bzero(arg3, SIZE);
     bzero(arg4, SIZE);
-    if (sscanf(message, "%s ", name) < 1){
+    sscanf(message, "%s %s %s %s %[^\n]", name, arg1, arg2, arg3, arg4);
+    if (strcmp(arg4, "")){
         puts(INVALID_CMD);
         return 0;
     }
-    message += strlen(name) + 1;
-    //puts(name);
-    /*if (!strcmp(name, "PST")){
-        //Post (TCP): "text" (Verificar as aspas, talvez?), [FName] (Verificar os parênteses, talvez?)  //e preciso mandar tbm o argumento 3 no caso do post, que vai ser o resto do text caso haja espacos
-        int format = sscanf(command, "\"%[^\"]\" %s %[^\n]", arg1, arg2, arg3);
-        if (strcmp(arg3, "")){
-            puts("Wrong format! Too many arguments. Please try again!");
-            return;
-        }
-        if (format == -1){
-            puts(ERR_FORMAT);
-            return;
-        }
-        if (format == 0){
-            puts(NO_TEXT);
-            return;
-        }
-        //post(IP_ADDRESS, gid, uid, res, arg1, arg2);
-        return;
-    }*/
-    sscanf(message, "%s %s %s %[^\n]", arg1, arg2, arg3, arg4);
-    if (strcmp(arg4, ""))
-        return 0;
     if (!strcmp(name, "REG")){        
         //Register (UDP): uid (tam 5), pass (tam 8)
-        return !strcmp(arg3, "") && reg(arg1, arg2);
+        return !strcmp(arg3, "") && reg(udp_socket, arg1, arg2);
     } else if (!strcmp(name, "UNR")){
         //Unegister (UDP): uid (tam 5), pass (tam 8)
-        return !strcmp(arg3, "") && unreg(arg1, arg2);
+        return !strcmp(arg3, "") && unreg(udp_socket, arg1, arg2);
     } else if (!strcmp(name, "LOG")){
         //Login (UDP): uid (tam 5), pass (tam 8)
-        return !strcmp(arg3, "") && login(arg1, arg2);
+        return !strcmp(arg3, "") && login(udp_socket, arg1, arg2);
     } else if (!strcmp(name, "OUT")){
         //Logout (UDP): (nada)
-        return !strcmp(arg3, "") && logout(arg1,arg2);
+        return !strcmp(arg3, "") && logout(udp_socket, arg1,arg2);
     } /*else if (!strcmp(name, "exit")){
         //Exit (TCP): (nada)
         if (!has_correct_arg_sizes(arg1, 0, arg2, 0))                   //o server nao recebe mensagem de exit (?)
@@ -208,16 +130,16 @@ int parse(char* message, char* response){
         exit(EXIT_SUCCESS);*/
     else if (!strcmp(name, "GLS")){
         //Groups (UDP): (nada)
-        return !strcmp(arg1, "") && groups();
+        return !strcmp(arg1, "") && groups(udp_socket);
     } else if (!strcmp(name, "GSR")){
         //Subscribe (UDP): gid (tam 2), group_name (tam 24)
-        return subscribe(arg1, arg2, arg3);
+        return subscribe(udp_socket, arg1, arg2, arg3);
     } else if (!strcmp(name, "GUR")){
         //Unsubscribe (UDP): gid (tam 2)
-        return unsubscribe(arg1, arg2);
+        return unsubscribe(udp_socket, arg1, arg2);
     } else if (!strcmp(name, "GLM")){
         //My groups (UDP): (nada)
-        return !strcmp(arg2, "") && my_groups(arg1);
+        return !strcmp(arg2, "") && my_groups(udp_socket, arg1);
     } else if (!strcmp(name, "ULS")){
         //User list (TCP): (nada)
         /*if (!(has_correct_arg_sizes(arg1, 0, arg2, 0) && check_login(uid) && check_select(gid)))
@@ -232,25 +154,28 @@ int parse(char* message, char* response){
         puts(INVALID_CMD);
 }
 
-int main(int argc, char* argv[]){
-    if (!parse_argv(argc, argv)){           // ./DS -v -p 58026 funciona com este, algumas verificacoes nao estao bem alteradas
+int main(int argc, char** argv){
+    bool verbose = false;
+    char PORT[6];
+    if (!parse_argv(argc, argv, PORT, &verbose)){           // ./DS -v -p 58026 funciona com este, algumas verificacoes nao estao bem alteradas
         puts(ARGV_ERR);
         exit(EXIT_FAILURE);
     }
     if (mkdir("USERS", 0700) == -1 && access("USERS", F_OK)){
-        printf(USERS_FAIL);
+        puts(USERS_FAIL);
         exit(EXIT_FAILURE);
     }
     if (mkdir("GROUPS", 0700) == -1 && access("GROUPS", F_OK)){
-        printf(GROUPS_FAIL);
+        puts(GROUPS_FAIL);
         exit(EXIT_FAILURE);
     }
+    
     //Criacao e bind dos sockets udp e tcp do servidor
-    udp_socket = socket_bind(SOCK_DGRAM);
-    tcp_socket = socket_bind(SOCK_STREAM);
+    struct addrinfo *res;
+    int udp_socket = socket_bind(SOCK_DGRAM, PORT, &res);
+    int tcp_socket = socket_bind(SOCK_STREAM, PORT, &res);
     listen(tcp_socket, 10);
-    char message[BUF_SIZE];
-    char response[BUF_SIZE];
+    char message[BUF_SIZE], response[BUF_SIZE];
     fd_set rset;
     int conn_fd;
 
@@ -276,25 +201,25 @@ int main(int argc, char* argv[]){
             close(tcp_socket);
             bzero(message, sizeof(message));
             bzero(response, sizeof(response));
-            recv_tcp(message);
+            recv_tcp(tcp_socket, message);
             if (verbose){
                 printf("Message from TCP client:\n%s\n", message);
                 puts("----------------------------------------");
             }
-            send_tcp("ERR\n");
+            send_tcp(tcp_socket, "ERR\n");
             close(conn_fd);
         }
         // if udp socket is readable receive the message.
         if (FD_ISSET(udp_socket, &rset)) {
             bzero(message, sizeof(message));
             bzero(response, sizeof(response));
-            recv_udp(message);
+            recv_udp(udp_socket, message);
             if (verbose){
                 printf("Message from UDP client:\n%s\n", message);
                 puts("----------------------------------------");
             }
-            if (!parse(message, response))
-                send_udp("ERR\n");
+            if (!parse(udp_socket, message, response))
+                send_udp(udp_socket, "ERR\n");
         }
         
     }
