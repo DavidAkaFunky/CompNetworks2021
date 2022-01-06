@@ -1,11 +1,13 @@
 #include "client.h"
 #include "../common.h"
 
-int check_login(char *uid){
-    if (strlen(uid) != 5){
+int check_login(char *uid, bool log){
+    if (strlen(uid) != 5 && log){
         puts(NO_LOGIN);
         return 0;
     }
+    else if (strlen(uid) != 5 && !log)
+        return 0;
     return 1;
 }
 
@@ -150,10 +152,14 @@ void parse(int udp_socket, int tcp_socket, struct addrinfo *res, char* IP_ADDRES
         unreg(IP_ADDRESS, arg1, arg2, res, udp_socket);
     } else if (!strcmp(name, "login")){
         //Login (UDP): uid (tam 5), pass (tam 8)
-        if (login(IP_ADDRESS, arg1, arg2, res, udp_socket) == 1){
-            strcpy(uid, arg1);
-            strcpy(password, arg2);
+        if (!check_login(uid, false)){
+            if (login(IP_ADDRESS, arg1, arg2, res, udp_socket) == 1){
+                strcpy(uid, arg1);
+                strcpy(password, arg2);
+            }
+            return;
         }
+        puts(LOGIN_DOUBLE);
     } else if (!strcmp(name, "logout")){
         //Logout (UDP): (nada)
         if (!(has_correct_arg_sizes(arg1, 0, arg2, 0) && is_correct_arg_size(uid, 5)))
@@ -162,7 +168,7 @@ void parse(int udp_socket, int tcp_socket, struct addrinfo *res, char* IP_ADDRES
             bzero(uid, 6);
     } else if (!strcmp(name, "showuid") || !strcmp(name, "su")){
         //displays uid : (nada)
-        if (!(has_correct_arg_sizes(arg1, 0, arg2, 0) && check_login(uid)))
+        if (!(has_correct_arg_sizes(arg1, 0, arg2, 0) && check_login(uid, true)))
             return;
         printf("The uid selected is %s.\n",uid);
     } else if (!strcmp(name, "exit")){
@@ -187,23 +193,23 @@ void parse(int udp_socket, int tcp_socket, struct addrinfo *res, char* IP_ADDRES
         unsubscribe(IP_ADDRESS, uid, arg1, res, udp_socket);
     } else if (!strcmp(name, "my_groups") || !strcmp(name, "mgl")){
         //My groups (UDP): (nada)
-        if (!(check_login(uid) && has_correct_arg_sizes(arg1, 0, arg2, 0)))
+        if (!(check_login(uid, true) && has_correct_arg_sizes(arg1, 0, arg2, 0)))
             return;
         my_groups(IP_ADDRESS, uid, res, udp_socket);
     } else if (!strcmp(name, "select") || !strcmp(name, "sag")){
         //Select: gid (tam 2)
-        if (!(has_correct_arg_sizes(arg1, 2, arg2, 0) && digits_only(arg1,"gid") && check_login(uid)))
+        if (!(has_correct_arg_sizes(arg1, 2, arg2, 0) && digits_only(arg1,"gid") && check_login(uid, true)))
             return;
         strcpy(gid, arg1);
         printf("Group %s sucessfully selected.\n", gid);
     } else if (!strcmp(name, "showgid") || !strcmp(name, "sg")){
         //displays selected group : (nada)
-        if (!(has_correct_arg_sizes(arg1, 0, arg2, 0) && check_login(uid) && check_select(gid)))
+        if (!(has_correct_arg_sizes(arg1, 0, arg2, 0) && check_login(uid, true) && check_select(gid)))
             return;
         printf("The group selected is %s.\n", gid);
     } else if (!strcmp(name, "ulist") || !strcmp(name, "ul")){
         //User list (TCP): (nada)
-        if (!(has_correct_arg_sizes(arg1, 0, arg2, 0) && check_login(uid) && check_select(gid)))
+        if (!(has_correct_arg_sizes(arg1, 0, arg2, 0) && check_login(uid, true) && check_select(gid)))
             return;
         ulist(IP_ADDRESS, PORT, gid, res, tcp_socket);
         close(tcp_socket);

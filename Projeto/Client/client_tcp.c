@@ -194,7 +194,7 @@ void post(char* IP_ADDRESS, char* PORT, char* gid, char* uid, struct addrinfo *r
         puts(BIG_TEXT);
         return;
     }
-    if (!(is_alphanumerical(file_name, 2) && check_login(uid) && check_select(gid)))
+    if (!(is_alphanumerical(file_name, 2) && check_login(uid, true) && check_select(gid)))
         return;
     int fname_strlen = strlen(file_name);
     char message[259];

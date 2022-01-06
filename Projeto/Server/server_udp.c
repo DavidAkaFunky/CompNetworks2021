@@ -41,7 +41,7 @@ int unreg(int udp_socket, char* uid, char* pass){
     bzero(path, 12);
     sprintf(path,"USERS/%s",uid);
 
-    if (!(digits_only(uid,"uid") && has_correct_arg_sizes(uid, 5, pass, 8) && is_alphanumerical(pass, 0)))
+    if (!(digits_only(uid,"uid") && has_correct_arg_sizes(uid, 5, pass, 8) && is_alphanumerical(pass, 0)))    // acho que deveria ser NOK
         return 0;
 
     if (access(path, F_OK) == -1){    //user doesnt exist
@@ -103,7 +103,6 @@ int login(int udp_socket, char* uid, char* pass){
     sprintf(file_path,"%s/%s_login.txt",path,uid);
     fp = fopen(file_path, "w");
     if (!fp){
-        puts("Here2");
         send_udp(udp_socket, "RLO NOK\n");
         return 1;
     }

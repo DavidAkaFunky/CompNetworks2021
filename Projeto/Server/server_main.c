@@ -25,12 +25,37 @@ int send_udp(int udp_socket, char* message){
     return n;
 }
 
-int recv_tcp(int tcp_socket, char* message){
-    return -1;
+int recv_tcp(int conn_fd, char* message, int size){
+    ssize_t nleft = size, nread;
+    char *ptr = message;
+    while (nleft > 0){
+        nread = read(conn_fd, ptr, nleft);
+        if (nread == -1){
+            puts(RECV_ERR);
+            return -1;
+        }
+        else if (nread == 0)
+            break;
+        nleft -= nread;
+        ptr += nread;
+    }
+    return 1;
 }
 
-int send_tcp(int tcp_socket, char* message){
-    return -1;
+int send_tcp(int conn_fd, char* response, int size){
+    ssize_t nleft = size, nwritten;
+    char *ptr = response;
+    //Caso o servidor não aceite a mensagem completa, manda por packages
+    while (nleft > 0){
+        nwritten = write(conn_fd, ptr, nleft);
+        if (nwritten <= 0){
+            puts(SEND_ERR);
+            return -1;
+        }
+        nleft -= nwritten;
+        ptr += nwritten;  
+    }
+    return 1;
 }
 
 int socket_bind(int socktype, char* PORT, struct addrinfo** res){
@@ -95,7 +120,7 @@ int parse_argv(int argc, char** argv, char* PORT, bool* verbose){
     return 0;
 }
 
-int parse(int udp_socket, char* message, char* response){
+int parse_udp(int udp_socket, char* message){
     char name[4];
     char arg1[SIZE];
     char arg2[SIZE];
@@ -123,12 +148,7 @@ int parse(int udp_socket, char* message, char* response){
     } else if (!strcmp(name, "OUT")){
         //Logout (UDP): (nada)
         return !strcmp(arg3, "") && logout(udp_socket, arg1,arg2);
-    } /*else if (!strcmp(name, "exit")){
-        //Exit (TCP): (nada)
-        if (!has_correct_arg_sizes(arg1, 0, arg2, 0))                   //o server nao recebe mensagem de exit (?)
-            return;
-        exit(EXIT_SUCCESS);*/
-    else if (!strcmp(name, "GLS")){
+    } else if (!strcmp(name, "GLS")){
         //Groups (UDP): (nada)
         return !strcmp(arg1, "") && groups(udp_socket);
     } else if (!strcmp(name, "GSR")){
@@ -140,24 +160,35 @@ int parse(int udp_socket, char* message, char* response){
     } else if (!strcmp(name, "GLM")){
         //My groups (UDP): (nada)
         return !strcmp(arg2, "") && my_groups(udp_socket, arg1);
-    } else if (!strcmp(name, "ULS")){
+    } else
+        puts(INVALID_CMD);
+}
+
+int parse_tcp(int conn_fd, char* message){
+    if (!strcmp(message, "ULS ")){
         //User list (TCP): (nada)
         /*if (!(has_correct_arg_sizes(arg1, 0, arg2, 0) && check_login(uid) && check_select(gid)))
-            return;
-        ulist(IP_ADDRESS, gid, res);*/
-    } else if (!strcmp(name, "RTV")){
+            return;*/
+        return ulist(conn_fd);
+    } else if (!strcmp(message, "PST ")){
+        //Post (TCP)
+        //return post(conn_fd);
+    } else if (!strcmp(message, "RTV ")){
         //Retrieve (TCP): MID
         /*if (!(has_correct_arg_sizes(arg1, 4, arg2, 0) && digits_only(arg1, "message ID")))
             return;
-        retrieve(IP_ADDRESS, gid, uid, arg1, res);*/
-    } else
+        return retrieve(conn_fd);*/
+    
+    } else {
         puts(INVALID_CMD);
+        return -1;
+    }
 }
 
 int main(int argc, char** argv){
     bool verbose = false;
     char PORT[6];
-    if (!parse_argv(argc, argv, PORT, &verbose)){           // ./DS -v -p 58026 funciona com este, algumas verificacoes nao estao bem alteradas
+    if (!parse_argv(argc, argv, PORT, &verbose)){
         puts(ARGV_ERR);
         exit(EXIT_FAILURE);
     }
@@ -175,7 +206,7 @@ int main(int argc, char** argv){
     int udp_socket = socket_bind(SOCK_DGRAM, PORT, &res);
     int tcp_socket = socket_bind(SOCK_STREAM, PORT, &res);
     listen(tcp_socket, 10);
-    char message[BUF_SIZE], response[BUF_SIZE];
+    char message[BUF_SIZE];//, response[BUF_SIZE];
     fd_set rset;
     int conn_fd;
 
@@ -200,25 +231,26 @@ int main(int argc, char** argv){
             conn_fd = accept(tcp_socket, (struct sockaddr*)&serv_addr, &len);
             close(tcp_socket);
             bzero(message, sizeof(message));
-            bzero(response, sizeof(response));
-            recv_tcp(tcp_socket, message);
+            //bzero(response, sizeof(response));
+            recv_tcp(conn_fd, message, 4);
             if (verbose){
                 printf("Message from TCP client:\n%s\n", message);
                 puts("----------------------------------------");
             }
-            send_tcp(tcp_socket, "ERR\n");
+            if (!parse_tcp(conn_fd, message))
+                send_tcp(conn_fd, "ERR\n", 4);
             close(conn_fd);
         }
         // if udp socket is readable receive the message.
         if (FD_ISSET(udp_socket, &rset)) {
             bzero(message, sizeof(message));
-            bzero(response, sizeof(response));
+            //bzero(response, sizeof(response)); //necessario? nao é usado...
             recv_udp(udp_socket, message);
             if (verbose){
                 printf("Message from UDP client:\n%s\n", message);
                 puts("----------------------------------------");
             }
-            if (!parse(udp_socket, message, response))
+            if (!parse_udp(udp_socket, message))
                 send_udp(udp_socket, "ERR\n");
         }
         

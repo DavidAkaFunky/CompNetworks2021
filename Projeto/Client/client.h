@@ -12,6 +12,7 @@
 #include <sys/stat.h>
 #include <ctype.h>
 #include <dirent.h>
+#include <stdbool.h>
 
 #define DOWNLOADS_FAIL "Failed creating the DOWNLOADS folder. Please try again!"
 #define NO_LOGIN "Not logged in. Please try again!"
@@ -29,6 +30,7 @@
 #define LOGIN_SUC "You are now logged in!"
 #define LOGIN_FAIL "Log in unsuccessful. Please confirm that this user exists and try again!"
 #define LOGIN_ERR "There was an error logging in. Please try again!"
+#define LOGIN_DOUBLE "You are currently logged in. To login again please logout first."
 #define LOGOUT_SUC "You have logged out succesfully."
 #define LOGOUT_FAIL "Log out unsuccessful."
 #define GRP_FAIL "The group ID does not exist. Please try again!"
@@ -54,7 +56,7 @@
 #define ERR_FILE "There was a problem writing to this file. Please confirm that you have writing permissions for it and try again!"
 
 /* -------------------- client_main -------------------- */
-int check_login(char *uid);
+int check_login(char *uid, bool log);
 int check_select(char *gid);
 int create_socket(struct addrinfo **res, int socktype, char* IP_ADDRESS, char* PORT);
 int get_IP(char* IP_ADDRESS);
