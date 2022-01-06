@@ -1,6 +1,7 @@
 #include "client.h"
 #include "../common.h"
 
+
 int tcp_socket;
 
 int tcp_connect(char* IP_ADDRESS, char* PORT, int* fd, struct addrinfo *res){
@@ -49,6 +50,7 @@ int tcp_read(char* buffer, ssize_t size){
     return 1;
 }
 
+
 int read_space(){
     char end[2];
     bzero(end, 2);
@@ -94,6 +96,7 @@ void ulist(char* IP_ADDRESS, char* PORT, char* gid, struct addrinfo *res){
         if (!strcmp("\n", end)){
             puts(GRP_FAIL);
             return;
+
         }
         close(tcp_socket);  
         return;
@@ -109,6 +112,7 @@ void ulist(char* IP_ADDRESS, char* PORT, char* gid, struct addrinfo *res){
             if (group_name[counter] == '\n' || group_name[counter] == ' '){
                 group_name[counter] = '\0';
                 if (!(counter > 0 && is_alphanumerical(group_name, 1))){
+
                     close(tcp_socket);
                     puts(INFO_ERR);
                     return;
@@ -116,6 +120,7 @@ void ulist(char* IP_ADDRESS, char* PORT, char* gid, struct addrinfo *res){
                 break;
             }
             if (counter == 25){
+
                 close(tcp_socket);
                 puts(INFO_ERR);
                 return;
@@ -127,6 +132,7 @@ void ulist(char* IP_ADDRESS, char* PORT, char* gid, struct addrinfo *res){
         printf("Group name: %s", group_name);
         if (group_name[counter] == '\n'){
             close(tcp_socket);
+
             puts(NO_USERS);
             return;
         }
@@ -258,6 +264,7 @@ void post(char* IP_ADDRESS, char* PORT, char* gid, char* uid, struct addrinfo *r
         return;
     }
     bzero(response, 5);
+
     nread = tcp_read(response, 4);
     if (nread == -1)
         return;
@@ -501,6 +508,7 @@ void retrieve(char* IP_ADDRESS, char* PORT, char* gid, char* uid, char* MID, str
             printf("Message ID: %s\nSent by: %s\nMessage size: %d\nMessage: %s", rtv_MID, rtv_uid, atoi(tsize)-1, text);
             bzero(end, 2);
             nread = tcp_read(end, 1);
+
             if (nread == -1)
                 return;
             if (!strcmp("\n", end)){
