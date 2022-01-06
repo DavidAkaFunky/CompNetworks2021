@@ -159,7 +159,7 @@ int parse_udp(int udp_socket, char* message){
         return subscribe(udp_socket, arg1, arg2, arg3);
     } else if (!strcmp(name, "GUR")){
         //Unsubscribe (UDP): gid (tam 2)
-        return unsubscribe(udp_socket, arg1, arg2);
+        return !strcmp(arg3, "") && unsubscribe(udp_socket, arg1, arg2);
     } else if (!strcmp(name, "GLM")){
         //My groups (UDP): (nada)
         return !strcmp(arg2, "") && my_groups(udp_socket, arg1);

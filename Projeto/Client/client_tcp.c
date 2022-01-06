@@ -31,9 +31,9 @@ int tcp_read(int fd, char* buffer, ssize_t size){
     ssize_t nleft = size, nread;
     char *ptr = buffer;
     while (nleft > 0){
-        TimerON(fd);
+        timer_on(fd);
         nread = read(fd, ptr, nleft);
-        TimerOFF(fd);
+        timer_off(fd);
         if (nread == -1){
             puts(RECV_ERR);
             return -1;

@@ -3,7 +3,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 
-int TimerON(int sd){
+int timer_on(int sd){
     struct timeval tmout;
     
     memset((char *)&tmout,0,sizeof(tmout)); /* clear time structure */
@@ -13,7 +13,7 @@ int TimerON(int sd){
 }
 
 
-int TimerOFF(int sd){
+int timer_off(int sd){
     struct timeval tmout;
     memset((char *)&tmout,0,sizeof(tmout)); /* clear time structure */
     return(setsockopt(sd, SOL_SOCKET, SO_RCVTIMEO,
@@ -22,12 +22,11 @@ int TimerOFF(int sd){
 
 
 int check_login(char *uid, bool log){
-    if (strlen(uid) != 5 && log){
-        puts(NO_LOGIN);
+    if (strlen(uid) != 5){
+        if (log)
+            puts(NO_LOGIN);
         return 0;
     }
-    else if (strlen(uid) != 5 && !log)
-        return 0;
     return 1;
 }
 
@@ -206,6 +205,8 @@ void parse(int udp_socket, int tcp_socket, struct addrinfo *res, char* IP_ADDRES
         groups(IP_ADDRESS, res, udp_socket);
     } else if (!strcmp(name, "subscribe") || !strcmp(name, "s")){
         //Subscribe (UDP): gid (tam 2), group_name (tam 24)
+        if (!check_login(uid, true))
+            return;
         subscribe(IP_ADDRESS, uid, arg1, arg2, res, udp_socket);
     } else if (!strcmp(name, "unsubscribe") || !strcmp(name, "u")){
         //Unsubscribe (UDP): gid (tam 2)
@@ -236,7 +237,7 @@ void parse(int udp_socket, int tcp_socket, struct addrinfo *res, char* IP_ADDRES
         close(tcp_socket);
     } else if (!strcmp(name, "retrieve") || !strcmp(name, "r")){
         //Retrieve (TCP): MID
-        if (!(has_correct_arg_sizes(arg1, 4, arg2, 0) && digits_only(arg1, "message ID")))
+        if (!(has_correct_arg_sizes(arg1, 4, arg2, 0) && digits_only(arg1, "message ID") && check_login(uid, true) && check_select(gid)))
             return;
         retrieve(IP_ADDRESS, PORT, gid, uid, arg1, res, tcp_socket);
         close(tcp_socket);

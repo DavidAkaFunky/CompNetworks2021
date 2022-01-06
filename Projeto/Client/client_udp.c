@@ -11,9 +11,9 @@ int udp_send_and_receive(int fd, struct addrinfo *res, char* message, char* buff
     }
     struct sockaddr_in addr;
 	socklen_t addrlen = sizeof(addr);
-    TimerON(fd);
+    timer_on(fd);
 	bytes = recvfrom(fd, buffer, size, 0, (struct sockaddr*) &addr, &addrlen);
-    TimerOFF(fd);
+    timer_off(fd);
     if (bytes == -1){
         puts(RECV_ERR);
         return -1;
