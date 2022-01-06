@@ -1,0 +1,8 @@
+{
+    "files.associations": {
+        "types.h": "c",
+        "server.h": "c",
+        "*.tcc": "c",
+        "fstream": "c"
+    }
+}
