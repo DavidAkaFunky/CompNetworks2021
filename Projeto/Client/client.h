@@ -81,12 +81,12 @@ void show_groups(char* ptr, char* groups);
 
 /* -------------------- client_tcp -------------------- */
 int tcp_connect(char* IP_ADDRESS, char* PORT, int* fd, struct addrinfo *res);
-int tcp_send(int fd, char* message, int size);
-int tcp_read(int fd, char* buffer, ssize_t size);
-int read_space(int tcp_socket);
-void ulist(char* IP_ADDRESS, char* PORT, char* gid, struct addrinfo *res, int tcp_socket);
-int upload_file(int tcp_socket, char* fname);
-void post(char* IP_ADDRESS, char* PORT, char* gid, char* uid, struct addrinfo *res, char *text, char *fname, int tcp_socket);
-void retrieve(char* IP_ADDRESS, char* PORT, char* gid, char* uid, char* MID, struct addrinfo *res, int tcp_socket);
+int tcp_send(char* message, int size);
+int tcp_read(char* buffer, ssize_t size);
+int read_space();
+void ulist(char* IP_ADDRESS, char* PORT, char* gid, struct addrinfo *res);
+int upload_file(char* fname);
+void post(char* IP_ADDRESS, char* PORT, char* gid, char* uid, struct addrinfo *res, char *text, char *fname);
+void retrieve(char* IP_ADDRESS, char* PORT, char* gid, char* uid, char* MID, struct addrinfo *res);
 
 #endif

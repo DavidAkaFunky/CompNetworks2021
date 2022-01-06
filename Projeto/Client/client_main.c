@@ -155,8 +155,7 @@ void parse(int udp_socket, int tcp_socket, struct addrinfo *res, char* IP_ADDRES
             puts(NO_TEXT);
             return;
         }
-        post(IP_ADDRESS, PORT, gid, uid, res, arg1, arg2, tcp_socket);
-        close(tcp_socket);
+        post(IP_ADDRESS, PORT, gid, uid, res, arg1, arg2);
         return;
     }
     sscanf(command, "%s %s %[^\n]", arg1, arg2, arg3);
@@ -233,14 +232,12 @@ void parse(int udp_socket, int tcp_socket, struct addrinfo *res, char* IP_ADDRES
         //User list (TCP): (nada)
         if (!(has_correct_arg_sizes(arg1, 0, arg2, 0) && check_login(uid, true) && check_select(gid)))
             return;
-        ulist(IP_ADDRESS, PORT, gid, res, tcp_socket);
-        close(tcp_socket);
+        ulist(IP_ADDRESS, PORT, gid, res);
     } else if (!strcmp(name, "retrieve") || !strcmp(name, "r")){
         //Retrieve (TCP): MID
         if (!(has_correct_arg_sizes(arg1, 4, arg2, 0) && digits_only(arg1, "message ID") && check_login(uid, true) && check_select(gid)))
             return;
-        retrieve(IP_ADDRESS, PORT, gid, uid, arg1, res, tcp_socket);
-        close(tcp_socket);
+        retrieve(IP_ADDRESS, PORT, gid, uid, arg1, res);
     } else
         puts(INVALID_CMD);
 }
