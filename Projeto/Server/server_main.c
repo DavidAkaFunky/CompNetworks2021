@@ -1,6 +1,8 @@
 #include "server.h"
 #include "../common.h"
 
+
+
 struct sockaddr_in serv_addr;
 
 
@@ -83,6 +85,7 @@ int socket_bind(int socktype, char* PORT, struct addrinfo** res){
     }
     return sockfd;
 }
+
 
 int parse_argv(int argc, char** argv, char* PORT, bool* verbose){
     if (argc < 1 || argc > 4 || strcmp(argv[0], "./DS"))

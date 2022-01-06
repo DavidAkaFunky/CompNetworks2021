@@ -56,6 +56,8 @@
 #define ERR_FILE "There was a problem writing to this file. Please confirm that you have writing permissions for it and try again!"
 
 /* -------------------- client_main -------------------- */
+int TimerON(int sd);
+int TimerOFF(int sd);
 int check_login(char *uid, bool log);
 int check_select(char *gid);
 int create_socket(struct addrinfo **res, int socktype, char* IP_ADDRESS, char* PORT);

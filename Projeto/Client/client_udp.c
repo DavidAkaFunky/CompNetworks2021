@@ -1,6 +1,8 @@
 #include "client.h" 
 #include "../common.h"
 
+
+
 int udp_send_and_receive(int fd, struct addrinfo *res, char* message, char* buffer, int size){
     ssize_t bytes = sendto(fd, message, strlen(message), 0, res -> ai_addr, res -> ai_addrlen);
 	if (bytes == -1){
@@ -9,7 +11,9 @@ int udp_send_and_receive(int fd, struct addrinfo *res, char* message, char* buff
     }
     struct sockaddr_in addr;
 	socklen_t addrlen = sizeof(addr);
+    TimerON(fd);
 	bytes = recvfrom(fd, buffer, size, 0, (struct sockaddr*) &addr, &addrlen);
+    TimerOFF(fd);
     if (bytes == -1){
         puts(RECV_ERR);
         return -1;

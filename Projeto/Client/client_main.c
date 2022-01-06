@@ -1,5 +1,25 @@
 #include "client.h"
 #include "../common.h"
+#include <sys/types.h>
+#include <sys/socket.h>
+
+int TimerON(int sd){
+    struct timeval tmout;
+    
+    memset((char *)&tmout,0,sizeof(tmout)); /* clear time structure */
+    tmout.tv_sec=3; /* Wait for 15 sec for a reply from server. */
+    return(setsockopt(sd, SOL_SOCKET, SO_RCVTIMEO,
+    (struct timeval *)&tmout,sizeof(struct timeval)));
+}
+
+
+int TimerOFF(int sd){
+    struct timeval tmout;
+    memset((char *)&tmout,0,sizeof(tmout)); /* clear time structure */
+    return(setsockopt(sd, SOL_SOCKET, SO_RCVTIMEO,
+    (struct timeval *)&tmout,sizeof(struct timeval)));
+}
+
 
 int check_login(char *uid, bool log){
     if (strlen(uid) != 5 && log){
@@ -105,6 +125,7 @@ int parse_argv(char* IP_ADDRESS, char* PORT, int argc, char** argv){
     }
     return 0;
 }
+
 
 void parse(int udp_socket, int tcp_socket, struct addrinfo *res, char* IP_ADDRESS, char* PORT, char* command, char* uid, char* password, char* gid){
     char name[12]; //The largest command name has 11 characters '\0'
