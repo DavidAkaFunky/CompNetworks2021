@@ -34,7 +34,7 @@ int send_tcp(int conn_fd, char* response, int size);
 int socket_bind(int socktype, char* PORT, struct addrinfo** res);
 int parse_argv(int argc, char** argv, char* PORT, bool* verbose);
 int parse_udp(int udp_socket, char* message);
-int parse_tcp(conn_fd, message);
+int parse_tcp(int conn_fd, char* message);
 int main(int argc, char** argv);
 
 /* -------------------- server_udp --------------------- */
@@ -51,6 +51,6 @@ int my_groups(int udp_socket, char* uid);
 int subscribe(int udp_socket, char* uid, char* gid, char* group_name);
 int unsubscribe(int udp_socket, char* uid, char* gid);
 /* -------------------- server_tcp --------------------- */
-int ulist(conn_fd);
+int ulist(int conn_fd);
 
 #endif

@@ -2,7 +2,7 @@
 #include "dirent.h"
 #include "../common.h"
 
-int ulist(conn_fd){
+int ulist(int conn_fd){
     char gid[3];
     char gid_path[10];
     bzero(gid, sizeof(gid));
