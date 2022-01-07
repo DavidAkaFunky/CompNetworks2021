@@ -207,7 +207,7 @@ int main(int argc, char** argv){
     int udp_socket = socket_bind(SOCK_DGRAM, port, &res);
     int tcp_socket = socket_bind(SOCK_STREAM, port, &res);
     listen(tcp_socket, 10);
-    char message[BUF_SIZE];//, response[BUF_SIZE];
+    char message[BUF_SIZE];
     fd_set rset;
     int conn_fd;
 
@@ -232,20 +232,21 @@ int main(int argc, char** argv){
             conn_fd = accept(tcp_socket, (struct sockaddr*)&serv_addr, &len);
             close(tcp_socket);
             bzero(message, sizeof(message));
-            //bzero(response, sizeof(response));
             recv_tcp(conn_fd, message, 4);
             if (verbose){
-                printf("Message from TCP client:\n%s\n", message);
+                printf("Message from TCP client:\n%s\n", message);    //nota é preciso completar a mensagem na funcao em questao
+                if (!parse_tcp(conn_fd, message))
+                    send_tcp(conn_fd, "ERR\n", 4);
+                    FD_CLR(tcp_socket,&rset);
                 puts("----------------------------------------");
             }
-            if (!parse_tcp(conn_fd, message))
+            else if (!parse_tcp(conn_fd, message))
                 send_tcp(conn_fd, "ERR\n", 4);
             close(conn_fd);
         }
         // if udp socket is readable receive the message.
         if (FD_ISSET(udp_socket, &rset)) {
             bzero(message, sizeof(message));
-            //bzero(response, sizeof(response)); //necessario? nao é usado...
             recv_udp(udp_socket, message);
             if (verbose){
                 printf("Message from UDP client:\n%s\n", message);

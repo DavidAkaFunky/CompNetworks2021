@@ -4,13 +4,21 @@
 
 int ulist(int conn_fd){
     char gid[3];
+    char enter[2];
     char gid_path[10];
     bzero(gid, sizeof(gid));
+    bzero(enter, sizeof(enter));
     bzero(gid_path, sizeof(gid_path));
     ssize_t nread;
     nread = recv_tcp(conn_fd, gid, 2);
     if (nread == -1)
         return -1;
+    nread = recv_tcp(conn_fd, enter, 1);
+    if (nread == -1)
+        return -1;
+    
+        //printf("%s",gid);
+        //printf("%s",enter);     //imprime o resto caso verbose 
     
     sprintf(gid_path,"GROUPS/%s",gid);    
     if (!digits_only(gid, "gid") && access(gid_path, F_OK) == -1)
@@ -68,7 +76,6 @@ int ulist(int conn_fd){
             if (nread == -1)
                 return -1;
         }
-        puts("acaba de ler a diretoria");
         nread = send_tcp(conn_fd, "\n", 1);
         if (nread == -1)
             return -1;
