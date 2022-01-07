@@ -2,7 +2,7 @@
 #include "dirent.h"
 #include "../common.h"
 
-int ulist(int conn_fd){
+int ulist(int conn_fd, bool verbose){
     char gid[3];
     char enter[2];
     char gid_path[10];
@@ -16,10 +16,9 @@ int ulist(int conn_fd){
     nread = recv_tcp(conn_fd, enter, 1);
     if (nread == -1)
         return -1;
-    
-        //printf("%s",gid);
-        //printf("%s",enter);     //imprime o resto caso verbose 
-    
+    if (verbose)    //imprime o resto caso verbose 
+        printf("%s%s",gid,enter);   
+
     sprintf(gid_path,"GROUPS/%s",gid);    
     if (!digits_only(gid, "gid") && access(gid_path, F_OK) == -1)
         return send_tcp(conn_fd, "RUL NOK\n", 8);

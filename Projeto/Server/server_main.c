@@ -167,10 +167,10 @@ int parse_udp(int udp_socket, char* message){
         puts(INVALID_CMD);
 }
 
-int parse_tcp(int conn_fd, char* message){
+int parse_tcp(int conn_fd, char* message, bool verbose){
     if (!strcmp(message, "ULS ")){
         //User list (TCP): (nada)
-        return ulist(conn_fd);
+        return ulist(conn_fd, verbose);
     } else if (!strcmp(message, "PST ")){
         //Post (TCP)
         //return post(conn_fd);
@@ -230,17 +230,15 @@ int main(int argc, char** argv){
         if (FD_ISSET(tcp_socket, &rset)) {
             socklen_t len = sizeof(serv_addr);
             conn_fd = accept(tcp_socket, (struct sockaddr*)&serv_addr, &len);
-            close(tcp_socket);
             bzero(message, sizeof(message));
             recv_tcp(conn_fd, message, 4);
             if (verbose){
-                printf("Message from TCP client:\n%s\n", message);    //nota é preciso completar a mensagem na funcao em questao
-                if (!parse_tcp(conn_fd, message))
+                printf("Message from TCP client:\n%s", message);    //nota é preciso completar a mensagem na funcao em questao
+                if (!parse_tcp(conn_fd, message, verbose))
                     send_tcp(conn_fd, "ERR\n", 4);
-                    FD_CLR(tcp_socket,&rset);
                 puts("----------------------------------------");
             }
-            else if (!parse_tcp(conn_fd, message))
+            else if (!parse_tcp(conn_fd, message, verbose))
                 send_tcp(conn_fd, "ERR\n", 4);
             close(conn_fd);
         }
@@ -257,6 +255,8 @@ int main(int argc, char** argv){
         }
         
     }
+    close(tcp_socket);
+    close(udp_socket);
     freeaddrinfo(res);
     exit(EXIT_SUCCESS);
 }
