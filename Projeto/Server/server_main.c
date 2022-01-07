@@ -60,7 +60,7 @@ int send_tcp(int conn_fd, char* response, int size){
     return 1;
 }
 
-int socket_bind(int socktype, char* PORT, struct addrinfo** res){
+int socket_bind(int socktype, char* port, struct addrinfo** res){
     int sockfd = socket(AF_INET,socktype,0);
     if (sockfd == -1){
         puts(SOCK_FAIL);
@@ -73,13 +73,13 @@ int socket_bind(int socktype, char* PORT, struct addrinfo** res){
     hints.ai_socktype = socktype;
     hints.ai_flags= AI_PASSIVE;
     
-    if (getaddrinfo(NULL, PORT, &hints, res) != 0){
-        puts(SOCK_FAIL);
+    if (getaddrinfo(NULL, port, &hints, res) != 0){
+        puts(ADDR_FAIL);
         close(sockfd);
         exit(EXIT_FAILURE);
     }
     if (bind(sockfd,(*res)->ai_addr,(*res)->ai_addrlen) == -1){
-        puts(SOCK_FAIL);
+        puts(BIND_FAIL);
         close(sockfd);
         exit(EXIT_FAILURE);
     }
@@ -87,25 +87,25 @@ int socket_bind(int socktype, char* PORT, struct addrinfo** res){
 }
 
 
-int parse_argv(int argc, char** argv, char* PORT, bool* verbose){
+int parse_argv(int argc, char** argv, char* port, bool* verbose){
     if (argc < 1 || argc > 4 || strcmp(argv[0], "./DS"))
         return 0;
-    bzero(PORT, 6);
+    bzero(port, 6);
     if (argc >= 2){
         if (!strcmp(argv[1], "-v")){
             *verbose = true;
             if (argc > 2){
                 if (!strcmp(argv[2], "-p") && digits_only(argv[3], "port number")){
-                    strcpy(PORT, argv[3]);
+                    strcpy(port, argv[3]);
                     return 1;
                 }
                 return 0;
             }
-            strcpy(PORT, "58026");
+            strcpy(port, "58026");
             return 1;
         }
         if (!strcmp(argv[1], "-p") && argc > 2 && digits_only(argv[2], "port number")){
-            strcpy(PORT, argv[2]);
+            strcpy(port, argv[2]);
             if (argc > 3){
                 if (!strcmp(argv[3], "-v")){
                     *verbose = true;
@@ -117,7 +117,7 @@ int parse_argv(int argc, char** argv, char* PORT, bool* verbose){
         }
     }
     if (argc == 1){
-        strcpy(PORT, "58026");
+        strcpy(port, "58026");
         return 1;
     }
     return 0;
@@ -170,8 +170,6 @@ int parse_udp(int udp_socket, char* message){
 int parse_tcp(int conn_fd, char* message){
     if (!strcmp(message, "ULS ")){
         //User list (TCP): (nada)
-        /*if (!(has_correct_arg_sizes(arg1, 0, arg2, 0) && check_login(uid) && check_select(gid)))
-            return;*/
         return ulist(conn_fd);
     } else if (!strcmp(message, "PST ")){
         //Post (TCP)
@@ -190,8 +188,8 @@ int parse_tcp(int conn_fd, char* message){
 
 int main(int argc, char** argv){
     bool verbose = false;
-    char PORT[6];
-    if (!parse_argv(argc, argv, PORT, &verbose)){
+    char port[6];
+    if (!parse_argv(argc, argv, port, &verbose)){
         puts(ARGV_ERR);
         exit(EXIT_FAILURE);
     }
@@ -206,8 +204,8 @@ int main(int argc, char** argv){
     
     //Criacao e bind dos sockets udp e tcp do servidor
     struct addrinfo *res;
-    int udp_socket = socket_bind(SOCK_DGRAM, PORT, &res);
-    int tcp_socket = socket_bind(SOCK_STREAM, PORT, &res);
+    int udp_socket = socket_bind(SOCK_DGRAM, port, &res);
+    int tcp_socket = socket_bind(SOCK_STREAM, port, &res);
     listen(tcp_socket, 10);
     char message[BUF_SIZE];//, response[BUF_SIZE];
     fd_set rset;

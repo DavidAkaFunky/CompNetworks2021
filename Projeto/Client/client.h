@@ -14,6 +14,7 @@
 #include <dirent.h>
 #include <stdbool.h>
 
+#define TIME 15
 #define DOWNLOADS_FAIL "Failed creating the DOWNLOADS folder. Please try again!"
 #define NO_LOGIN "Not logged in. Please try again!"
 #define NO_GROUP "No group selected. Please try again!"
@@ -21,7 +22,6 @@
 #define CONN_ERR "There was an error conecting to the server. Please try again!"
 #define SEND_ERR "There was an error sending information to the server. Please try again!"
 #define INFO_ERR "There was an error collecting information from the server. Please try again!"
-#define ADDR_FAIL "Failed getting the address' information!"
 #define REG_USER_SUC "You have registered successfully!"
 #define REG_USER_DUP "A user with this uid has already been registered. Please try another one!"
 #define REG_USER_FAIL "Registration not accepted (too many users might be registered)."
@@ -52,41 +52,41 @@
 #define FILE_DOWN_SUC "\nFile successfully downloaded!"
 #define FILE_UP_SUC "\nFile successfully uploaded!"
 #define NO_MSGS "There are no messages in this group."
-#define RTV_ERR "There was a problem retrieving the messages. Please confirm that you're logged in and subscribed to this group and try again!"
-#define ERR_FILE "There was a problem writing to this file. Please confirm that you have writing permissions for it and try again!"
+#define RTV_ERR "There was a problem retrieving the messages. Please confirm that you're logged in and subscribed to this group, then try again!"
+#define ERR_FILE "There was a problem writing to this file. Please confirm that you have writing permissions for it, then try again!"
 
 /* -------------------- client_main -------------------- */
 int timer_on(int sd);
 int timer_off(int sd);
-int check_login(char *uid, bool log);
-int check_select(char *gid);
-int create_socket(struct addrinfo **res, int socktype, char* IP_ADDRESS, char* PORT);
-int get_IP(char* IP_ADDRESS);
-int get_local_IP(char* IP_ADDRESS);
-int parse_argv(char* IP_ADDRESS, char* PORT, int argc, char** argv);
-void parse(int udp_socket, int tcp_socket, struct addrinfo *res, char* IP_ADDRESS, char* PORT, char* command, char* uid, char* password, char* gid);
+bool check_login(char *uid, bool log);
+bool check_group(char *gid);
+int create_socket(struct addrinfo **res, int socktype, char* ip_address, char* port);
+bool is_valid_IP(char* ip_address);
+bool get_local_IP(char* ip_address);
+bool parse_argv(char* ip_address, char* port, int argc, char** argv);
+void parse(int udp_socket, struct addrinfo *res, char* ip_address, char* port, char* command, char* uid, char* password, char* gid);
 int main(int argc, char** argv);
 
 /* -------------------- client_udp -------------------- */
 int udp_send_and_receive(int fd, struct addrinfo *res, char* message, char* buffer, int size);
-void reg(char* IP_ADDRESS, char* uid, char* password, struct addrinfo *res, int fd);
-void unreg(char* IP_ADDRESS, char* uid, char* password, struct addrinfo *res, int fd);
-int login(char* IP_ADDRESS, char* uid, char* password, struct addrinfo *res, int fd);
-int logout(char* IP_ADDRESS, char* uid, char* password, struct addrinfo *res, int fd);
-void groups(char* IP_ADDRESS, struct addrinfo *res, int fd);
-void subscribe(char* IP_ADDRESS, char* uid, char* gid, char* group_name, struct addrinfo *res, int fd);
-void unsubscribe(char* IP_ADDRESS, char* uid, char* gid, struct addrinfo *res, int fd);
-void my_groups(char* IP_ADDRESS, char* uid, struct addrinfo *res, int fd);
+void reg(char* ip_address, char* uid, char* password, struct addrinfo *res, int fd);
+void unreg(char* ip_address, char* uid, char* password, struct addrinfo *res, int fd);
+int login(char* ip_address, char* uid, char* password, struct addrinfo *res, int fd);
+int logout(char* ip_address, char* uid, char* password, struct addrinfo *res, int fd);
+void groups(char* ip_address, struct addrinfo *res, int fd);
+void subscribe(char* ip_address, char* uid, char* gid, char* group_name, struct addrinfo *res, int fd);
+void unsubscribe(char* ip_address, char* uid, char* gid, struct addrinfo *res, int fd);
+void my_groups(char* ip_address, char* uid, struct addrinfo *res, int fd);
 void show_groups(char* ptr, char* groups);
 
 /* -------------------- client_tcp -------------------- */
-int tcp_connect(char* IP_ADDRESS, char* PORT, int* fd, struct addrinfo *res);
+int tcp_connect(char* ip_address, char* port, int* fd, struct addrinfo *res);
 int tcp_send(char* message, int size);
 int tcp_read(char* buffer, ssize_t size);
 int read_space();
-void ulist(char* IP_ADDRESS, char* PORT, char* gid, struct addrinfo *res);
+void ulist(char* ip_address, char* port, char* gid, struct addrinfo *res);
 int upload_file(char* fname);
-void post(char* IP_ADDRESS, char* PORT, char* gid, char* uid, struct addrinfo *res, char *text, char *fname);
-void retrieve(char* IP_ADDRESS, char* PORT, char* gid, char* uid, char* MID, struct addrinfo *res);
+void post(char* ip_address, char* port, char* gid, char* uid, struct addrinfo *res, char *text, char *fname);
+void retrieve(char* ip_address, char* port, char* gid, char* uid, char* MID, struct addrinfo *res);
 
 #endif

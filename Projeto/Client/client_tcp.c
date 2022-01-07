@@ -1,12 +1,11 @@
 #include "client.h"
 #include "../common.h"
 
-
 int tcp_socket;
 
-int tcp_connect(char* IP_ADDRESS, char* PORT, int* fd, struct addrinfo *res){
+int tcp_connect(char* ip_address, char* port, int* fd, struct addrinfo *res){
     int bytes;
-    tcp_socket = create_socket(&res, SOCK_STREAM, IP_ADDRESS, PORT);
+    tcp_socket = create_socket(&res, SOCK_STREAM, ip_address, port);
     if ((bytes = connect(tcp_socket, res->ai_addr, res->ai_addrlen)) == -1){
         puts(CONN_ERR);
         return -1;
@@ -65,11 +64,11 @@ int read_space(){
     return 0;
 }
 
-void ulist(char* IP_ADDRESS, char* PORT, char* gid, struct addrinfo *res){
+void ulist(char* ip_address, char* port, char* gid, struct addrinfo *res){
     char message[8];
     bzero(message, 8);
     sprintf(message,"ULS %s\n", gid);
-    if (tcp_connect(IP_ADDRESS, PORT, &tcp_socket, res) == -1 || tcp_send(message, strlen(message)) == -1)
+    if (tcp_connect(ip_address, port, &tcp_socket, res) == -1 || tcp_send(message, strlen(message)) == -1)
         return;
     char response[5];
     bzero(response, 5);
@@ -210,13 +209,13 @@ int upload_file(char* file_name){
     return 1;
 }
 
-void post(char* IP_ADDRESS, char* PORT, char* gid, char* uid, struct addrinfo *res, char *text, char *file_name){
+void post(char* ip_address, char* port, char* gid, char* uid, struct addrinfo *res, char *text, char *file_name){
     int text_strlen = strlen(text);
     if (text_strlen > 240){
         puts(BIG_TEXT);
         return;
     }
-    if (!(is_alphanumerical(file_name, 2) && check_login(uid, true) && check_select(gid)))
+    if (!(is_alphanumerical(file_name, 2) && check_login(uid, true) && check_group(gid)))
         return;
     int fname_strlen = strlen(file_name);
     char message[259];
@@ -225,7 +224,7 @@ void post(char* IP_ADDRESS, char* PORT, char* gid, char* uid, struct addrinfo *r
     bzero(text_size, 4);
     sprintf(text_size, "%d", text_strlen);
     sprintf(message, "PST %s %s %s %s", uid, gid, text_size, text);
-    if (tcp_connect(IP_ADDRESS, PORT, &tcp_socket, res) == -1 || tcp_send(message, strlen(message)) == -1)
+    if (tcp_connect(ip_address, port, &tcp_socket, res) == -1 || tcp_send(message, strlen(message)) == -1)
         return;
     if (fname_strlen > 24){
         close(tcp_socket);
@@ -371,16 +370,17 @@ int download_file(){
         }
         fwrite(data, 1, nread, fp);
     }
+    printf("Downloading file: %ld of %ld bytes...\r", total-j, total);
     puts(FILE_DOWN_SUC);
     fclose(fp);
     return 1;
 }
 
-void retrieve(char* IP_ADDRESS, char* PORT, char* gid, char* uid, char* MID, struct addrinfo *res){
+void retrieve(char* ip_address, char* port, char* gid, char* uid, char* MID, struct addrinfo *res){
     char message[19];
     bzero(message, 19);
     sprintf(message, "RTV %s %s %s\n", uid, gid, MID);
-    if (tcp_connect(IP_ADDRESS, PORT, &tcp_socket, res) == -1 || tcp_send(message, strlen(message)) == -1)
+    if (tcp_connect(ip_address, port, &tcp_socket, res) == -1 || tcp_send(message, strlen(message)) == -1)
         return;
     char response[5];
     bzero(response, 5);
@@ -505,7 +505,7 @@ void retrieve(char* IP_ADDRESS, char* PORT, char* gid, char* uid, char* MID, str
             }
             bzero(text, 241);
             tcp_read(text, atoi(tsize));
-            printf("Message ID: %s\nSent by: %s\nMessage size: %d\nMessage: %s", rtv_MID, rtv_uid, atoi(tsize)-1, text);
+            printf("Message ID: %s\nSent by: %s\nMessage size: %d\nMessage: %s\n", rtv_MID, rtv_uid, atoi(tsize), text);
             bzero(end, 2);
             nread = tcp_read(end, 1);
 

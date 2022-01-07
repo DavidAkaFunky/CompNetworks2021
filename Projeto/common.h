@@ -17,6 +17,7 @@
 #define NO_ALPH1 "The argument doesn't contain only alphanumerical characters. Please try again!"
 #define NO_ALPH2 "The argument doesn't contain only alphanumerical characters, ., - or _. Please try again!"
 #define SOCK_FAIL "Failed creating the socket!"
+#define ADDR_FAIL "Failed getting the address' information!"
 #define RECV_ERR "There was an error receiving information from the client. Please try again!"
 
 int digits_only(char *s, char* id);
