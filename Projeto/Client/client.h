@@ -69,14 +69,14 @@ int main(int argc, char** argv);
 
 /* -------------------- client_udp -------------------- */
 int udp_send_and_receive(int fd, struct addrinfo *res, char* message, char* buffer, int size);
-void reg(char* ip_address, char* uid, char* password, struct addrinfo *res, int fd);
-void unreg(char* ip_address, char* uid, char* password, struct addrinfo *res, int fd);
-int login(char* ip_address, char* uid, char* password, struct addrinfo *res, int fd);
-int logout(char* ip_address, char* uid, char* password, struct addrinfo *res, int fd);
-void groups(char* ip_address, struct addrinfo *res, int fd);
-void subscribe(char* ip_address, char* uid, char* gid, char* group_name, struct addrinfo *res, int fd);
-void unsubscribe(char* ip_address, char* uid, char* gid, struct addrinfo *res, int fd);
-void my_groups(char* ip_address, char* uid, struct addrinfo *res, int fd);
+void reg(char* uid, char* password, struct addrinfo *res, int fd);
+void unreg(char* uid, char* password, struct addrinfo *res, int fd);
+int login(char* uid, char* password, struct addrinfo *res, int fd);
+int logout(char* uid, char* password, struct addrinfo *res, int fd);
+void groups(struct addrinfo *res, int fd);
+void subscribe(char* uid, char* gid, char* group_name, struct addrinfo *res, int fd);
+void unsubscribe(char* uid, char* gid, struct addrinfo *res, int fd);
+void my_groups(char* uid, struct addrinfo *res, int fd);
 void show_groups(char* ptr, char* groups);
 
 /* -------------------- client_tcp -------------------- */

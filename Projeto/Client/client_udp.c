@@ -19,7 +19,7 @@ int udp_send_and_receive(int fd, struct addrinfo *res, char* message, char* buff
     return bytes;
 }
 
-void reg(char* ip_address, char* uid, char* password, struct addrinfo *res, int fd){
+void reg(char* uid, char* password, struct addrinfo *res, int fd){
     if (!(digits_only(uid,"uid") && has_correct_arg_sizes(uid, 5, password, 8) && is_alphanumerical(password, 0)))
         return;
     char message[20], buffer[BUF_SIZE];
@@ -40,7 +40,7 @@ void reg(char* ip_address, char* uid, char* password, struct addrinfo *res, int 
         puts(INFO_ERR);
 }
 
-void unreg(char* ip_address, char* uid, char* password, struct addrinfo *res, int fd){
+void unreg(char* uid, char* password, struct addrinfo *res, int fd){
     if (!(digits_only(uid,"uid") && has_correct_arg_sizes(uid, 5, password, 8) && is_alphanumerical(password, 0)))
         return;
     char message[20], buffer[BUF_SIZE];
@@ -60,7 +60,7 @@ void unreg(char* ip_address, char* uid, char* password, struct addrinfo *res, in
     }    
 }
 
-int login(char* ip_address, char* uid, char* password, struct addrinfo *res, int fd){
+int login(char* uid, char* password, struct addrinfo *res, int fd){
     if (!(digits_only(uid,"uid") && has_correct_arg_sizes(uid, 5, password, 8) && is_alphanumerical(password, 0)))
         return -1;
     char message[20], buffer[BUF_SIZE];
@@ -85,7 +85,7 @@ int login(char* ip_address, char* uid, char* password, struct addrinfo *res, int
     return -1;
 }
 
-int logout(char* ip_address, char* uid, char* password, struct addrinfo *res, int fd){
+int logout(char* uid, char* password, struct addrinfo *res, int fd){
     char message[20], buffer[BUF_SIZE];
     bzero(message, 20);
     bzero(buffer, BUF_SIZE);
@@ -133,7 +133,7 @@ void show_groups(char* ptr, char* groups){
         puts(INFO_ERR);
 }
 
-void groups(char* ip_address, struct addrinfo *res, int fd){
+void groups(struct addrinfo *res, int fd){
     char buffer[GROUPS];
     bzero(buffer, GROUPS);
     if (udp_send_and_receive(fd, res, "GLS\n", buffer, GROUPS) == -1)
@@ -159,7 +159,7 @@ void groups(char* ip_address, struct addrinfo *res, int fd){
     }
 }
 
-void subscribe(char* ip_address, char* uid, char* gid, char* group_name, struct addrinfo *res, int fd){
+void subscribe(char* uid, char* gid, char* group_name, struct addrinfo *res, int fd){
     if (strlen(gid) == 1)
         sprintf(gid, "0%c", gid[0]);
     if (!(has_correct_arg_sizes(uid, 5, gid, 2) && digits_only(uid,"uid") && digits_only(gid,"gid") && strlen(group_name) <= 24 && is_alphanumerical(group_name, 1) && strlen(group_name) >= 1)){
@@ -200,7 +200,7 @@ void subscribe(char* ip_address, char* uid, char* gid, char* group_name, struct 
     }
 }
 
-void unsubscribe(char* ip_address, char* uid, char* gid, struct addrinfo *res, int fd) {
+void unsubscribe(char* uid, char* gid, struct addrinfo *res, int fd) {
     char message[13], buffer[BUF_SIZE];
     sprintf(message,"GUR %s %s\n", uid, gid);
     if (udp_send_and_receive(fd, res, message, buffer, BUF_SIZE) == -1)
@@ -219,7 +219,7 @@ void unsubscribe(char* ip_address, char* uid, char* gid, struct addrinfo *res, i
         puts(INFO_ERR);
 }
 
-void my_groups(char* ip_address, char* uid, struct addrinfo *res, int fd){
+void my_groups(char* uid, struct addrinfo *res, int fd){
     char message[12], buffer[GROUPS];
     bzero(buffer, GROUPS);
     sprintf(message,"GLM %s\n", uid);

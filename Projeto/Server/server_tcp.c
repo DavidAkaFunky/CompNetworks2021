@@ -64,7 +64,7 @@ int ulist(int conn_fd, bool verbose){
     char name_file[12];
     char uid_path[20];
     char uid_temp[7];
-    char uid[7];
+    char uid[8];
     bzero(name_file, sizeof(name_file));
     bzero(uid_path, sizeof(uid_path));
     bzero(uid, sizeof(uid));
@@ -92,7 +92,7 @@ int ulist(int conn_fd, bool verbose){
     if (d){
         while ((dir = readdir(d)) != NULL){
 
-            bzero(uid,7);
+            bzero(uid,8);
             bzero(uid_temp,7);
             bzero(uid_path,20);
             if( !strcmp(dir -> d_name,".") || !strcmp(dir -> d_name, "..") || !strcmp(dir -> d_name, "MSG") || !strcmp(dir -> d_name, name_file))

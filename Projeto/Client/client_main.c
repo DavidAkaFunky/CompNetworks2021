@@ -227,15 +227,15 @@ void parse(int udp_socket, struct addrinfo *res, char* ip_address, char* port, c
     }
     if (!strcmp(name, "reg")){
         // Register (UDP): arg1 = uid (size 5, digits), arg2 = pass (size 8, alphanumerical)
-        reg(ip_address, arg1, arg2, res, udp_socket);
+        reg(arg1, arg2, res, udp_socket);
     } else if (!strcmp(name, "unregister") || !strcmp(name, "unr")){
         // Unegister (UDP): arg1 = uid (size 5, digits), arg2 = pass (size 8, alphanumerical)
-        unreg(ip_address, arg1, arg2, res, udp_socket);
+        unreg(arg1, arg2, res, udp_socket);
     } else if (!strcmp(name, "login")){
         // Login (UDP): uid (size 5, digits), pass (size 8, alphanumerical)
         // There can't be a user already logged in
         if (!check_login(uid, false)){ 
-            if (login(ip_address, arg1, arg2, res, udp_socket) == 1){
+            if (login(arg1, arg2, res, udp_socket) == 1){
                 strcpy(uid, arg1);
                 strcpy(password, arg2);
             }
@@ -247,7 +247,7 @@ void parse(int udp_socket, struct addrinfo *res, char* ip_address, char* port, c
         // There must be a user logged in
         if (!(has_correct_arg_sizes(arg1, 0, arg2, 0) && check_login(uid, true)))
             return;
-        if (logout(ip_address, uid, password, res, udp_socket) == 1)
+        if (logout(uid, password, res, udp_socket) == 1)
             bzero(uid, 6);
     } else if (!strcmp(name, "showuid") || !strcmp(name, "su")){
         // Show UID : (none)
@@ -261,32 +261,32 @@ void parse(int udp_socket, struct addrinfo *res, char* ip_address, char* port, c
             return;
         freeaddrinfo(res);
         if(check_login(uid, false))
-            logout(ip_address, uid, password, res, udp_socket);
+            logout(uid, password, res, udp_socket);
         close(udp_socket);
         exit(EXIT_SUCCESS);
     } else if (!strcmp(name, "groups") || !strcmp(name, "gl")){
         // Groups (UDP): (none)
         if (!has_correct_arg_sizes(arg1, 0, arg2, 0))
             return;
-        groups(ip_address, res, udp_socket);
+        groups(res, udp_socket);
     } else if (!strcmp(name, "subscribe") || !strcmp(name, "s")){
         // Subscribe (UDP): gid (size 2, digits), group_name (size 24, alphanumerical)
         if (!check_login(uid, true))
             return;
-        subscribe(ip_address, uid, arg1, arg2, res, udp_socket);
+        subscribe(uid, arg1, arg2, res, udp_socket);
     } else if (!strcmp(name, "unsubscribe") || !strcmp(name, "u")){
         // Unsubscribe (UDP): gid (size 2, digits)
         if (strlen(gid) == 1)
             sprintf(gid, "0%c", gid[0]);
         if (!(has_correct_arg_sizes(arg1, 2, arg2, 0) && digits_only(arg1, "gid")))
             return;
-        unsubscribe(ip_address, uid, arg1, res, udp_socket);
+        unsubscribe(uid, arg1, res, udp_socket);
     } else if (!strcmp(name, "my_groups") || !strcmp(name, "mgl")){
         // My groups (UDP): (none)
         // There must be a user logged in
         if (!(has_correct_arg_sizes(arg1, 0, arg2, 0) && check_login(uid, true)))
             return;
-        my_groups(ip_address, uid, res, udp_socket);
+        my_groups(uid, res, udp_socket);
     } else if (!strcmp(name, "select") || !strcmp(name, "sag")){
         // Select: gid (size 2, digits)
         if (strlen(arg1) == 1)
