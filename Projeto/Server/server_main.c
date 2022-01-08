@@ -1,10 +1,7 @@
 #include "server.h"
 #include "../common.h"
 
-
-
 struct sockaddr_in serv_addr;
-
 
 int recv_udp(int udp_socket, char* message){
     socklen_t addrlen = sizeof(serv_addr);

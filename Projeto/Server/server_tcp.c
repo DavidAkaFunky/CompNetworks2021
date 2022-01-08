@@ -35,7 +35,7 @@ int send_tcp(int conn_fd, char* response, int size){
     return 1;
 }
 
-int ulist(int conn_fd){
+int ulist(int conn_fd, bool verbose){
     char gid[3];
     char enter[2];
     char gid_path[10];
