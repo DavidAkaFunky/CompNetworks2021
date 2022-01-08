@@ -30,8 +30,8 @@ typedef struct{
 
 int recv_udp(int udp_socket, char* message);
 int send_udp(int udp_socket, char* message);
-int socket_bind(int socktype, char* port, struct addrinfo** res);
-int parse_argv(int argc, char** argv, char* port, bool* verbose);
+int socket_bind(char* ip_address, int socktype, char* port, struct addrinfo** res);
+int parse_argv(char* ip_address, char* port, int argc, char** argv, bool* verbose);
 int parse_udp(int udp_socket, char* message);
 int parse_tcp(int conn_fd, char* message, bool verbose);
 int main(int argc, char** argv);

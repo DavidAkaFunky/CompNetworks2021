@@ -24,7 +24,7 @@ int send_udp(int udp_socket, char* message){
     return n;
 }
 
-int socket_bind(int socktype, char* port, struct addrinfo** res){
+int socket_bind(char* ip_address, int socktype, char* port, struct addrinfo** res){
     int sockfd = socket(AF_INET,socktype,0);
     if (sockfd == -1){
         puts(SOCK_FAIL);
@@ -37,7 +37,7 @@ int socket_bind(int socktype, char* port, struct addrinfo** res){
     hints.ai_socktype = socktype;
     hints.ai_flags= AI_PASSIVE;
     
-    if (getaddrinfo(NULL, port, &hints, res) != 0){
+    if (getaddrinfo(ip_address, port, &hints, res) != 0){
         puts(ADDR_FAIL);
         close(sockfd);
         exit(EXIT_FAILURE);
@@ -50,11 +50,13 @@ int socket_bind(int socktype, char* port, struct addrinfo** res){
     return sockfd;
 }
 
-
-int parse_argv(int argc, char** argv, char* port, bool* verbose){
+int parse_argv(char* ip_address, char* port, int argc, char** argv, bool* verbose){
     if (argc < 1 || argc > 4 || strcmp(argv[0], "./DS"))
         return 0;
+    bzero(ip_address, 512);
     bzero(port, 6);
+    if (!get_local_IP(ip_address))
+        return 0;
     if (argc >= 2){
         if (!strcmp(argv[1], "-v")){
             *verbose = true;
@@ -152,8 +154,8 @@ int parse_tcp(int conn_fd, char* message, bool verbose){
 
 int main(int argc, char** argv){
     bool verbose = false;
-    char port[6];
-    if (!parse_argv(argc, argv, port, &verbose)){
+    char port[6], ip_address[512];
+    if (!parse_argv(ip_address, port, argc, argv, &verbose)){
         puts(ARGV_ERR);
         exit(EXIT_FAILURE);
     }
@@ -168,8 +170,8 @@ int main(int argc, char** argv){
     
     //Criacao e bind dos sockets udp e tcp do servidor
     struct addrinfo *res;
-    int udp_socket = socket_bind(SOCK_DGRAM, port, &res);
-    int tcp_socket = socket_bind(SOCK_STREAM, port, &res);
+    int udp_socket = socket_bind(ip_address, SOCK_DGRAM, port, &res);
+    int tcp_socket = socket_bind(ip_address, SOCK_STREAM, port, &res);
     listen(tcp_socket, 1);
     char message[BUF_SIZE];
     fd_set rset;
