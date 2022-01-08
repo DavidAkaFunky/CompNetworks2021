@@ -6,9 +6,6 @@
 #include <unistd.h>
 #include <string.h>
 #include <ctype.h>
-#include <stdbool.h>
-#include <arpa/inet.h>
-#include <netdb.h>
 
 #define SIZE 512
 #define BUF_SIZE 128
@@ -27,6 +24,5 @@ int digits_only(char *s, char* id);
 int is_alphanumerical(char* s, int flag);
 int is_correct_arg_size(char* arg, int size);
 int has_correct_arg_sizes(char* arg1, int size1, char* arg2, int size2);
-bool get_local_IP(char* ip_address);
 
 #endif

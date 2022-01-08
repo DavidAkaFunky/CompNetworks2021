@@ -51,24 +51,3 @@ int is_correct_arg_size(char* arg, int size){
 int has_correct_arg_sizes(char* arg1, int size1, char* arg2, int size2){
     return is_correct_arg_size(arg1, size1) && is_correct_arg_size(arg2, size2);
 }
-
-/**
- * @brief Get the local IP address.
- * 
- * @param ip_address the IP address where the packets will be sent.
- * @return true if the function could get the local IP address.
- * @return false otherwise.
- */
-bool get_local_IP(char* ip_address){
-    char hostbuffer[256];
-    
-    if (gethostname(hostbuffer, sizeof(hostbuffer)) == -1)
-        return false;
-
-    struct hostent *host_entry = gethostbyname(hostbuffer);
-    if (host_entry == NULL)
-        return false;
-    
-    strcpy(ip_address, inet_ntoa(*((struct in_addr*) host_entry->h_addr_list[0])));
-    return strlen(ip_address) > 0;
-}

@@ -62,6 +62,7 @@ bool check_login(char *uid, bool log);
 bool check_group(char *gid);
 int create_socket(struct addrinfo **res, int socktype, char* ip_address, char* port);
 bool is_valid_IP(char* ip_address);
+bool get_local_IP(char* ip_address);
 bool parse_argv(char* ip_address, char* port, int argc, char** argv);
 void parse(int udp_socket, struct addrinfo *res, char* ip_address, char* port, char* command, char* uid, char* password, char* gid);
 int main(int argc, char** argv);
