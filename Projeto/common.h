@@ -18,6 +18,8 @@
 #define NO_ALPH2 "The argument doesn't contain only alphanumerical characters, ., - or _. Please try again!"
 #define SOCK_FAIL "Failed creating the socket!"
 #define ADDR_FAIL "Failed getting the address' information!"
+#define FILE_UP_SUC "\nFile successfully uploaded!"
+#define FILE_DOWN_SUC "\nFile successfully downloaded!"
 
 int digits_only(char *s, char* id);
 int is_alphanumerical(char* s, int flag);

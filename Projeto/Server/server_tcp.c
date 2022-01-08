@@ -152,11 +152,9 @@ int download_file(int conn_fd, char *path_name, bool verbose){
             return 0;
         ++counter;    
     }
-    puts("here1");
     int fname_strlen = strlen(file_name);
     if (!(file_name[fname_strlen - 4] == '.' && is_alphanumerical(&(file_name[fname_strlen - 3]), 0) && strcmp(file_name,"T E X T.txt") && strcmp(file_name,"A U T H O R.txt")))
         return 0;
-    puts("here2");
     puts("This message contains a file!");
     printf("File name: %s\nFile size: %s bytes\n", file_name, file_size);
     char path[35];
@@ -187,6 +185,7 @@ int download_file(int conn_fd, char *path_name, bool verbose){
         fwrite(data, 1, nread, fp);
     }
     printf("Downloading file: %ld of %ld bytes...\r", total-j, total);
+    puts(FILE_DOWN_SUC);
     fclose(fp);
     return 1;
 }
@@ -299,7 +298,6 @@ int post(int conn_fd, bool verbose){
     }
     fprintf(fp,"%s", message);
     fclose(fp);
-    puts("11111");
     // Download file
     if (!strcmp(end, " ") && !download_file(conn_fd, path, verbose)){
         puts("file");
@@ -312,5 +310,6 @@ int post(int conn_fd, bool verbose){
     char response[10];
     bzero(response, 10);
     sprintf(response, "RPT %s\n", mid);
+    tcp_send(conn_fd, response);
     return 1;
 }

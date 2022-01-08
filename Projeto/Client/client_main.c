@@ -102,27 +102,6 @@ bool is_valid_IP(char* ip_address){
 }
 
 /**
- * @brief Get the local IP address.
- * 
- * @param ip_address the IP address where the packets will be sent.
- * @return true if the function could get the local IP address.
- * @return false otherwise.
- */
-bool get_local_IP(char* ip_address){
-    char hostbuffer[256];
-    
-    if (gethostname(hostbuffer, sizeof(hostbuffer)) == -1)
-        return false;
-
-    struct hostent *host_entry = gethostbyname(hostbuffer);
-    if (host_entry == NULL)
-        return false;
-    
-    strcpy(ip_address, inet_ntoa(*((struct in_addr*) host_entry->h_addr_list[0])));
-    return strlen(ip_address) > 0;
-}
-
-/**
  * @brief Parse the argv to get the IP address and port needed to communicate with the server.
  * 
  * @param ip_address the IP address where the packets will be sent.

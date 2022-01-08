@@ -18,7 +18,6 @@ int tcp_send(char* message, int size){
     char *ptr = message;
     //Caso o servidor não aceite a mensagem completa, manda por packages
     while (nleft > 0){
-        puts("here");
         nwritten = write(tcp_socket, ptr, nleft);
         if (nwritten <= 0){
             puts(SEND_ERR);

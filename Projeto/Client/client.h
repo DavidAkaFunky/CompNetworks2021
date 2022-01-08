@@ -50,8 +50,6 @@
 #define FNAME_LEN_ERR "Your file name is over 24 characters. Please try again!"
 #define INV_FILE "The argument does not match a valid file. Please try again!"
 #define MSG_SEND_FAIL "Message sent unsuccessfully. Please confirm that you're logged in and subscribed to this group, then try again!"
-#define FILE_DOWN_SUC "\nFile successfully downloaded!"
-#define FILE_UP_SUC "\nFile successfully uploaded!"
 #define NO_MSGS "There are no messages in this group."
 #define RTV_ERR "There was a problem retrieving the messages. Please confirm that you're logged in and subscribed to this group, then try again!"
 #define ERR_FILE "There was a problem writing to this file. Please confirm that you have writing permissions for it, then try again!"
@@ -64,7 +62,6 @@ bool check_login(char *uid, bool log);
 bool check_group(char *gid);
 int create_socket(struct addrinfo **res, int socktype, char* ip_address, char* port);
 bool is_valid_IP(char* ip_address);
-bool get_local_IP(char* ip_address);
 bool parse_argv(char* ip_address, char* port, int argc, char** argv);
 void parse(int udp_socket, struct addrinfo *res, char* ip_address, char* port, char* command, char* uid, char* password, char* gid);
 int main(int argc, char** argv);
