@@ -11,7 +11,7 @@ int reg(int udp_socket, char* uid, char* pass){
         return 0;
 
     if (!access(path, F_OK)){//if already exists the uid directory
-        send_udp(udp_socket, "RRG DUP\n");
+        udp_send(udp_socket, "RRG DUP\n");
         return 1;
     }
 
@@ -20,19 +20,19 @@ int reg(int udp_socket, char* uid, char* pass){
     bzero(file_path, 26);
     sprintf(file_path,"%s/%s_pass.txt",path,uid);
     if (mkdir(path, 0700) == -1){
-        send_udp(udp_socket, "RRG NOK\n");
+        udp_send(udp_socket, "RRG NOK\n");
         return 1;
     }
 
     FILE* fp = fopen(file_path, "w");
     if (!fp){
-        send_udp(udp_socket, "RRG NOK\n");
+        udp_send(udp_socket, "RRG NOK\n");
         return 1;
     }
     fprintf(fp,"%s",pass);
     fclose(fp);
 
-    send_udp(udp_socket, "RRG OK\n");
+    udp_send(udp_socket, "RRG OK\n");
     return 1;
 }
 
@@ -45,7 +45,7 @@ int unreg(int udp_socket, char* uid, char* pass){
         return 0;
 
     if (access(path, F_OK) == -1){    //user doesnt exist
-        send_udp(udp_socket, "RUN NOK\n");
+        udp_send(udp_socket, "RUN NOK\n");
         return 1;
     }
 
@@ -54,17 +54,17 @@ int unreg(int udp_socket, char* uid, char* pass){
     bzero(file_path, 26);
     sprintf(file_path,"%s/%s_pass.txt",path,uid);
     if (access(file_path, F_OK) || remove(file_path)){
-        send_udp(udp_socket, "RUN NOK\n");
+        udp_send(udp_socket, "RUN NOK\n");
         return 1;
     }
     bzero(file_path, 26);
     sprintf(file_path,"%s/%s_login.txt",path,uid);
     if (access(file_path, F_OK) || remove(file_path)){ //if already exists the uid directory
-        send_udp(udp_socket, "RUN NOK\n");
+        udp_send(udp_socket, "RUN NOK\n");
         return 1;
     }
 
-    send_udp(udp_socket, "RUN OK\n");
+    udp_send(udp_socket, "RUN OK\n");
     return 1;
 }
 
@@ -77,7 +77,7 @@ int login(int udp_socket, char* uid, char* pass){
         return 0;
     
     if (access(path, F_OK) == -1){//if doesnt exist the uid directory
-        send_udp(udp_socket, "RLO NOK\n");
+        udp_send(udp_socket, "RLO NOK\n");
         return 1;
     }
     //verifies if the password is correct from the uid_pass.txt
@@ -86,7 +86,7 @@ int login(int udp_socket, char* uid, char* pass){
     sprintf(file_path,"%s/%s_pass.txt",path,uid);
     FILE *fp = fopen(file_path,"r");
     if (!fp){
-        send_udp(udp_socket, "RLO NOK\n");
+        udp_send(udp_socket, "RLO NOK\n");
         return 1;
     }
 
@@ -94,7 +94,7 @@ int login(int udp_socket, char* uid, char* pass){
     fclose(fp);
 
     if (strcmp(pass_temp,pass)){
-        send_udp(udp_socket, "RLO NOK\n");
+        udp_send(udp_socket, "RLO NOK\n");
         return 1;
     }
 
@@ -103,12 +103,12 @@ int login(int udp_socket, char* uid, char* pass){
     sprintf(file_path,"%s/%s_login.txt",path,uid);
     fp = fopen(file_path, "w");
     if (!fp){
-        send_udp(udp_socket, "RLO NOK\n");
+        udp_send(udp_socket, "RLO NOK\n");
         return 1;
     }
     fclose(fp);
 
-    send_udp(udp_socket, "RLO OK\n");
+    udp_send(udp_socket, "RLO OK\n");
     return 1;
 }
 
@@ -122,7 +122,7 @@ int logout(int udp_socket, char* uid, char* pass){
     sprintf(path,"USERS/%s",uid);
 
     if (access(path, F_OK) == -1){//if the uid directory exists
-        send_udp(udp_socket, "ROU NOK\n");
+        udp_send(udp_socket, "ROU NOK\n");
         return 1;
     }
 
@@ -132,14 +132,14 @@ int logout(int udp_socket, char* uid, char* pass){
     sprintf(file_path,"%s/%s_pass.txt",path,uid);
     FILE* fp = fopen(file_path,"r");
     if (!fp){
-        send_udp(udp_socket, "ROU NOK\n");
+        udp_send(udp_socket, "ROU NOK\n");
         return 1;
     }
     fgets(pass_temp,9,fp);
     fclose(fp);
 
     if (strcmp(pass_temp,pass)){
-        send_udp(udp_socket, "ROU NOK\n");
+        udp_send(udp_socket, "ROU NOK\n");
         return 1;
     }
 
@@ -149,11 +149,11 @@ int logout(int udp_socket, char* uid, char* pass){
 
     //Check if the login file exists
     if (access(file_path, F_OK) || remove(file_path)){ //checks if login exists and if it can delete it
-        send_udp(udp_socket, "ROU NOK\n");
+        udp_send(udp_socket, "ROU NOK\n");
         return 1;
     }
 
-    send_udp(udp_socket, "ROU OK\n");
+    udp_send(udp_socket, "ROU OK\n");
     return 1;
 }
 
@@ -227,7 +227,7 @@ void send_groups(int udp_socket, group* list, int groups, char* message){
     }
     index = strlen(message);
     sprintf(&(message[index]), "\n");
-    send_udp(udp_socket, message);
+    udp_send(udp_socket, message);
 }
 
 int groups(int udp_socket){
@@ -287,19 +287,19 @@ int subscribe(int udp_socket, char* uid, char* gid, char* group_name){
 
     //Check if the UID is well-formatted and is registered
     if (!(digits_only(uid,"uid") && is_correct_arg_size(uid, 5)) || access(uid_path, F_OK) == -1){
-        send_udp(udp_socket, "RGS E_USR\n");
+        udp_send(udp_socket, "RGS E_USR\n");
         return 1;
     }
 
     //Check if the GID is well-formatted and is registered
     if (!(digits_only(gid,"gid") && is_correct_arg_size(gid, 2)) || atoi(gid) > new_gid){
-        send_udp(udp_socket, "RGS E_GRP\n");
+        udp_send(udp_socket, "RGS E_GRP\n");
         return 1;
     }
 
     //Check if the group name is valid
     if (!(strlen(group_name) <= 24 && is_alphanumerical(group_name, 1))){
-        send_udp(udp_socket, "RGS E_GNAME\n");
+        udp_send(udp_socket, "RGS E_GNAME\n");
         return 1;
     }
 
@@ -309,7 +309,7 @@ int subscribe(int udp_socket, char* uid, char* gid, char* group_name){
         if (new_gid == -1)
             return 0;
         if (new_gid == 99){
-            send_udp(udp_socket, "RGS E_FULL\n");
+            udp_send(udp_socket, "RGS E_FULL\n");
             return 1;
         }
         bzero(gid, 2);
@@ -332,12 +332,12 @@ int subscribe(int udp_socket, char* uid, char* gid, char* group_name){
 
     if (new_group){
         if (!access(path, F_OK) || mkdir(path, 0700) == -1 || !access(msg_path, F_OK) || mkdir(msg_path, 0700) == -1){
-            send_udp(udp_socket, "RGS NOK\n");
+            udp_send(udp_socket, "RGS NOK\n");
             return 1;
         }
         FILE* fp = fopen(name_path, "w");
         if (!fp){
-            send_udp(udp_socket, "RGS NOK\n");
+            udp_send(udp_socket, "RGS NOK\n");
             return 1;
         }
         fprintf(fp, "%s", group_name);
@@ -348,7 +348,7 @@ int subscribe(int udp_socket, char* uid, char* gid, char* group_name){
 
         fp = fopen(name_path, "w");
         if (!fp){
-            send_udp(udp_socket, "RGS NOK\n");
+            udp_send(udp_socket, "RGS NOK\n");
             return 1;
         }
         fprintf(fp, "%s", uid);
@@ -356,15 +356,15 @@ int subscribe(int udp_socket, char* uid, char* gid, char* group_name){
 
         char message[12];
         sprintf(message, "RGS NEW %s\n", gid);
-        send_udp(udp_socket, message);
+        udp_send(udp_socket, message);
     } else {
         if (access(path, F_OK) == -1 || access(msg_path, F_OK) == -1){
-            send_udp(udp_socket, "RGS NOK\n");
+            udp_send(udp_socket, "RGS NOK\n");
             return 1;
         }
         FILE* fp = fopen(name_path, "r");
         if (!fp){
-            send_udp(udp_socket, "RGS NOK\n");
+            udp_send(udp_socket, "RGS NOK\n");
             return 1;
         }
         char group_name_temp[25];
@@ -372,7 +372,7 @@ int subscribe(int udp_socket, char* uid, char* gid, char* group_name){
         fclose(fp);
 
         if (strcmp(group_name_temp,group_name)){
-            send_udp(udp_socket, "RGS NOK\n");
+            udp_send(udp_socket, "RGS NOK\n");
             return 1;
         }
 
@@ -381,13 +381,13 @@ int subscribe(int udp_socket, char* uid, char* gid, char* group_name){
 
         fp = fopen(name_path, "w");
         if (!fp){
-            send_udp(udp_socket, "RGS NOK\n");
+            udp_send(udp_socket, "RGS NOK\n");
             return 1;
         }
         fprintf(fp, "%s", uid);
         fclose(fp);
 
-        send_udp(udp_socket, "RGS OK\n");
+        udp_send(udp_socket, "RGS OK\n");
     }
 }
 
@@ -403,13 +403,13 @@ int unsubscribe(int udp_socket, char* uid, char* gid){
 
     //Check if the UID is well-formatted and is registered
     if (!(digits_only(uid,"uid") && is_correct_arg_size(uid, 5)) || access(uid_path, F_OK) == -1){
-        send_udp(udp_socket, "RGU E_USR\n");
+        udp_send(udp_socket, "RGU E_USR\n");
         return 1;
     }
 
     //Check if the GID is well-formatted and is registered
     if (!(digits_only(gid,"gid") && is_correct_arg_size(gid, 2)) || atoi(gid) > new_gid){
-        send_udp(udp_socket, "RGU E_GRP\n");
+        udp_send(udp_socket, "RGU E_GRP\n");
         return 1;
     }
 
@@ -419,8 +419,8 @@ int unsubscribe(int udp_socket, char* uid, char* gid){
     sprintf(file_path,"GROUPS/%s/%s.txt",gid,uid);
 
     if (access(file_path, F_OK) || remove(file_path)){
-        send_udp(udp_socket, "RGU NOK\n");
+        udp_send(udp_socket, "RGU NOK\n");
         return 1;
     }
-    send_udp(udp_socket, "RGU OK\n");
+    udp_send(udp_socket, "RGU OK\n");
 }

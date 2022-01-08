@@ -18,11 +18,11 @@
 #define NO_ALPH2 "The argument doesn't contain only alphanumerical characters, ., - or _. Please try again!"
 #define SOCK_FAIL "Failed creating the socket!"
 #define ADDR_FAIL "Failed getting the address' information!"
-#define RECV_ERR "There was an error receiving information from the client. Please try again!"
 
 int digits_only(char *s, char* id);
 int is_alphanumerical(char* s, int flag);
 int is_correct_arg_size(char* arg, int size);
 int has_correct_arg_sizes(char* arg1, int size1, char* arg2, int size2);
+void add_trailing_zeros(int number, int len, char* result);
 
 #endif

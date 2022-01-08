@@ -16,9 +16,10 @@
 #include <sys/stat.h>
 
 #define BIND_FAIL "Failed binding information to the server socket!"
-#define SEND_ERR "There was an error sending information from the server. Please try again!"
 #define USERS_FAIL "Failed creating the USERS folder. Please try again!"
 #define GROUPS_FAIL "Failed creating the GROUPS folder. Please try again!"
+#define SEND_ERR "There was an error sending information to the client. Please try again!"
+#define RECV_ERR "There was an error receiving information from the client. Please try again!"
 
 typedef struct{
     char group_name[25];
@@ -28,8 +29,8 @@ typedef struct{
 
 /* -------------------- server_main -------------------- */
 
-int recv_udp(int udp_socket, char* message);
-int send_udp(int udp_socket, char* message);
+int udp_receive(int udp_socket, char* message);
+int udp_send(int udp_socket, char* message);
 int socket_bind(int socktype, char* port, struct addrinfo** res);
 int parse_argv(int argc, char** argv, char* port, bool* verbose);
 int parse_udp(int udp_socket, char* message);
@@ -50,9 +51,13 @@ int my_groups(int udp_socket, char* uid);
 int subscribe(int udp_socket, char* uid, char* gid, char* group_name);
 int unsubscribe(int udp_socket, char* uid, char* gid);
 
+
 /* -------------------- server_tcp --------------------- */
-int recv_tcp(int conn_fd, char* message, int size);
-int send_tcp(int conn_fd, char* response, int size);
+int tcp_read(int conn_fd, char* message, int size);
+int tcp_send(int conn_fd, char* response);
+bool read_string(char* str, int conn_fd);
 int ulist(int conn_fd, bool verbose);
+int download_file(int conn_fd, char* path_name, bool verbose);
+int post(int conn_fd, bool verbose);
 
 #endif

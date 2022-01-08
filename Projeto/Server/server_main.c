@@ -3,7 +3,7 @@
 
 struct sockaddr_in serv_addr;
 
-int recv_udp(int udp_socket, char* message){
+int udp_receive(int udp_socket, char* message){
     socklen_t addrlen = sizeof(serv_addr);
     ssize_t nread = recvfrom(udp_socket, message, 128, 0, (struct sockaddr*)&serv_addr, &addrlen);
     if (nread == -1){
@@ -13,7 +13,7 @@ int recv_udp(int udp_socket, char* message){
     return nread;
 }
 
-int send_udp(int udp_socket, char* message){
+int udp_send(int udp_socket, char* message){
     printf("Message: %s\n", message);
     socklen_t addrlen = sizeof(serv_addr);
     ssize_t n = sendto(udp_socket, message, strlen(message), 0, (struct sockaddr*)&serv_addr,addrlen);
@@ -137,7 +137,7 @@ int parse_tcp(int conn_fd, char* message, bool verbose){
         return ulist(conn_fd, verbose);
     } else if (!strcmp(message, "PST ")){
         //Post (TCP)
-        //return post(conn_fd);
+        return post(conn_fd, verbose);
     } else if (!strcmp(message, "RTV ")){
         //Retrieve (TCP): MID
         /*if (!(has_correct_arg_sizes(arg1, 4, arg2, 0) && digits_only(arg1, "message ID")))
@@ -195,27 +195,27 @@ int main(int argc, char** argv){
             socklen_t len = sizeof(serv_addr);
             conn_fd = accept(tcp_socket, (struct sockaddr*)&serv_addr, &len);
             bzero(message, sizeof(message));
-            recv_tcp(conn_fd, message, 4);
+            tcp_read(conn_fd, message, 4);
             if (verbose){
                 printf("Message from TCP client:\n%s", message);    //nota é preciso completar a mensagem na funcao em questao
                 if (!parse_tcp(conn_fd, message, verbose))
-                    send_tcp(conn_fd, "ERR\n", 4);
+                    tcp_send(conn_fd, "ERR\n");
                 puts("----------------------------------------");
             }
             else if (!parse_tcp(conn_fd, message, verbose))
-                send_tcp(conn_fd, "ERR\n", 4);
+                tcp_send(conn_fd, "ERR\n");
             close(conn_fd);
         }
         // if udp socket is readable receive the message.
         if (FD_ISSET(udp_socket, &rset)) {
             bzero(message, sizeof(message));
-            recv_udp(udp_socket, message);
+            udp_receive(udp_socket, message);
             if (verbose){
                 printf("Message from UDP client:\n%s\n", message);
                 puts("----------------------------------------");
             }
             if (!parse_udp(udp_socket, message))
-                send_udp(udp_socket, "ERR\n");
+                udp_send(udp_socket, "ERR\n");
         }
         
     }

@@ -21,6 +21,7 @@
 #define GEN_ERR "The server returned an error. Please try again!"
 #define CONN_ERR "There was an error conecting to the server. Please try again!"
 #define SEND_ERR "There was an error sending information to the server. Please try again!"
+#define RECV_ERR "There was an error receiving information from the server. Please try again!"
 #define INFO_ERR "There was an error collecting information from the server. Please try again!"
 #define REG_USER_SUC "You have registered successfully!"
 #define REG_USER_DUP "A user with this uid has already been registered. Please try another one!"
@@ -54,6 +55,7 @@
 #define NO_MSGS "There are no messages in this group."
 #define RTV_ERR "There was a problem retrieving the messages. Please confirm that you're logged in and subscribed to this group, then try again!"
 #define ERR_FILE "There was a problem writing to this file. Please confirm that you have writing permissions for it, then try again!"
+#define GRP_ZERO "You can't select group 0. Please try again!"
 
 /* -------------------- client_main -------------------- */
 int timer_on(int sd);
@@ -83,7 +85,7 @@ void show_groups(char* ptr, char* groups);
 int tcp_connect(char* ip_address, char* port, int* fd, struct addrinfo *res);
 int tcp_send(char* message, int size);
 int tcp_read(char* buffer, ssize_t size);
-int read_space();
+bool read_space();
 void ulist(char* ip_address, char* port, char* gid, struct addrinfo *res);
 int upload_file(char* fname);
 void post(char* ip_address, char* port, char* gid, char* uid, struct addrinfo *res, char *text, char *fname);

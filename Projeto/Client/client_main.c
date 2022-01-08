@@ -161,13 +161,15 @@ bool parse_argv(char* ip_address, char* port, int argc, char** argv){
                 }
                 return false;
             }
-            return get_local_IP(ip_address); // Get local IP address if there's no specified address
+            strcpy(ip_address, "localhost"); // Get local IP address if there's no specified address
+            return true; 
         }
     }
     
     if (argc == 1){
-        strcpy(port, "58026"); // Copy the IP address given in the argv
-        return get_local_IP(ip_address); // Get local IP address if there's no specified address
+        strcpy(port, "58026"); // Use port 58000 + group number (26) if there's no specified port number
+        strcpy(ip_address, "localhost"); // Get local IP address if there's no specified address
+            return true;
     }
 
     return false;
@@ -276,9 +278,10 @@ void parse(int udp_socket, struct addrinfo *res, char* ip_address, char* port, c
         subscribe(uid, arg1, arg2, res, udp_socket);
     } else if (!strcmp(name, "unsubscribe") || !strcmp(name, "u")){
         // Unsubscribe (UDP): gid (size 2, digits)
-        if (strlen(gid) == 1)
-            sprintf(gid, "0%c", gid[0]);
-        if (!(has_correct_arg_sizes(arg1, 2, arg2, 0) && digits_only(arg1, "gid")))
+        if (!digits_only(arg1, "gid"))
+            return;
+        add_trailing_zeros(atoi(arg1), 2, arg1);
+        if (!has_correct_arg_sizes(arg1, 2, arg2, 0))
             return;
         unsubscribe(uid, arg1, res, udp_socket);
     } else if (!strcmp(name, "my_groups") || !strcmp(name, "mgl")){
@@ -289,10 +292,15 @@ void parse(int udp_socket, struct addrinfo *res, char* ip_address, char* port, c
         my_groups(uid, res, udp_socket);
     } else if (!strcmp(name, "select") || !strcmp(name, "sag")){
         // Select: gid (size 2, digits)
-        if (strlen(arg1) == 1)
-            sprintf(arg1, "0%c", arg1[0]);
-        if (!(has_correct_arg_sizes(arg1, 2, arg2, 0) && digits_only(arg1,"gid") && check_login(uid, true)))
+        if (!digits_only(arg1, "gid"))
             return;
+        add_trailing_zeros(atoi(arg1), 2, arg1);
+        if (!(has_correct_arg_sizes(arg1, 2, arg2, 0) && check_login(uid, true)))
+            return;
+        if (!strcmp(arg1, "00")){
+            puts(GRP_ZERO);
+            return;
+        }
         strcpy(gid, arg1);
         printf("Group %s sucessfully selected.\n", gid);
     } else if (!strcmp(name, "showgid") || !strcmp(name, "sg")){
@@ -310,7 +318,10 @@ void parse(int udp_socket, struct addrinfo *res, char* ip_address, char* port, c
     } else if (!strcmp(name, "retrieve") || !strcmp(name, "r")){
         // Retrieve (TCP): arg1 = MID (size 4, digits)
         // There must be a logged in user and a group selected
-        if (!(has_correct_arg_sizes(arg1, 4, arg2, 0) && digits_only(arg1, "message ID") && check_login(uid, true) && check_group(gid)))
+        if (!digits_only(arg1, "message ID"))
+            return;
+        add_trailing_zeros(atoi(arg1), 4, arg1);
+        if (!(has_correct_arg_sizes(arg1, 4, arg2, 0) && check_login(uid, true) && check_group(gid)))
             return;
         retrieve(ip_address, port, gid, uid, arg1, res);
     } else

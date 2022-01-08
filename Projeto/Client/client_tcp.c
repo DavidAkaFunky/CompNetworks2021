@@ -18,6 +18,7 @@ int tcp_send(char* message, int size){
     char *ptr = message;
     //Caso o servidor não aceite a mensagem completa, manda por packages
     while (nleft > 0){
+        puts("here");
         nwritten = write(tcp_socket, ptr, nleft);
         if (nwritten <= 0){
             puts(SEND_ERR);
@@ -49,19 +50,17 @@ int tcp_read(char* buffer, ssize_t size){
     return 1;
 }
 
-
-int read_space(){
+bool read_space(){
     char end[2];
     bzero(end, 2);
-    ssize_t nread = tcp_read(end, 1);
-    if (nread == -1)
-        return -1;
+    if (tcp_read(end, 1) == -1)
+        return false;
     if (strcmp(" ", end)){
         close(tcp_socket);
         puts(INFO_ERR);
-        return -1;
+        return false;
     }
-    return 0;
+    return true;
 }
 
 void ulist(char* ip_address, char* port, char* gid, struct addrinfo *res){
@@ -237,9 +236,9 @@ void post(char* ip_address, char* port, char* gid, char* uid, struct addrinfo *r
             puts(INV_FILE);
             return;
         }
-        char* ext = &(file_name[fname_strlen - 3]);
-        if (!(is_alphanumerical(ext, 0))){
+        if (!(is_alphanumerical(&(file_name[fname_strlen - 3]), 0))){
             close(tcp_socket);
+            puts(INV_FILE);
             return;
         }
         if (!upload_file(file_name))
@@ -289,14 +288,13 @@ void post(char* ip_address, char* port, char* gid, char* uid, struct addrinfo *r
 }
 
 int download_file(){
-    if (read_space(tcp_socket) == -1)
+    if (!read_space())
         return 0;
     char file_name[25], file_size[11];
     bzero(file_name, 25);
     int counter = 0, nread;
     while (1){
-        nread = tcp_read(file_name + counter, 1);
-        if (nread == -1)
+        if (tcp_read(file_name + counter, 1) == -1)
             return 0;
         if (file_name[counter] == ' '){
             file_name[counter] = '\0';
@@ -317,8 +315,7 @@ int download_file(){
     bzero(file_size, 11);
     counter = 0;
     while (1){
-        nread = tcp_read(file_size + counter, 1);
-        if (nread == -1)
+        if (tcp_read(file_size + counter, 1) == -1)
             return 0;
         if (file_size[counter] == ' '){
             file_size[counter] = '\0';
@@ -335,6 +332,16 @@ int download_file(){
             return 0;
         }
         ++counter;    
+    }
+    if (file_name[strlen(file_name) - 4] != '.'){
+        close(tcp_socket);
+        puts(INV_FILE);
+        return 0;
+    }
+    if (!(is_alphanumerical(&(file_name[strlen(file_name) - 3]), 0))){
+        close(tcp_socket);
+        puts(INV_FILE);
+        return 0;
     }
     puts("This message contains a file!");
     printf("File name: %s\nFile size: %s bytes\n", file_name, file_size);
@@ -468,13 +475,13 @@ void retrieve(char* ip_address, char* port, char* gid, char* uid, char* MID, str
                 puts(INFO_ERR);
                 return;
             }
-            if (read_space(tcp_socket) == -1)
+            if (!read_space())
                 return;
             bzero(rtv_uid, 6);
             nread = tcp_read(rtv_uid, 5);
             if (nread == -1)
                 return;
-            if (read_space(tcp_socket) == -1)
+            if (!read_space())
                 return;
             if (!(is_correct_arg_size(rtv_uid, 5) && digits_only(rtv_uid, "user ID"))){
                 close(tcp_socket);

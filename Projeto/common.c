@@ -51,3 +51,13 @@ int is_correct_arg_size(char* arg, int size){
 int has_correct_arg_sizes(char* arg1, int size1, char* arg2, int size2){
     return is_correct_arg_size(arg1, size1) && is_correct_arg_size(arg2, size2);
 }
+
+void add_trailing_zeros(int number, int len, char* result){
+    memset(result, '0', len);
+    int i = 1;
+    while (number > 0){
+        result[len-i] = '0' + number % 10;
+        ++i;
+        number /= 10;
+    }
+}
