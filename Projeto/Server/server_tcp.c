@@ -2,15 +2,47 @@
 #include "dirent.h"
 #include "../common.h"
 
-int ulist(int conn_fd, bool verbose){
+int recv_tcp(int conn_fd, char* message, int size){
+    ssize_t nleft = size, nread;
+    char *ptr = message;
+    while (nleft > 0){
+        nread = read(conn_fd, ptr, nleft);
+        if (nread == -1){
+            puts(RECV_ERR);
+            return -1;
+        }
+        else if (nread == 0)
+            break;
+        nleft -= nread;
+        ptr += nread;
+    }
+    return 1;
+}
+
+int send_tcp(int conn_fd, char* response, int size){
+    ssize_t nleft = size, nwritten;
+    char *ptr = response;
+    //Caso o servidor não aceite a mensagem completa, manda por packages
+    while (nleft > 0){
+        nwritten = write(conn_fd, ptr, nleft);
+        if (nwritten <= 0){
+            puts(SEND_ERR);
+            return -1;
+        }
+        nleft -= nwritten;
+        ptr += nwritten;  
+    }
+    return 1;
+}
+
+int ulist(int conn_fd){
     char gid[3];
     char enter[2];
     char gid_path[10];
     bzero(gid, sizeof(gid));
     bzero(enter, sizeof(enter));
     bzero(gid_path, sizeof(gid_path));
-    ssize_t nread;
-    nread = recv_tcp(conn_fd, gid, 2);
+    ssize_t nread = recv_tcp(conn_fd, gid, 2);
     if (nread == -1)
         return -1;
     nread = recv_tcp(conn_fd, enter, 1);

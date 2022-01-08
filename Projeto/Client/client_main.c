@@ -289,8 +289,8 @@ void parse(int udp_socket, struct addrinfo *res, char* ip_address, char* port, c
         my_groups(ip_address, uid, res, udp_socket);
     } else if (!strcmp(name, "select") || !strcmp(name, "sag")){
         // Select: gid (size 2, digits)
-        if (strlen(gid) == 1)
-            sprintf(gid, "0%c", gid[0]);
+        if (strlen(arg1) == 1)
+            sprintf(arg1, "0%c", arg1[0]);
         if (!(has_correct_arg_sizes(arg1, 2, arg2, 0) && digits_only(arg1,"gid") && check_login(uid, true)))
             return;
         strcpy(gid, arg1);

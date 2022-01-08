@@ -27,39 +27,6 @@ int send_udp(int udp_socket, char* message){
     return n;
 }
 
-int recv_tcp(int conn_fd, char* message, int size){
-    ssize_t nleft = size, nread;
-    char *ptr = message;
-    while (nleft > 0){
-        nread = read(conn_fd, ptr, nleft);
-        if (nread == -1){
-            puts(RECV_ERR);
-            return -1;
-        }
-        else if (nread == 0)
-            break;
-        nleft -= nread;
-        ptr += nread;
-    }
-    return 1;
-}
-
-int send_tcp(int conn_fd, char* response, int size){
-    ssize_t nleft = size, nwritten;
-    char *ptr = response;
-    //Caso o servidor não aceite a mensagem completa, manda por packages
-    while (nleft > 0){
-        nwritten = write(conn_fd, ptr, nleft);
-        if (nwritten <= 0){
-            puts(SEND_ERR);
-            return -1;
-        }
-        nleft -= nwritten;
-        ptr += nwritten;  
-    }
-    return 1;
-}
-
 int socket_bind(int socktype, char* port, struct addrinfo** res){
     int sockfd = socket(AF_INET,socktype,0);
     if (sockfd == -1){
@@ -206,7 +173,7 @@ int main(int argc, char** argv){
     struct addrinfo *res;
     int udp_socket = socket_bind(SOCK_DGRAM, port, &res);
     int tcp_socket = socket_bind(SOCK_STREAM, port, &res);
-    listen(tcp_socket, 10);
+    listen(tcp_socket, 1);
     char message[BUF_SIZE];
     fd_set rset;
     int conn_fd;
