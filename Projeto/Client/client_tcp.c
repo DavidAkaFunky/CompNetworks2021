@@ -3,16 +3,32 @@
 
 int tcp_socket;
 
+/**
+ * @brief Creates a tcp socket and connects it to the server.
+ * 
+ * @param ip_address the IP address where the packets will be sent.
+ * @param port the port used to send the packets to the desired IP address.
+ * @param fd the tcp socket used to communicate.
+ * @param res information about the address of the service provider.
+ * @return the value that indicates success or failure of the connection attempt.
+ */
 int tcp_connect(char* ip_address, char* port, int* fd, struct addrinfo *res){
-    int bytes;
+    int value;
     tcp_socket = create_socket(&res, SOCK_STREAM, ip_address, port);
-    if ((bytes = connect(tcp_socket, res->ai_addr, res->ai_addrlen)) == -1){
+    if ((value = connect(tcp_socket, res->ai_addr, res->ai_addrlen)) == -1){
         puts(CONN_ERR);
         return -1;
     }
-    return bytes;
+    return value;
 }
 
+/**
+ * @brief Send a message to the server with a fixed size in bytes (TCP).
+ * 
+ * @param message the message sent to the server.
+ * @param size the size of the message sent.
+ * @return the value that indicates success or failure. 
+ */
 int tcp_send(char* message, int size){
     ssize_t nleft = size, nwritten;
     char *ptr = message;
@@ -29,6 +45,13 @@ int tcp_send(char* message, int size){
     return 1;
 }
 
+/**
+ * @brief Read a message from the server with a fixed size in bytes (TCP).
+ * 
+ * @param buffer the message that was sent by the server.
+ * @param size the size of the buffer.
+ * @return the value that indicates success or failure. 
+ */
 int tcp_read(char* buffer, ssize_t size){
     ssize_t nleft = size, nread;
     char *ptr = buffer;
@@ -49,6 +72,12 @@ int tcp_read(char* buffer, ssize_t size){
     return 1;
 }
 
+/**
+ * @brief Function that reads one byte and compares with " ".
+ * 
+ * @return true, if the byte read is a space.
+ * @return false, if its not a space.
+ */
 bool read_space(){
     char end[2];
     bzero(end, 2);
@@ -62,6 +91,14 @@ bool read_space(){
     return true;
 }
 
+/**
+ * @brief Executes the ulist command.
+ * 
+ * @param ip_address the IP address where the packets will be sent.
+ * @param port the port used to send the packets to the desired IP address.
+ * @param gid the group ID to list all the users subscribed.
+ * @param res information about the address of the service provider.
+ */
 void ulist(char* ip_address, char* port, char* gid, struct addrinfo *res){
     char message[8];
     bzero(message, 8);
@@ -166,6 +203,12 @@ void ulist(char* ip_address, char* port, char* gid, struct addrinfo *res){
     close(tcp_socket);
 }
 
+/**
+ * @brief Auxiliary function that uploads a file.
+ * 
+ * @param file_name the path to the file to be uploaded.
+ * @return the value that indicates success or failure.
+ */
 int upload_file(char* file_name){
     char file_info[37];
     bzero(file_info, 37);
@@ -207,6 +250,17 @@ int upload_file(char* file_name){
     return 1;
 }
 
+/**
+ * @brief Executes the post command.
+ * 
+ * @param ip_address the IP address where the packets will be sent.
+ * @param port the port used to send the packets to the desired IP address.
+ * @param gid the group's ID that will receive the post.
+ * @param uid the user's ID that posted.
+ * @param res information about the address of the service provider.
+ * @param text the message posted on the group.
+ * @param file_name the path to the file to be uploaded.
+ */
 void post(char* ip_address, char* port, char* gid, char* uid, struct addrinfo *res, char *text, char *file_name){
     int text_strlen = strlen(text);
     if (text_strlen > 240){
@@ -286,6 +340,11 @@ void post(char* ip_address, char* port, char* gid, char* uid, struct addrinfo *r
     close(tcp_socket);
 }
 
+/**
+ * @brief Auxiliary function that retrieves the file from the server
+ * 
+ * @return the value that indicates success or failure.
+ */
 int download_file(){
     if (!read_space())
         return 0;
@@ -382,6 +441,16 @@ int download_file(){
     return 1;
 }
 
+/**
+ * @brief Executes the retrieve command.
+ * 
+ * @param ip_address the IP address where the packets will be sent.
+ * @param port the port used to send the packets to the desired IP address.
+ * @param gid the group's ID that will send the message.
+ * @param uid the user's ID that wants to retrieve the message.
+ * @param MID the message's ID that will be retrieved from the group.
+ * @param res information about the address of the service provider.
+ */
 void retrieve(char* ip_address, char* port, char* gid, char* uid, char* MID, struct addrinfo *res){
     char message[19];
     bzero(message, 19);

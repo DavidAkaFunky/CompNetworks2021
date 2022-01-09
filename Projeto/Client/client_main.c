@@ -106,8 +106,8 @@ bool is_valid_IP(char* ip_address){
  * 
  * @param ip_address the IP address where the packets will be sent.
  * @param port the port used to send the packets to the desired IP address.
- * @param argc 
- * @param argv 
+ * @param argc number of arguments in the stdin.
+ * @param argv array of the arguments written in stdin.
  * @return true if the argv is well-formatted.
  * @return false otherwise.
  */

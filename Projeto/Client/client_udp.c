@@ -1,6 +1,16 @@
 #include "client.h" 
 #include "../common.h"
 
+/**
+ * @brief Sends and receives the messages between the server and the client (UDP).
+ * 
+ * @param fd the udp socket used to communicate.
+ * @param res information about the address of the service provider.
+ * @param message message sent from the client to the server.
+ * @param buffer message received from the server.
+ * @param size the size of the message received from the server.
+ * @return the quantity of bytes read.
+ */
 int udp_send_and_receive(int fd, struct addrinfo *res, char* message, char* buffer, int size){
     ssize_t bytes = sendto(fd, message, strlen(message), 0, res -> ai_addr, res -> ai_addrlen);
 	if (bytes == -1){
@@ -19,6 +29,14 @@ int udp_send_and_receive(int fd, struct addrinfo *res, char* message, char* buff
     return bytes;
 }
 
+/**
+ * @brief Executes the register command.
+ * 
+ * @param uid the user ID to be registered.
+ * @param password the password of the user to be registered.
+ * @param res information about the address of the service provider.
+ * @param fd the udp socket used to communicate.
+ */
 void reg(char* uid, char* password, struct addrinfo *res, int fd){
     if (!(digits_only(uid,"uid") && has_correct_arg_sizes(uid, 5, password, 8) && is_alphanumerical(password, 0)))
         return;
@@ -40,6 +58,14 @@ void reg(char* uid, char* password, struct addrinfo *res, int fd){
         puts(INFO_ERR);
 }
 
+/**
+ * @brief Executes the unregister command.
+ * 
+ * @param uid the user ID to be unregistered.
+ * @param password the password of the user to be unregistered.
+ * @param res information about the address of the service provider.
+ * @param fd the udp socket used to communicate.
+ */
 void unreg(char* uid, char* password, struct addrinfo *res, int fd){
     if (!(digits_only(uid,"uid") && has_correct_arg_sizes(uid, 5, password, 8) && is_alphanumerical(password, 0)))
         return;
@@ -60,6 +86,15 @@ void unreg(char* uid, char* password, struct addrinfo *res, int fd){
     }    
 }
 
+/**
+ * @brief Executes the login command.
+ * 
+ * @param uid the user ID to be logged in.
+ * @param password the password of the user to be logged in.
+ * @param res information about the address of the service provider.
+ * @param fd the udp socket used to communicate.
+ * @return the value that indicates success or failure.
+ */
 int login(char* uid, char* password, struct addrinfo *res, int fd){
     if (!(digits_only(uid,"uid") && has_correct_arg_sizes(uid, 5, password, 8) && is_alphanumerical(password, 0)))
         return -1;
@@ -85,6 +120,15 @@ int login(char* uid, char* password, struct addrinfo *res, int fd){
     return -1;
 }
 
+/**
+ * @brief Executes the logout command.
+ * 
+ * @param uid the user ID to be logged out.
+ * @param password the password of the user to be logged out.
+ * @param res information about the address of the service provider.
+ * @param fd the udp socket used to communicate.
+ * @return the value that indicates success or failure.
+ */
 int logout(char* uid, char* password, struct addrinfo *res, int fd){
     char message[20], buffer[BUF_SIZE];
     bzero(message, 20);
@@ -109,6 +153,12 @@ int logout(char* uid, char* password, struct addrinfo *res, int fd){
   
 }
 
+/**
+ * @brief Auxiliary function that prints the groups to stdout
+ * 
+ * @param ptr ptr to the buffer that has every Group with the gid, group name and mid, in this specific order
+ * @param groups string that has the number of groups
+ */
 void show_groups(char* ptr, char* groups){
     int n = atoi(groups), format;
     char group_name[25];
@@ -133,6 +183,12 @@ void show_groups(char* ptr, char* groups){
         puts(INFO_ERR);
 }
 
+/**
+ * @brief Executes the groups command.
+ *
+ * @param res information about the address of the service provider.
+ * @param fd the udp socket used to communicate.
+ */
 void groups(struct addrinfo *res, int fd){
     char buffer[GROUPS];
     bzero(buffer, GROUPS);
@@ -159,6 +215,15 @@ void groups(struct addrinfo *res, int fd){
     }
 }
 
+/**
+ * @brief Executes the subscribe command.
+ * 
+ * @param uid the user ID to be subscribed.
+ * @param gid the group ID to subscribe.
+ * @param group_name the group name to subscribe.
+ * @param res information about the address of the service provider.
+ * @param fd the udp socket used to communicate.
+ */
 void subscribe(char* uid, char* gid, char* group_name, struct addrinfo *res, int fd){
     if (strlen(gid) == 1)
         sprintf(gid, "0%c", gid[0]);
@@ -200,6 +265,14 @@ void subscribe(char* uid, char* gid, char* group_name, struct addrinfo *res, int
     }
 }
 
+/**
+ * @brief Executes the unsubscribe command.
+ * 
+ * @param uid the user ID to be unsubscribed.
+ * @param gid the group ID to unsubscribe.
+ * @param res information about the address of the service provider.
+ * @param fd the udp socket used to communicate.
+ */
 void unsubscribe(char* uid, char* gid, struct addrinfo *res, int fd) {
     char message[13], buffer[BUF_SIZE];
     sprintf(message,"GUR %s %s\n", uid, gid);
@@ -219,6 +292,13 @@ void unsubscribe(char* uid, char* gid, struct addrinfo *res, int fd) {
         puts(INFO_ERR);
 }
 
+/**
+ * @brief Executes the my_groups command.
+ * 
+ * @param uid the user ID to show the groups he is subscribed.
+ * @param res information about the address of the service provider.
+ * @param fd the udp socket used to communicate.
+ */
 void my_groups(char* uid, struct addrinfo *res, int fd){
     char message[12], buffer[GROUPS];
     bzero(buffer, GROUPS);
