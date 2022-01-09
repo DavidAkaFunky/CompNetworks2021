@@ -44,10 +44,6 @@ int unreg(int udp_socket, char* uid, char* pass){
     if (!(digits_only(uid,"uid") && has_correct_arg_sizes(uid, 5, pass, 8) && is_alphanumerical(pass, 0)))    // acho que deveria ser NOK
         return 0;
 
-    if (access(path, F_OK) == -1){    //user doesnt exist
-        udp_send(udp_socket, "RUN NOK\n");
-        return 1;
-    }
 
     //deletes folder with the user uid, and the txt file with his password
     char file_path[26];
@@ -57,13 +53,21 @@ int unreg(int udp_socket, char* uid, char* pass){
         udp_send(udp_socket, "RUN NOK\n");
         return 1;
     }
+
     bzero(file_path, 26);
     sprintf(file_path,"%s/%s_login.txt",path,uid);
-    if (access(file_path, F_OK) || remove(file_path)){ //if already exists the uid directory
+    if (!access(file_path, F_OK) && remove(file_path)){ //if already exists the uid directory
         udp_send(udp_socket, "RUN NOK\n");
         return 1;
     }
 
+    if (access(path, F_OK) == -1 || remove(path)){    //user doesnt exist
+        udp_send(udp_socket, "RUN NOK\n");
+        return 1;
+    }
+
+    //Falta retirar o utilizador de todos os grupos
+    
     udp_send(udp_socket, "RUN OK\n");
     return 1;
 }
@@ -143,7 +147,7 @@ int logout(int udp_socket, char* uid, char* pass){
         return 1;
     }
 
-    //delete the txt file with his log
+    //Delete the txt file with his log
     bzero(file_path, 26);
     sprintf(file_path,"%s/%s_login.txt",path,uid);
 

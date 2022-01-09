@@ -342,7 +342,7 @@ int download_file(){
         puts(INV_FILE);
         return 0;
     }
-    puts("This message contains a file!");
+    puts(FILE_IN_MSG);
     printf("File name: %s\nFile size: %s bytes\n", file_name, file_size);
     char file_path[35];
     sprintf(file_path, "DOWNLOADS/%s", file_name);

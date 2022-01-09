@@ -241,8 +241,6 @@ void parse(int udp_socket, struct addrinfo *res, char* ip_address, char* port, c
         if (!has_correct_arg_sizes(arg1, 0, arg2, 0))
             return;
         freeaddrinfo(res);
-        if(check_login(uid, false))
-            logout(uid, password, res, udp_socket);
         close(udp_socket);
         exit(EXIT_SUCCESS);
     } else if (!strcmp(name, "groups") || !strcmp(name, "gl")){
