@@ -14,13 +14,13 @@
 #include <dirent.h>
 #include <stdbool.h>
 
-#define TIME 15
 #define DOWNLOADS_FAIL "Failed creating the DOWNLOADS folder. Please try again!"
 #define NO_LOGIN "Not logged in. Please try again!"
 #define NO_GROUP "No group selected. Please try again!"
 #define GEN_ERR "The server returned an error. Please try again!"
 #define CONN_ERR "There was an error conecting to the server. Please try again!"
 #define SEND_ERR "There was an error sending information to the server. Please try again!"
+#define RECV_NEW_ATT "Trying to receive data from the server again..."
 #define RECV_ERR "There was an error receiving information from the server. Please try again!"
 #define INFO_ERR "There was an error collecting information from the server. Please try again!"
 #define REG_USER_SUC "You have registered successfully!"
@@ -56,8 +56,6 @@
 #define GRP_ZERO "You can't select group 0. Please try again!"
 
 /* -------------------- client_main -------------------- */
-int timer_on(int sd);
-int timer_off(int sd);
 bool check_login(char *uid, bool log);
 bool check_group(char *gid);
 int create_socket(struct addrinfo **res, int socktype, char* ip_address, char* port);
@@ -67,6 +65,8 @@ void parse(int udp_socket, struct addrinfo *res, char* ip_address, char* port, c
 int main(int argc, char** argv);
 
 /* -------------------- client_udp -------------------- */
+int timer_on(int sd, int time);
+int timer_off(int sd);
 int udp_send_and_receive(int fd, struct addrinfo *res, char* message, char* buffer, int size);
 void reg(char* uid, char* password, struct addrinfo *res, int fd);
 void unreg(char* uid, char* password, struct addrinfo *res, int fd);

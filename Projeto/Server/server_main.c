@@ -180,7 +180,7 @@ int main(int argc, char** argv){
  
     // get maxfd
     int maxfd = udp_socket > tcp_socket ? udp_socket + 1 : tcp_socket + 1;
-    while (1) {
+    while (true) {
  
         // set tcp_socket and udp_socket in readset
         FD_SET(tcp_socket, &rset);

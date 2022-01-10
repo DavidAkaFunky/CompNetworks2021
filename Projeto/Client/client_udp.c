@@ -2,6 +2,32 @@
 #include "../common.h"
 
 /**
+ * @brief Activates timeout limit (given by the constant TIME) for client sockets.
+ * 
+ * @param[in] sd the socket whose timer will be activated.
+ * @param[in] time the number of seconds to wait for a reply from the server.
+ * @return 0 if the activation using setsockopt was successful, -1 otherwise.
+ */
+int timer_on(int sd, int time){
+    struct timeval tmout;
+    memset((char *)&tmout,0,sizeof(tmout)); /* Clear time structure. */
+    tmout.tv_sec = time;
+    return setsockopt(sd, SOL_SOCKET, SO_RCVTIMEO, (struct timeval *)&tmout,sizeof(struct timeval));
+}
+
+/**
+ * @brief Deactivates timeout limit for client sockets.
+ * 
+ * @param[in] sd the socket whose timer will be deactivated.
+ * @return 0 if the deactivation using setsockopt was successful, -1 otherwise.
+ */
+int timer_off(int sd){
+    struct timeval tmout;
+    memset((char *)&tmout,0,sizeof(tmout)); /* Clear time structure */
+    return setsockopt(sd, SOL_SOCKET, SO_RCVTIMEO, (struct timeval *)&tmout,sizeof(struct timeval));
+}
+
+/**
  * @brief Sends and receives the messages between the server and the client (UDP).
  * 
  * @param fd the udp socket used to communicate.
@@ -19,14 +45,21 @@ int udp_send_and_receive(int fd, struct addrinfo *res, char* message, char* buff
     }
     struct sockaddr_in addr;
 	socklen_t addrlen = sizeof(addr);
-    timer_on(fd);
-	bytes = recvfrom(fd, buffer, size, 0, (struct sockaddr*) &addr, &addrlen);
-    timer_off(fd);
-    if (bytes == -1){
-        puts(RECV_ERR);
-        return -1;
+    int i = 0;
+    while (true){
+        timer_on(fd, 2);
+        bytes = recvfrom(fd, buffer, size, 0, (struct sockaddr*) &addr, &addrlen);
+        timer_off(fd);
+        if (bytes == -1){
+            if ((++i) == 3){
+                puts(RECV_ERR);
+                return -1;
+            }
+            puts(RECV_NEW_ATT);
+        }
+        else
+            return bytes;
     }
-    return bytes;
 }
 
 /**

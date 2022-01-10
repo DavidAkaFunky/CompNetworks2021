@@ -3,6 +3,7 @@
         "types.h": "c",
         "server.h": "c",
         "*.tcc": "c",
-        "fstream": "c"
+        "fstream": "c",
+        "system_error": "c"
     }
 }

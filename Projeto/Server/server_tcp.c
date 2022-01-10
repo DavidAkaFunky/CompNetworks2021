@@ -123,7 +123,7 @@ bool download_file(int conn_fd, char *path_name, bool verbose){
     char file_name[25];
     bzero(file_name, 25);
     int counter = 0;
-    while (1){
+    while (true){
         if (tcp_read(conn_fd, file_name + counter, 1) == -1)
             return false;
         if (file_name[counter] == ' '){
@@ -140,7 +140,7 @@ bool download_file(int conn_fd, char *path_name, bool verbose){
     char file_size[11];
     bzero(file_size, 11);
     counter = 0;
-    while (1){
+    while (true){
         if (tcp_read(conn_fd,file_size + counter, 1) == -1)
             return false;
         if (file_size[counter] == ' '){
@@ -227,7 +227,7 @@ bool post(int conn_fd, bool verbose){
     char text_size[4];
     bzero(text_size, 4);
     int counter = 0;
-    while (1){
+    while (true){
         if (tcp_read(conn_fd, text_size + counter, 1) == -1)
             return true;
         if (text_size[counter] == ' '){
@@ -315,7 +315,7 @@ bool post(int conn_fd, bool verbose){
 }
 
 int get_number_of_messages(char* gid, int first_msg){
-    char path[15], msg_path[19], msg[5];
+    char path[15], msg_path[19], file_path[35], msg[5];
     bzero(path, 15);
     sprintf(path,"GROUPS/%s/MSG/", gid);
     int n = 0;
@@ -324,8 +324,16 @@ int get_number_of_messages(char* gid, int first_msg){
         bzero(msg, 5);
         add_trailing_zeros(first_msg, 4, msg);
         sprintf(msg_path, "%s%s", path, msg);
-        if (!access(msg_path, F_OK))
-            ++n;
+        if (!access(msg_path, F_OK)){
+            bzero(file_path, 35);
+            sprintf(file_path, "%s/A U T H O R.txt", msg_path);
+            if (!access(file_path, F_OK)){
+                bzero(file_path, 35);
+                sprintf(file_path, "%s/T E X T.txt", msg_path);
+                if (!access(file_path, F_OK))
+                    ++n;
+            }
+        }   
         ++first_msg;
     }
     return n;

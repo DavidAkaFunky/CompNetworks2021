@@ -4,31 +4,6 @@
 #include <sys/socket.h>
 
 /**
- * @brief Activates timeout limit (given by the constant TIME) for client sockets.
- * 
- * @param[in] sd the socket whose timer will be activated.
- * @return 0 if the activation using setsockopt was successful, -1 otherwise.
- */
-int timer_on(int sd){
-    struct timeval tmout;
-    memset((char *)&tmout,0,sizeof(tmout)); /* Clear time structure. */
-    tmout.tv_sec = TIME; /* Wait for TIME seconds (check client.h) for a reply from server. */
-    return setsockopt(sd, SOL_SOCKET, SO_RCVTIMEO, (struct timeval *)&tmout,sizeof(struct timeval));
-}
-
-/**
- * @brief Deactivates timeout limit for client sockets.
- * 
- * @param[in] sd the socket whose timer will be deactivated.
- * @return 0 if the deactivation using setsockopt was successful, -1 otherwise.
- */
-int timer_off(int sd){
-    struct timeval tmout;
-    memset((char *)&tmout,0,sizeof(tmout)); /* Clear time structure */
-    return setsockopt(sd, SOL_SOCKET, SO_RCVTIMEO, (struct timeval *)&tmout,sizeof(struct timeval));
-}
-
-/**
  * @brief Checks if there's a user currently logged in.
  * 
  * @param uid the string that contains the currently logged in user's ID, if existent.

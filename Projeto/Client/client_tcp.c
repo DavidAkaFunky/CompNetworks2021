@@ -56,9 +56,7 @@ int tcp_read(char* buffer, ssize_t size){
     ssize_t nleft = size, nread;
     char *ptr = buffer;
     while (nleft > 0){
-        timer_on(tcp_socket);
         nread = read(tcp_socket, ptr, nleft);
-        timer_off(tcp_socket);
         if (nread == -1){
             close(tcp_socket);
             puts(RECV_ERR);
@@ -139,7 +137,7 @@ void ulist(char* ip_address, char* port, char* gid, struct addrinfo *res){
         char group_name[25];
         bzero(group_name, 25);
         int counter = 0;
-        while (1){
+        while (true){
             nread = tcp_read(group_name + counter, 1);
             if (nread == -1)
                 return;
@@ -174,7 +172,7 @@ void ulist(char* ip_address, char* port, char* gid, struct addrinfo *res){
         puts("This group contains the following users: ");
         char user[6];
         bzero(user, 6);  
-        while (1){
+        while (true){
             nread = tcp_read(user, 5);
             if (nread == -1)
                 return;
@@ -232,7 +230,7 @@ int upload_file(char* file_name){
     char data[1025];
     long total = 0;
     int n;
-    while (1){
+    while (true){
         bzero(data, 1025);
         n = fread(data, 1, sizeof(data), fp);
         total += n;
@@ -351,7 +349,7 @@ int download_file(){
     char file_name[25], file_size[11];
     bzero(file_name, 25);
     int counter = 0, nread;
-    while (1){
+    while (true){
         if (tcp_read(file_name + counter, 1) == -1)
             return 0;
         if (file_name[counter] == ' '){
@@ -372,7 +370,7 @@ int download_file(){
     }
     bzero(file_size, 11);
     counter = 0;
-    while (1){
+    while (true){
         if (tcp_read(file_size + counter, 1) == -1)
             return 0;
         if (file_size[counter] == ' '){
@@ -501,7 +499,7 @@ void retrieve(char* ip_address, char* port, char* gid, char* uid, char* MID, str
         char n[5];
         bzero(n, 5);
         int counter = 0;
-        while (1){
+        while (true){
             nread = tcp_read(n + counter, 1);
             if (nread == -1)
                 return;
@@ -558,7 +556,7 @@ void retrieve(char* ip_address, char* port, char* gid, char* uid, char* MID, str
             }
             bzero(tsize, 4);
             counter = 0;
-            while (1){
+            while (true){
                 nread = tcp_read(tsize + counter, 1);
                 if (nread == -1)
                     return;
