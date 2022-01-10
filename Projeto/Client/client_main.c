@@ -186,7 +186,8 @@ void parse(int udp_socket, struct addrinfo *res, char* ip_address, char* port, c
         reg(arg1, arg2, res, udp_socket);
     } else if (!strcmp(name, "unregister") || !strcmp(name, "unr")){
         // Unegister (UDP): arg1 = uid (size 5, digits), arg2 = pass (size 8, alphanumerical)
-        unreg(arg1, arg2, res, udp_socket);
+        if (unreg(arg1, arg2, res, udp_socket) && !strcmp(arg1, uid))
+            bzero(uid, 6);
     } else if (!strcmp(name, "login")){
         // Login (UDP): uid (size 5, digits), pass (size 8, alphanumerical)
         // There can't be a user already logged in
@@ -230,7 +231,7 @@ void parse(int udp_socket, struct addrinfo *res, char* ip_address, char* port, c
         subscribe(uid, arg1, arg2, res, udp_socket);
     } else if (!strcmp(name, "unsubscribe") || !strcmp(name, "u")){
         // Unsubscribe (UDP): gid (size 2, digits)
-        if (!digits_only(arg1, "gid"))
+        if (!(digits_only(arg1, "gid") && strlen(arg1) > 0))
             return;
         add_trailing_zeros(atoi(arg1), 2, arg1);
         if (!has_correct_arg_sizes(arg1, 2, arg2, 0))
@@ -244,7 +245,7 @@ void parse(int udp_socket, struct addrinfo *res, char* ip_address, char* port, c
         my_groups(uid, res, udp_socket);
     } else if (!strcmp(name, "select") || !strcmp(name, "sag")){
         // Select: gid (size 2, digits)
-        if (!digits_only(arg1, "gid"))
+        if (!(digits_only(arg1, "gid") && strlen(arg1) > 0))
             return;
         add_trailing_zeros(atoi(arg1), 2, arg1);
         if (!(has_correct_arg_sizes(arg1, 2, arg2, 0) && check_login(uid, true)))
@@ -270,7 +271,7 @@ void parse(int udp_socket, struct addrinfo *res, char* ip_address, char* port, c
     } else if (!strcmp(name, "retrieve") || !strcmp(name, "r")){
         // Retrieve (TCP): arg1 = MID (size 4, digits)
         // There must be a logged in user and a group selected
-        if (!digits_only(arg1, "message ID"))
+        if (!(digits_only(arg1, "message ID") && strlen(arg1) > 0))
             return;
         add_trailing_zeros(atoi(arg1), 4, arg1);
         if (!(has_correct_arg_sizes(arg1, 4, arg2, 0) && check_login(uid, true) && check_group(gid)))

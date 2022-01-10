@@ -98,25 +98,28 @@ void reg(char* uid, char* password, struct addrinfo *res, int fd){
  * @param password the password of the user to be unregistered.
  * @param res information about the address of the service provider.
  * @param fd the udp socket used to communicate.
+ * @return true if the command was successful, false otherwise.
  */
-void unreg(char* uid, char* password, struct addrinfo *res, int fd){
+bool unreg(char* uid, char* password, struct addrinfo *res, int fd){
     if (!(digits_only(uid,"uid") && has_correct_arg_sizes(uid, 5, password, 8) && is_alphanumerical(password, 0)))
-        return;
+        return false;
     char message[20], buffer[BUF_SIZE];
     bzero(message, 20);
     bzero(buffer, BUF_SIZE);
     sprintf(message,"UNR %s %s\n", uid, password);
     if (udp_send_and_receive(fd, res, message, buffer, BUF_SIZE) == -1)
-        return;
-    if (!strcmp("ERR\n", buffer))
-        puts(GEN_ERR);
+        return false;
     if (!strcmp("RUN OK\n", buffer)) {
         puts(UNR_USER_SUC);
-    } else if (!strcmp("RUN NOK\n", buffer)) {
+        return true;
+    }
+    if (!strcmp("ERR\n", buffer))
+        puts(GEN_ERR);
+    else if (!strcmp("RUN NOK\n", buffer))
         puts(UNR_USER_FAIL);
-    } else {
-        puts(INFO_ERR);
-    }    
+    else
+        puts(INFO_ERR);    
+    return false;
 }
 
 /**

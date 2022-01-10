@@ -56,7 +56,7 @@ int unreg(int udp_socket, char* uid, char* pass){
 
     bzero(file_path, 26);
     sprintf(file_path,"%s/%s_login.txt",path,uid);
-    if (!access(file_path, F_OK) && remove(file_path)){ //if already exists the uid directory
+    if (!access(file_path, F_OK) && remove(file_path)){ //if the uid directory already exists
         udp_send(udp_socket, "RUN NOK\n");
         return 1;
     }
@@ -66,7 +66,36 @@ int unreg(int udp_socket, char* uid, char* pass){
         return 1;
     }
 
+    
     //Falta retirar o utilizador de todos os grupos
+    DIR *d;
+    bool valid;
+    struct dirent *dir;
+    int i = 1;
+    char group_path[30];
+    d = opendir("GROUPS");
+    if (d){
+        while ((dir = readdir(d)) != NULL){
+            if (dir->d_name[0]=='.' || strlen(dir->d_name) > 2)
+                continue;
+            bzero(group_path, 30);
+            sprintf(group_path,"GROUPS/%s/%s.txt",dir->d_name,uid);
+            if (access(group_path, F_OK)==0){
+                if (remove(group_path)==-1){
+                    puts("Test");
+                    udp_send(udp_socket, "RUN NOK\n");
+                    return 1;
+                }
+            }
+            if(i == 99)
+                break; 
+            i++;
+        }
+        closedir(d);
+    }
+    
+    
+
     
     udp_send(udp_socket, "RUN OK\n");
     return 1;

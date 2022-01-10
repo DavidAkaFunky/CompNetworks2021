@@ -3,6 +3,7 @@
 
 struct sockaddr_in serv_addr;
 
+
 int udp_receive(int udp_socket, char* message){
     socklen_t addrlen = sizeof(serv_addr);
     ssize_t nread = recvfrom(udp_socket, message, 128, 0, (struct sockaddr*)&serv_addr, &addrlen);
@@ -133,16 +134,14 @@ int parse_udp(int udp_socket, char* message){
 
 int parse_tcp(int conn_fd, char* message, bool verbose){
     if (!strcmp(message, "ULS ")){
-        //User list (TCP): (nada)
+        //User list (TCP)
         return ulist(conn_fd, verbose);
     } else if (!strcmp(message, "PST ")){
         //Post (TCP)
         return post(conn_fd, verbose);
     } else if (!strcmp(message, "RTV ")){
-        //Retrieve (TCP): MID
-        /*if (!(has_correct_arg_sizes(arg1, 4, arg2, 0) && digits_only(arg1, "message ID")))
-            return;
-        return retrieve(conn_fd);*/
+        //Retrieve (TCP):
+        return retrieve(conn_fd, verbose);
     
     } else {
         puts(INVALID_CMD);

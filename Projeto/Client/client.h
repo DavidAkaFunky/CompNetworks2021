@@ -69,7 +69,7 @@ int timer_on(int sd, int time);
 int timer_off(int sd);
 int udp_send_and_receive(int fd, struct addrinfo *res, char* message, char* buffer, int size);
 void reg(char* uid, char* password, struct addrinfo *res, int fd);
-void unreg(char* uid, char* password, struct addrinfo *res, int fd);
+bool unreg(char* uid, char* password, struct addrinfo *res, int fd);
 int login(char* uid, char* password, struct addrinfo *res, int fd);
 int logout(char* uid, char* password, struct addrinfo *res, int fd);
 void groups(struct addrinfo *res, int fd);
@@ -80,7 +80,7 @@ void show_groups(char* ptr, char* groups);
 
 /* -------------------- client_tcp -------------------- */
 int tcp_connect(char* ip_address, char* port, int* fd, struct addrinfo *res);
-int tcp_send(char* message, int size);
+int tcp_send(char* message);
 int tcp_read(char* buffer, ssize_t size);
 bool read_space();
 void ulist(char* ip_address, char* port, char* gid, struct addrinfo *res);

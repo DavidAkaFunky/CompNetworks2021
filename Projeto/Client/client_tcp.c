@@ -29,8 +29,8 @@ int tcp_connect(char* ip_address, char* port, int* fd, struct addrinfo *res){
  * @param size the size of the message sent.
  * @return the value that indicates success or failure. 
  */
-int tcp_send(char* message, int size){
-    ssize_t nleft = size, nwritten;
+int tcp_send(char* message){
+    ssize_t nleft = strlen(message), nwritten;
     char *ptr = message;
     //Caso o servidor não aceite a mensagem completa, manda por packages
     while (nleft > 0){
@@ -101,7 +101,7 @@ void ulist(char* ip_address, char* port, char* gid, struct addrinfo *res){
     char message[8];
     bzero(message, 8);
     sprintf(message,"ULS %s\n", gid);
-    if (tcp_connect(ip_address, port, &tcp_socket, res) == -1 || tcp_send(message, strlen(message)) == -1)
+    if (tcp_connect(ip_address, port, &tcp_socket, res) == -1 || tcp_send(message) == -1)
         return;
     char response[5];
     bzero(response, 5);
@@ -222,22 +222,22 @@ int upload_file(char* file_name){
     sprintf(file_size, "%ld", ftell(fp));
     sprintf(file_info, " %s %s ", file_name, file_size);
     rewind(fp);
-    if (tcp_send(file_info, strlen(file_info)) == -1){
+    if (tcp_send(file_info) == -1){
         close(tcp_socket);
         fclose(fp);
         return 0;
     }
-    char data[1025];
+    char data[1024];
     long total = 0;
     int n;
     while (true){
-        bzero(data, 1025);
+        bzero(data, 1024);
         n = fread(data, 1, sizeof(data), fp);
         total += n;
         printf("Uploading file: %ld of %s bytes...\r", total, file_size);
         if (n == 0)
             break;
-        if (tcp_send(data, n) == -1){
+        if (tcp_send(data) == -1){
             close(tcp_socket);
             fclose(fp);
             return 0;
@@ -274,7 +274,7 @@ void post(char* ip_address, char* port, char* gid, char* uid, struct addrinfo *r
     bzero(text_size, 4);
     sprintf(text_size, "%d", text_strlen);
     sprintf(message, "PST %s %s %s %s", uid, gid, text_size, text);
-    if (tcp_connect(ip_address, port, &tcp_socket, res) == -1 || tcp_send(message, strlen(message)) == -1)
+    if (tcp_connect(ip_address, port, &tcp_socket, res) == -1 || tcp_send(message) == -1)
         return;
     if (fname_strlen > 24){
         close(tcp_socket);
@@ -295,7 +295,7 @@ void post(char* ip_address, char* port, char* gid, char* uid, struct addrinfo *r
         if (!upload_file(file_name))
             return;
     }
-    if (tcp_send("\n", 1) == -1)
+    if (tcp_send("\n") == -1)
         return;
     char response[5];
     bzero(response, 5);
@@ -411,10 +411,10 @@ int download_file(){
     }
     int j;
     long total = atoi(file_size);
-    char data[1025];
+    char data[1024];
     for (j = total; j > 0; j -= nread){ //porque nao fazer tcp read do tamanho em vez de ciclo ? 
         printf("Downloading file: %ld of %ld bytes...\r", total-j, total);
-        bzero(data, 1025);
+        bzero(data, 1024);
         nread = read(tcp_socket, data, j < 1024 ? j : 1024);
         if (nread == -1){
             close(tcp_socket);
@@ -453,7 +453,7 @@ void retrieve(char* ip_address, char* port, char* gid, char* uid, char* MID, str
     char message[19];
     bzero(message, 19);
     sprintf(message, "RTV %s %s %s\n", uid, gid, MID);
-    if (tcp_connect(ip_address, port, &tcp_socket, res) == -1 || tcp_send(message, strlen(message)) == -1)
+    if (tcp_connect(ip_address, port, &tcp_socket, res) == -1 || tcp_send(message) == -1)
         return;
     char response[5];
     bzero(response, 5);
