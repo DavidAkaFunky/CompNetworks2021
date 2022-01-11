@@ -72,17 +72,18 @@ int unreg(int udp_socket, char* uid, char* pass){
     bool valid;
     struct dirent *dir;
     int i = 1;
-    char group_path[30];
+    char group_path[21], dir_name[3];
     d = opendir("GROUPS");
     if (d){
         while ((dir = readdir(d)) != NULL){
-            if (dir->d_name[0]=='.' || strlen(dir->d_name) > 2)
+            if (dir->d_name[0]== '.' || strlen(dir->d_name) > 2)
                 continue;
-            bzero(group_path, 30);
-            sprintf(group_path,"GROUPS/%s/%s.txt",dir->d_name,uid);
+            bzero(group_path, 21);
+            bzero(dir_name, 3);
+            strcpy(dir_name, dir -> d_name);
+            sprintf(group_path,"GROUPS/%s/%s.txt",dir_name,uid);
             if (access(group_path, F_OK)==0){
                 if (remove(group_path)==-1){
-                    puts("Test");
                     udp_send(udp_socket, "RUN NOK\n");
                     return 1;
                 }
@@ -216,7 +217,7 @@ int list_groups_dir(group* list, bool my_groups, char* uid){
     int i = 0;
     FILE *fp;
     bool valid;
-    char gidname[30];
+    char gidname[30],dir_name[3];
     bzero(gidname, 30);
     d = opendir("GROUPS");
     if (d){
@@ -224,21 +225,23 @@ int list_groups_dir(group* list, bool my_groups, char* uid){
             if (dir->d_name[0]=='.' || strlen(dir->d_name) > 2)
                 continue;
             valid = true;
+            bzero(dir_name, 3);
+            strcpy(dir_name, dir -> d_name);
             if (my_groups){
                 bzero(gidname, 30);
-                sprintf(gidname,"GROUPS/%s/%s.txt",dir->d_name,uid);
+                sprintf(gidname,"GROUPS/%s/%s.txt",dir_name,uid);
                 if (access(gidname, F_OK))
                     valid = false;
             }
             if (valid){
                 bzero(gidname, 30);
-                sprintf(gidname,"GROUPS/%s/%s_name.txt",dir->d_name,dir->d_name);
+                sprintf(gidname,"GROUPS/%s/%s_name.txt",dir_name,dir_name);
                 fp = fopen(gidname,"r");
                 if(fp){
-                    strcpy(list[i].gid, dir->d_name);
+                    strcpy(list[i].gid, dir_name);
                     fscanf(fp,"%24s",list[i].group_name);
                     fclose(fp);
-                    find_last_message(dir->d_name, list[i].last_msg);
+                    find_last_message(dir_name, list[i].last_msg);
                     ++i;
                 }   
             }

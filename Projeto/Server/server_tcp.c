@@ -102,10 +102,14 @@ bool ulist(int conn_fd, bool verbose){
             bzero(uid,8);
             bzero(uid_temp,7);
             bzero(uid_path,20);
+            
             if(dir->d_name[0] == '.' || !strcmp(dir -> d_name, "MSG") || !strcmp(dir -> d_name, name_file))
                 continue;
             
-            sprintf(uid_path, "GROUPS/%s/%s", gid, dir -> d_name);
+            char dir_name[10];
+            bzero(dir_name, 10);
+            strcpy(dir_name, dir -> d_name);
+            sprintf(uid_path, "GROUPS/%s/%s", gid, dir_name);
             fp = fopen(uid_path,"r");
             fgets(uid_temp, 6, fp);
             sprintf(uid," %s",uid_temp);
@@ -281,7 +285,7 @@ bool post(int conn_fd, bool verbose){
     bzero(mid, 5);
     add_trailing_zeros(atoi(last_msg)+1, 4, mid);
     // Create message folder
-    bzero(path, 19);
+    bzero(path, 29);
     sprintf(path,"GROUPS/%s/MSG/%s",gid,mid);
     if (!access(path, F_OK)){ //Message with given MID already exists
         tcp_send(conn_fd, "RPT NOK\n", 8);
@@ -291,8 +295,8 @@ bool post(int conn_fd, bool verbose){
         tcp_send(conn_fd, "RPT NOK\n", 8);
         return true;
     }
-    char file_path[35];
-    bzero(file_path, 35);
+    char file_path[45];
+    bzero(file_path, 45);
     sprintf(file_path, "%s/A U T H O R.txt", path);
     FILE* fp = fopen(file_path, "w");
     if (!fp){
@@ -302,7 +306,7 @@ bool post(int conn_fd, bool verbose){
     fprintf(fp,"%s", uid);
     fclose(fp);
     
-    bzero(file_path, 35);
+    bzero(file_path, 45);
     sprintf(file_path, "%s/T E X T.txt", path);
     fp = fopen(file_path, "w");
     if (!fp){
@@ -380,8 +384,12 @@ void upload_file(int conn_fd, char* msg_path){
             if(dir->d_name[0]=='.' || !strcmp(dir -> d_name, "A U T H O R.txt") || !strcmp(dir -> d_name, "T E X T.txt"))
                 continue;
             
+            char dir_name[25];
+            bzero(dir_name, 25);
+            strcpy(dir_name, dir -> d_name);
+
             bzero(file_path, 43);
-            sprintf(file_path, "%s/%s", msg_path, dir -> d_name);
+            sprintf(file_path, "%s/%s", msg_path, dir_name);
             fp = fopen(file_path, "rb");
             if (!fp)
                 return;
@@ -392,7 +400,7 @@ void upload_file(int conn_fd, char* msg_path){
             rewind(fp);
 
             bzero(response, 40);
-            sprintf(response, " / %s %s ", dir -> d_name, file_size);
+            sprintf(response, " / %s %s ", dir_name, file_size);
             if (tcp_send(conn_fd, response, strlen(response)) == -1){
                 fclose(fp);
                 break;
@@ -447,7 +455,7 @@ void get_messages(int conn_fd, char* gid, int n, char messages[20][5]){
         }
 
         bzero(response, 257);
-        sprintf(response, " %s %s %d %s", messages[i], uid, strlen(message), message);
+        sprintf(response, " %s %s %ld %s", messages[i], uid, strlen(message), message);
 
         if (tcp_send(conn_fd, response, strlen(response)) == -1)
             continue;
