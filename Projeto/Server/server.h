@@ -54,7 +54,7 @@ int unsubscribe(int udp_socket, char* uid, char* gid);
 
 /* -------------------- server_tcp --------------------- */
 int tcp_read(int conn_fd, char* message, int size);
-int tcp_send(int conn_fd, char* response);
+int tcp_send(int conn_fd, char* response, int size);
 bool read_string(char* str, int conn_fd);
 bool ulist(int conn_fd, bool verbose);
 bool download_file(int conn_fd, char* path_name, bool verbose);

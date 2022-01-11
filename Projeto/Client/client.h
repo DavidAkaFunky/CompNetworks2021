@@ -80,7 +80,7 @@ void show_groups(char* ptr, char* groups);
 
 /* -------------------- client_tcp -------------------- */
 int tcp_connect(char* ip_address, char* port, int* fd, struct addrinfo *res);
-int tcp_send(char* message);
+int tcp_send(char* message, int size);
 int tcp_read(char* buffer, ssize_t size);
 bool read_space();
 void ulist(char* ip_address, char* port, char* gid, struct addrinfo *res);

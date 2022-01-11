@@ -19,8 +19,8 @@ int tcp_read(int conn_fd, char* message, int size){
     return 1;
 }
 
-int tcp_send(int conn_fd, char* response){
-    ssize_t nleft = strlen(response), nwritten;
+int tcp_send(int conn_fd, char* response, int size){
+    ssize_t nleft = size, nwritten;
     char* ptr = response;
     //Caso o servidor não aceite a mensagem completa, manda por packages
     while (nleft > 0){
@@ -59,7 +59,7 @@ bool ulist(int conn_fd, bool verbose){
     if (!(is_correct_arg_size(gid, 2) && digits_only(gid, "gid") && read_string("\n", conn_fd)))
         return false;
     if (access(gid_path, F_OK) == -1){
-        tcp_send(conn_fd, "RUL NOK\n");
+        tcp_send(conn_fd, "RUL NOK\n", 8);
         return true;
     }
     
@@ -92,7 +92,7 @@ bool ulist(int conn_fd, bool verbose){
     fclose(fp);
     
     sprintf(send_status,"RUL OK %s",gname);
-    if (tcp_send(conn_fd, send_status) == -1){
+    if (tcp_send(conn_fd, send_status, strlen(send_status)) == -1){
         closedir(d);
         return true;
     }
@@ -110,14 +110,14 @@ bool ulist(int conn_fd, bool verbose){
             fgets(uid_temp, 6, fp);
             sprintf(uid," %s",uid_temp);
             fclose(fp);
-            if (tcp_send(conn_fd, uid) == -1){
+            if (tcp_send(conn_fd, uid, strlen(uid)) == -1){
                 closedir(d);
                 return true;
             }
 
         }
         closedir(d);
-        if (tcp_send(conn_fd, "\n") == -1)
+        if (tcp_send(conn_fd, "\n", 1) == -1)
             return true;
     }
     return true;
@@ -213,7 +213,7 @@ bool post(int conn_fd, bool verbose){
     bzero(path, 19);
     sprintf(path,"USERS/%s/%s_login.txt",uid,uid);
     if (access(path, F_OK) == -1){
-        tcp_send(conn_fd, "RPT NOK\n");
+        tcp_send(conn_fd, "RPT NOK\n", 8);
         return true;
     }
     // Check if gid exists and if the user is subscribed    
@@ -228,7 +228,7 @@ bool post(int conn_fd, bool verbose){
     bzero(path, 19);
     sprintf(path,"GROUPS/%s/%s.txt", gid, uid);
     if (access(path, F_OK) == -1){
-        tcp_send(conn_fd, "RPT NOK\n");
+        tcp_send(conn_fd, "RPT NOK\n", 8);
         return true;
     }
     
@@ -284,11 +284,11 @@ bool post(int conn_fd, bool verbose){
     bzero(path, 19);
     sprintf(path,"GROUPS/%s/MSG/%s",gid,mid);
     if (!access(path, F_OK)){ //Message with given MID already exists
-        tcp_send(conn_fd, "RPT NOK\n");
+        tcp_send(conn_fd, "RPT NOK\n", 8);
         return true;
     }
     if (mkdir(path, 0700) == -1){
-        tcp_send(conn_fd, "RPT NOK\n");
+        tcp_send(conn_fd, "RPT NOK\n", 8);
         return true;
     }
     char file_path[35];
@@ -296,7 +296,7 @@ bool post(int conn_fd, bool verbose){
     sprintf(file_path, "%s/A U T H O R.txt", path);
     FILE* fp = fopen(file_path, "w");
     if (!fp){
-        tcp_send(conn_fd, "RPT NOK\n");
+        tcp_send(conn_fd, "RPT NOK\n", 8);
         return true;
     }
     fprintf(fp,"%s", uid);
@@ -306,7 +306,7 @@ bool post(int conn_fd, bool verbose){
     sprintf(file_path, "%s/T E X T.txt", path);
     fp = fopen(file_path, "w");
     if (!fp){
-        tcp_send(conn_fd, "RPT NOK\n");
+        tcp_send(conn_fd, "RPT NOK\n", 8);
         return true;
     }
     fprintf(fp,"%s", message);
@@ -316,14 +316,14 @@ bool post(int conn_fd, bool verbose){
     if (!strcmp(end, " ") && !download_file(conn_fd, path, verbose)){
         if (!read_string("\n", conn_fd))
             return false;
-        tcp_send(conn_fd, "RPT NOK\n");
+        tcp_send(conn_fd, "RPT NOK\n", 8);
         return true;
     }
 
     char response[10];
     bzero(response, 10);
     sprintf(response, "RPT %s\n", mid);
-    tcp_send(conn_fd, response);
+    tcp_send(conn_fd, response, strlen(response));
     return true;
 }
 
@@ -377,11 +377,10 @@ void upload_file(int conn_fd, char* msg_path){
 
             bzero(response, 40);
             sprintf(response, " / %s %s ", dir -> d_name, file_size);
-            if (tcp_send(conn_fd, response) == -1){
+            if (tcp_send(conn_fd, response, strlen(response)) == -1){
                 puts(response);
                 break;
             }
-                
 
             char data[1024];
             long total = 0;
@@ -393,7 +392,7 @@ void upload_file(int conn_fd, char* msg_path){
                 printf("Uploading file: %ld of %s bytes...\r", total, file_size);
                 if (n == 0)
                     break;
-                if (tcp_send(conn_fd, data) == -1){
+                if (tcp_send(conn_fd, data, 1024) == -1){
                     puts("caso 2");
                     fclose(fp);
                     return;
@@ -402,7 +401,7 @@ void upload_file(int conn_fd, char* msg_path){
 
         }
         closedir(d);
-        if (tcp_send(conn_fd, "\n") == -1)
+        if (tcp_send(conn_fd, "\n", 1) == -1)
             return;
     }
 }
@@ -439,7 +438,7 @@ void get_messages(int conn_fd, char* gid, int n, char messages[20][5]){
 
         bzero(response, 257);
         sprintf(response, " %s %s %d %s", messages[i], uid, strlen(message), message);
-        if (tcp_send(conn_fd, response) == -1)
+        if (tcp_send(conn_fd, response, strlen(response)) == -1)
             continue;
 
         upload_file(conn_fd, msg_path);
@@ -461,7 +460,7 @@ bool retrieve(int conn_fd, bool verbose){
     bzero(path, 19);
     sprintf(path,"USERS/%s/%s_login.txt",uid,uid);
     if (access(path, F_OK) == -1){
-        tcp_send(conn_fd, "RRT NOK\n");
+        tcp_send(conn_fd, "RRT NOK\n", 8);
         return true;
     }
     
@@ -476,7 +475,7 @@ bool retrieve(int conn_fd, bool verbose){
     bzero(path, 19);
     sprintf(path,"GROUPS/%s/%s.txt", gid, uid);
     if (access(path, F_OK) == -1){
-        tcp_send(conn_fd, "RRT NOK\n");
+        tcp_send(conn_fd, "RRT NOK\n", 8);
         return true;
     }
 
@@ -495,7 +494,7 @@ bool retrieve(int conn_fd, bool verbose){
     char messages[20][5];
     int n = get_number_of_messages(gid, atoi(mid), messages);
     if (n == 0){
-        tcp_send(conn_fd, "RRT EOF\n");
+        tcp_send(conn_fd, "RRT EOF\n", 8);
         return true;
     }
     
