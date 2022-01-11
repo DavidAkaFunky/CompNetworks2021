@@ -369,20 +369,19 @@ void upload_file(int conn_fd, char* msg_path){
             sprintf(file_path, "%s/%s", msg_path, dir -> d_name);
             fp = fopen(file_path, "rb");
             if (!fp)
-                break;
+                return;
 
             fseek(fp, 0L, SEEK_END);
             char file_size[11];
             sprintf(file_size, "%ld", ftell(fp));
             rewind(fp);
-            fclose(fp);
 
             bzero(response, 40);
             sprintf(response, " / %s %s ", dir -> d_name, file_size);
             if (tcp_send(conn_fd, response, strlen(response)) == -1){
+                fclose(fp);
                 break;
             }
-
             char data[1024];
             long total = 0;
             int n;
@@ -394,12 +393,11 @@ void upload_file(int conn_fd, char* msg_path){
                 if (n == 0)
                     break;
                 if (tcp_send(conn_fd, data, n) == -1){
-                    puts("caso 2");
                     fclose(fp);
                     return;
                 }
             }
-
+            fclose(fp);
         }
         closedir(d);
     }
