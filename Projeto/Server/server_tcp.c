@@ -209,9 +209,10 @@ bool post(int conn_fd, bool verbose){
         return false;
     }
 
-    char path[19];
-    bzero(path, 19);
+    char path[29];
+    bzero(path, 29);
     sprintf(path,"USERS/%s/%s_login.txt",uid,uid);
+    puts(path);
     if (access(path, F_OK) == -1){
         tcp_send(conn_fd, "RPT NOK\n", 8);
         return true;
@@ -225,8 +226,9 @@ bool post(int conn_fd, bool verbose){
     if (!(is_correct_arg_size(gid, 2) && digits_only(gid, "gid") && read_string(" ", conn_fd)))
         return false;
 
-    bzero(path, 19);
+    bzero(path, 29);
     sprintf(path,"GROUPS/%s/%s.txt", gid, uid);
+    puts(path);
     if (access(path, F_OK) == -1){
         tcp_send(conn_fd, "RPT NOK\n", 8);
         return true;
@@ -429,7 +431,7 @@ void get_messages(int conn_fd, char* gid, int n, char messages[20][5]){
         if (!fp)
             continue;
         bzero(message, 242);
-        fgets(message, 242, fp);
+        fgets(message, 241, fp);
         if (strlen(message) > 240){
             fclose(fp);
             continue;
@@ -440,8 +442,8 @@ void get_messages(int conn_fd, char* gid, int n, char messages[20][5]){
         sprintf(response, " %s %s %d %s", messages[i], uid, strlen(message), message);
         if (tcp_send(conn_fd, response, strlen(response)) == -1)
             continue;
-
         upload_file(conn_fd, msg_path);
+        
     }
     
 }
@@ -456,15 +458,15 @@ bool retrieve(int conn_fd, bool verbose){
         return false;
     }
 
-    char path[19];
-    bzero(path, 19);
+    char path[29];
+    bzero(path, 29);
     sprintf(path,"USERS/%s/%s_login.txt",uid,uid);
     if (access(path, F_OK) == -1){
         tcp_send(conn_fd, "RRT NOK\n", 8);
         return true;
     }
     
-    // Check if gid exists and if the user is subscribed    
+    //Check if gid exists and if the user is subscribed    
     char gid[3];
     bzero(gid, 3);
     if (tcp_read(conn_fd, gid, 2) == -1)
@@ -472,7 +474,7 @@ bool retrieve(int conn_fd, bool verbose){
     if (!(is_correct_arg_size(gid, 2) && digits_only(gid, "gid") && read_string(" ", conn_fd)))
         return false;
 
-    bzero(path, 19);
+    bzero(path, 29);
     sprintf(path,"GROUPS/%s/%s.txt", gid, uid);
     if (access(path, F_OK) == -1){
         tcp_send(conn_fd, "RRT NOK\n", 8);
@@ -499,7 +501,8 @@ bool retrieve(int conn_fd, bool verbose){
     }
     
     char response[10];
-    sprintf(response, "RRT OK %d\n", n);
+    sprintf(response, "RRT OK %d", n);
+    puts("2");
     get_messages(conn_fd, gid, n, messages);
     return true;
 }

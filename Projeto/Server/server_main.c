@@ -198,11 +198,11 @@ int main(int argc, char** argv){
             if (verbose){
                 printf("Message from TCP client:\n%s", message);    //nota é preciso completar a mensagem na funcao em questao
                 if (!parse_tcp(conn_fd, message, verbose))
-                    tcp_send(conn_fd, "ERR\n");
+                    tcp_send(conn_fd, "ERR\n", 4);
                 puts("----------------------------------------");
             }
             else if (!parse_tcp(conn_fd, message, verbose))
-                tcp_send(conn_fd, "ERR\n");
+                tcp_send(conn_fd, "ERR\n",4);
             close(conn_fd);
         }
         // if udp socket is readable receive the message.

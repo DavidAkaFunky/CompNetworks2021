@@ -9,4 +9,7 @@ DS: Server/server_main.o Server/server_udp.o Server/server_tcp.o
 	gcc -o DS common.o Server/server_main.o Server/server_udp.o Server/server_tcp.o
 
 clean:
-	rm -rf Client/*.o Server/*.o *.o user DS GROUPS USERS DOWNLOADS
+	rm -rf Client/*.o Server/*.o *.o user DS DOWNLOADS
+
+clean-server:
+	rm -rf GROUPS USERS
