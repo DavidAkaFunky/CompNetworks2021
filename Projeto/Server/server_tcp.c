@@ -2,7 +2,7 @@
 #include "dirent.h"
 #include "../common.h"
 
-int tcp_read(int conn_fd, char* message, int size){
+int tcp_read(int conn_fd, char* message, ssize_t size){
     ssize_t nleft = size, nread;
     char* ptr = message;
     while (nleft > 0){
@@ -19,10 +19,10 @@ int tcp_read(int conn_fd, char* message, int size){
     return 1;
 }
 
-int tcp_send(int conn_fd, char* response, int size){
+int tcp_send(int conn_fd, char* response, ssize_t size){
     ssize_t nleft = size, nwritten;
     char* ptr = response;
-    //Caso o servidor não aceite a mensagem completa, manda por packages
+    //Caso o cliente não aceite a mensagem completa, manda por packages
     while (nleft > 0){
         nwritten = write(conn_fd, ptr, nleft);
         if (nwritten <= 0){
@@ -53,7 +53,7 @@ bool ulist(int conn_fd, bool verbose){
     if (tcp_read(conn_fd, gid, 2) == -1)
         return true;
     if (verbose)    //imprime o resto caso verbose 
-        printf("%s",gid);   
+        printf("%s\n",gid);   
 
     sprintf(gid_path,"GROUPS/%s",gid);  
     if (!(is_correct_arg_size(gid, 2) && digits_only(gid, "gid") && read_string("\n", conn_fd)))
@@ -212,7 +212,6 @@ bool post(int conn_fd, bool verbose){
     char path[29];
     bzero(path, 29);
     sprintf(path,"USERS/%s/%s_login.txt",uid,uid);
-    puts(path);
     if (access(path, F_OK) == -1){
         tcp_send(conn_fd, "RPT NOK\n", 8);
         return true;
@@ -228,7 +227,6 @@ bool post(int conn_fd, bool verbose){
 
     bzero(path, 29);
     sprintf(path,"GROUPS/%s/%s.txt", gid, uid);
-    puts(path);
     if (access(path, F_OK) == -1){
         tcp_send(conn_fd, "RPT NOK\n", 8);
         return true;
@@ -345,8 +343,10 @@ int get_number_of_messages(char* gid, int first_msg, char messages[20][5]){
             if (!access(file_path, F_OK)){
                 bzero(file_path, 35);
                 sprintf(file_path, "%s/T E X T.txt", msg_path);
-                if (!access(file_path, F_OK))
+                if (!access(file_path, F_OK)){
                     strcpy(messages[n++], msg);
+                }
+                    
             }
         }   
         ++first_msg;
@@ -380,7 +380,6 @@ void upload_file(int conn_fd, char* msg_path){
             bzero(response, 40);
             sprintf(response, " / %s %s ", dir -> d_name, file_size);
             if (tcp_send(conn_fd, response, strlen(response)) == -1){
-                puts(response);
                 break;
             }
 
@@ -394,7 +393,7 @@ void upload_file(int conn_fd, char* msg_path){
                 printf("Uploading file: %ld of %s bytes...\r", total, file_size);
                 if (n == 0)
                     break;
-                if (tcp_send(conn_fd, data, 1024) == -1){
+                if (tcp_send(conn_fd, data, n) == -1){
                     puts("caso 2");
                     fclose(fp);
                     return;
@@ -403,8 +402,6 @@ void upload_file(int conn_fd, char* msg_path){
 
         }
         closedir(d);
-        if (tcp_send(conn_fd, "\n", 1) == -1)
-            return;
     }
 }
 
@@ -413,7 +410,6 @@ void get_messages(int conn_fd, char* gid, int n, char messages[20][5]){
     FILE* fp;
     for (int i = 0; i < n; ++i){
         bzero(msg_path, 19);
-        puts(messages[i]);
         sprintf(msg_path, "GROUPS/%s/MSG/%s", gid, messages[i]);
 
         bzero(file_path, 35);
@@ -432,19 +428,20 @@ void get_messages(int conn_fd, char* gid, int n, char messages[20][5]){
             continue;
         bzero(message, 242);
         fgets(message, 241, fp);
+        fclose(fp);
         if (strlen(message) > 240){
-            fclose(fp);
             continue;
         }
-        fclose(fp);
 
         bzero(response, 257);
         sprintf(response, " %s %s %d %s", messages[i], uid, strlen(message), message);
+
         if (tcp_send(conn_fd, response, strlen(response)) == -1)
             continue;
         upload_file(conn_fd, msg_path);
-        
     }
+    if (tcp_send(conn_fd, "\n", 1) == -1)
+        return;
     
 }
 
@@ -465,7 +462,6 @@ bool retrieve(int conn_fd, bool verbose){
         tcp_send(conn_fd, "RRT NOK\n", 8);
         return true;
     }
-    
     //Check if gid exists and if the user is subscribed    
     char gid[3];
     bzero(gid, 3);
@@ -473,14 +469,14 @@ bool retrieve(int conn_fd, bool verbose){
         return true; 
     if (!(is_correct_arg_size(gid, 2) && digits_only(gid, "gid") && read_string(" ", conn_fd)))
         return false;
-
+    
     bzero(path, 29);
     sprintf(path,"GROUPS/%s/%s.txt", gid, uid);
     if (access(path, F_OK) == -1){
         tcp_send(conn_fd, "RRT NOK\n", 8);
         return true;
     }
-
+    
     char mid[5];
     bzero(mid, 5);
     if (tcp_read(conn_fd, mid, 4) == -1)
@@ -492,17 +488,16 @@ bool retrieve(int conn_fd, bool verbose){
     if (verbose){
         printf("%s %s %s\n",uid,gid,mid);
     }
-
     char messages[20][5];
     int n = get_number_of_messages(gid, atoi(mid), messages);
     if (n == 0){
         tcp_send(conn_fd, "RRT EOF\n", 8);
         return true;
     }
-    
     char response[10];
     sprintf(response, "RRT OK %d", n);
-    puts("2");
+    tcp_send(conn_fd, response, strlen(response));
+    bzero(response,strlen(response));
     get_messages(conn_fd, gid, n, messages);
     return true;
 }
