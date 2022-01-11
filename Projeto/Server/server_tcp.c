@@ -102,7 +102,7 @@ bool ulist(int conn_fd, bool verbose){
             bzero(uid,8);
             bzero(uid_temp,7);
             bzero(uid_path,20);
-            if(dir->d_name[0]=='.' || !strcmp(dir -> d_name, "MSG") || !strcmp(dir -> d_name, name_file))
+            if(dir->d_name[0] == '.' || !strcmp(dir -> d_name, "MSG") || !strcmp(dir -> d_name, name_file))
                 continue;
             
             sprintf(uid_path, "GROUPS/%s/%s", gid, dir -> d_name);
@@ -327,64 +327,45 @@ bool post(int conn_fd, bool verbose){
     return true;
 }
 
-/*int get_number_of_messages(char* gid, int first_msg, char messages[20][5]){
-    char path[15], msg_path[19], file_path[35], msg[5];
-    bzero(path, 15);
-    sprintf(path,"GROUPS/%s/MSG/", gid);
-    int n = 0;
-    while (n < 20 && first_msg < 10000){
-        bzero(msg_path, 19);
-        bzero(msg, 5);
-        add_trailing_zeros(first_msg, 4, msg);
-        sprintf(msg_path, "%s%s", path, msg);
-        if (!access(msg_path, F_OK)){
-            bzero(file_path, 35);
-            sprintf(file_path, "%s/A U T H O R.txt", msg_path);
-            if (!access(file_path, F_OK)){
-                bzero(file_path, 35);
-                sprintf(file_path, "%s/T E X T.txt", msg_path);
-                if (!access(file_path, F_OK)){
-                    strcpy(messages[n++], msg);
-                }
-                    
-            }
-        }   
-        ++first_msg;
-    }
-    return n;
-}*/
-
 int get_number_of_messages(char* gid, int first_msg, char messages[20][5]){
-    char path[15], msg_path[19], file_path[35], msg[5];
+    char path[15], msg_path[19], file_path[35], msg[5], first_msg_str[5];
     bzero(path, 15);
+    bzero(first_msg_str, 5);
     sprintf(path,"GROUPS/%s/MSG/", gid);
-
+    add_trailing_zeros(first_msg, 4, first_msg_str);
     DIR* d = opendir(path);
     struct dirent* dir;
     int n = 0;
     if (d){
-        while (((dir = readdir(d)) != NULL)){
-            //if 
-            bzero(msg_path, 19);
-            bzero(msg, 5);
-            strcpy(msg,dir -> d_name);
-            add_trailing_zeros(first_msg, 4, msg);
-            sprintf(msg_path, "%s%s", path, msg);
-            if (!access(msg_path, F_OK)){
-                bzero(file_path, 35);
-                sprintf(file_path, "%s/A U T H O R.txt", msg_path);
-                if (!access(file_path, F_OK)){
-                    bzero(file_path, 35);
-                    sprintf(file_path, "%s/T E X T.txt", msg_path);
-                    if (!access(file_path, F_OK)){
-                        strcpy(messages[n++], msg);
+        while (n < 20 && (dir = readdir(d)) != NULL){
+            if(dir->d_name[0] == '.' || !strcmp(dir->d_name,"..")){
+                continue;
+            }
+            if (!strcmp(dir -> d_name, first_msg_str)){
+                while(n < 20 && dir != NULL){
+                    bzero(msg_path, 19);
+                    bzero(msg, 5);
+                    strcpy(msg,dir -> d_name);
+                    add_trailing_zeros(first_msg, 4, msg);
+                    sprintf(msg_path, "%s%s", path, msg);
+                    if (!access(msg_path, F_OK)){
+                        bzero(file_path, 35);
+                        sprintf(file_path, "%s/A U T H O R.txt", msg_path);
+                        if (!access(file_path, F_OK)){
+                            bzero(file_path, 35);
+                            sprintf(file_path, "%s/T E X T.txt", msg_path);
+                            if (!access(file_path, F_OK)){
+                                strcpy(messages[n++], msg);
+                            }
+                        }
                     }
-                        
+                    first_msg++;
+                    dir = readdir(d);
                 }
             }
-            ++first_msg; 
         }
     }
+    closedir(d);
     return n;
 }
 
