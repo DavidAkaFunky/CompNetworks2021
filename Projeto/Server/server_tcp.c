@@ -327,7 +327,7 @@ bool post(int conn_fd, bool verbose){
     return true;
 }
 
-int get_number_of_messages(char* gid, int first_msg, char messages[20][5]){
+/*int get_number_of_messages(char* gid, int first_msg, char messages[20][5]){
     char path[15], msg_path[19], file_path[35], msg[5];
     bzero(path, 15);
     sprintf(path,"GROUPS/%s/MSG/", gid);
@@ -350,6 +350,40 @@ int get_number_of_messages(char* gid, int first_msg, char messages[20][5]){
             }
         }   
         ++first_msg;
+    }
+    return n;
+}*/
+
+int get_number_of_messages(char* gid, int first_msg, char messages[20][5]){
+    char path[15], msg_path[19], file_path[35], msg[5];
+    bzero(path, 15);
+    sprintf(path,"GROUPS/%s/MSG/", gid);
+
+    DIR* d = opendir(path);
+    struct dirent* dir;
+    int n = 0;
+    if (d){
+        while (((dir = readdir(d)) != NULL)){
+            //if 
+            bzero(msg_path, 19);
+            bzero(msg, 5);
+            strcpy(msg,dir -> d_name);
+            add_trailing_zeros(first_msg, 4, msg);
+            sprintf(msg_path, "%s%s", path, msg);
+            if (!access(msg_path, F_OK)){
+                bzero(file_path, 35);
+                sprintf(file_path, "%s/A U T H O R.txt", msg_path);
+                if (!access(file_path, F_OK)){
+                    bzero(file_path, 35);
+                    sprintf(file_path, "%s/T E X T.txt", msg_path);
+                    if (!access(file_path, F_OK)){
+                        strcpy(messages[n++], msg);
+                    }
+                        
+                }
+            }
+            ++first_msg; 
+        }
     }
     return n;
 }
