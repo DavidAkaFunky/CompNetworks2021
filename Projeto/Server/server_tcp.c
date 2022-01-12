@@ -52,11 +52,11 @@ bool ulist(int conn_fd, bool verbose){
 
     if (tcp_read(conn_fd, gid, 2) == -1)
         return true;
-    if (verbose)    //imprime o resto caso verbose 
-        printf("%s\n",gid);   
+    if (verbose)
+        printf("GID: %s\n",gid);   
 
     sprintf(gid_path,"GROUPS/%s",gid);  
-    if (!(is_correct_arg_size(gid, 2) && digits_only(gid, "gid") && read_string("\n", conn_fd)))
+    if (!(is_correct_arg_size(gid, NULL, 2) && digits_only(gid, NULL) && read_string("\n", conn_fd)))
         return false;
     if (access(gid_path, F_OK) == -1){
         tcp_send(conn_fd, "RUL NOK\n", 8);
@@ -136,7 +136,7 @@ bool download_file(int conn_fd, char* path_name, bool verbose){
             return false;
         if (file_name[counter] == ' '){
             file_name[counter] = '\0';
-            if (!(counter > 0 && is_alphanumerical(file_name, 2)))
+            if (!(counter > 0 && is_alphanumerical(file_name, 2, false)))
                 return false;
             break;
         }
@@ -153,7 +153,7 @@ bool download_file(int conn_fd, char* path_name, bool verbose){
             return false;
         if (file_size[counter] == ' '){
             file_size[counter] = '\0';
-            if (!(counter > 0 && digits_only(file_size, "file size")))
+            if (!(counter > 0 && digits_only(file_size, NULL)))
                 return false;
             break;
         }
@@ -162,26 +162,26 @@ bool download_file(int conn_fd, char* path_name, bool verbose){
         ++counter;    
     }
     int fname_strlen = strlen(file_name);
-    if (!(file_name[fname_strlen - 4] == '.' && is_alphanumerical(&(file_name[fname_strlen - 3]), 0) && strcmp(file_name,"T E X T.txt") && strcmp(file_name,"A U T H O R.txt")))
+    if (!(file_name[fname_strlen - 4] == '.' && is_alphanumerical(&(file_name[fname_strlen - 3]), 0, false) && strcmp(file_name,"T E X T.txt") && strcmp(file_name,"A U T H O R.txt")))
         return false;
-    puts(FILE_IN_MSG);
-    printf("File name: %s\nFile size: %s bytes\n", file_name, file_size);
+    
+    if (verbose){
+        puts(FILE_IN_MSG);
+        printf("File name: %s\nFile size: %s bytes\n", file_name, file_size);
+    }
+        
     char path[35];
     sprintf(path, "%s/%s", path_name, file_name);
     FILE* fp = fopen(path, "wb");
     if (!fp)
         return false;
-    
-    //Completes the message in stdout 
-    if(verbose){
-        printf("%s\n",file_name);
-    }
 
     long total = atoi(file_size);
     char data[1025];
     int j, nread;
-    for (j = total; j > 0; j -= nread){ 
-        printf("Downloading file: %ld of %ld bytes...\n", total-j, total);
+    for (j = total; j > 0; j -= nread){
+        if (verbose)
+            printf("Downloading file: %ld of %ld bytes...\r", total-j, total);
         bzero(data, 1025);
         nread = read(conn_fd, data, j < 1024 ? j : 1024);
         if (nread == -1){
@@ -197,8 +197,11 @@ bool download_file(int conn_fd, char* path_name, bool verbose){
         }
         fwrite(data, 1, nread, fp);
     }
-    printf("Downloading file: %ld of %ld bytes...\r", total-j, total);
-    puts(FILE_DOWN_SUC);
+    if (verbose){
+        printf("Downloading file: %ld of %ld bytes...\r", total-j, total);
+        puts(FILE_DOWN_SUC);
+    }
+    
     fclose(fp);
     return true;
 }
@@ -209,7 +212,9 @@ bool post(int conn_fd, bool verbose){
     bzero(uid, 6);
     if (tcp_read(conn_fd, uid, 5) == -1)
         return true;
-    if (!(is_correct_arg_size(uid, 5) && digits_only(uid, "uid") && read_string(" ", conn_fd))){
+    if (verbose)
+        printf("UID: %s\n", uid);
+    if (!(is_correct_arg_size(uid, NULL, 5) && digits_only(uid, NULL) && read_string(" ", conn_fd))){
         return false;
     }
 
@@ -225,8 +230,9 @@ bool post(int conn_fd, bool verbose){
     bzero(gid, 3);
     if (tcp_read(conn_fd, gid, 2) == -1)
         return true;
-        
-    if (!(is_correct_arg_size(gid, 2) && digits_only(gid, "gid") && read_string(" ", conn_fd)))
+    if (verbose)
+        printf("GID: %s\n", gid);
+    if (!(is_correct_arg_size(gid, NULL, 2) && digits_only(gid, NULL) && read_string(" ", conn_fd)))
         return false;
 
     bzero(path, 29);
@@ -245,7 +251,7 @@ bool post(int conn_fd, bool verbose){
             return true;
         if (text_size[counter] == ' '){
             text_size[counter] = '\0';
-            if (!(counter > 0 && digits_only(text_size, "counter")))
+            if (!(counter > 0 && digits_only(text_size, NULL)))
                 return false;
             break;
         }
@@ -256,6 +262,8 @@ bool post(int conn_fd, bool verbose){
     if (counter < 0)
         return false;
     
+    if (verbose)
+        printf("Text size: %s\n", text_size);
     //Transform the string into the number
     int size = atoi(text_size);
     if (size <= 0 || size > 240)
@@ -265,7 +273,8 @@ bool post(int conn_fd, bool verbose){
     bzero(message, size+1);
     if (tcp_read(conn_fd, message, size) == -1)
         return true;
-
+    if (verbose)
+        printf("Message: %s\n", message);
     char end[2];
     bzero(end, 2);
     if (tcp_read(conn_fd, end, 1) == -1)
@@ -273,10 +282,6 @@ bool post(int conn_fd, bool verbose){
     
     if (strcmp(end, " ") && strcmp(end, "\n"))
         return false;
-    //Completes the message in stdout 
-    if(verbose){
-        printf("%s %s %s %s %s",uid,gid,text_size,message,end);
-    }
 
     char last_msg[5];
     bzero(last_msg, 5);
@@ -373,7 +378,7 @@ int get_number_of_messages(char* gid, int first_msg, char messages[20][5]){
     return n;
 }
 
-void upload_file(int conn_fd, char* msg_path){
+void upload_file(int conn_fd, char* msg_path, bool verbose){
     char response[40], file_path[43];
     DIR* d = opendir(msg_path);
     struct dirent* dir;
@@ -412,7 +417,8 @@ void upload_file(int conn_fd, char* msg_path){
                 bzero(data, 1024);
                 n = fread(data, 1, sizeof(data), fp);
                 total += n;
-                printf("Uploading file: %ld of %s bytes...\r", total, file_size);
+                if (verbose)
+                    printf("Uploading file: %ld of %s bytes...\r", total, file_size);
                 if (n == 0)
                     break;
                 if (tcp_send(conn_fd, data, n) == -1){
@@ -426,7 +432,7 @@ void upload_file(int conn_fd, char* msg_path){
     }
 }
 
-void get_messages(int conn_fd, char* gid, int n, char messages[20][5]){
+void get_messages(int conn_fd, char* gid, int n, char messages[20][5], bool verbose){
     char msg_path[19], file_path[35], uid[7], message[242], response[257];
     FILE* fp;
     for (int i = 0; i < n; ++i){
@@ -459,7 +465,7 @@ void get_messages(int conn_fd, char* gid, int n, char messages[20][5]){
 
         if (tcp_send(conn_fd, response, strlen(response)) == -1)
             continue;
-        upload_file(conn_fd, msg_path);
+        upload_file(conn_fd, msg_path, verbose);
     }
     if (tcp_send(conn_fd, "\n", 1) == -1)
         return;
@@ -470,9 +476,11 @@ bool retrieve(int conn_fd, bool verbose){
     //Check if uid exists and if the user is logged in
     char uid[6];
     bzero(uid, 6);
+    if (verbose)
+        printf("UID: %s\n", uid);
     if (tcp_read(conn_fd, uid, 5) == -1)
         return true;
-    if (!(is_correct_arg_size(uid, 5) && digits_only(uid, "uid") && read_string(" ", conn_fd))){
+    if (!(is_correct_arg_size(uid, NULL, 5) && digits_only(uid, NULL) && read_string(" ", conn_fd))){
         return false;
     }
 
@@ -487,8 +495,10 @@ bool retrieve(int conn_fd, bool verbose){
     char gid[3];
     bzero(gid, 3);
     if (tcp_read(conn_fd, gid, 2) == -1)
-        return true; 
-    if (!(is_correct_arg_size(gid, 2) && digits_only(gid, "gid") && read_string(" ", conn_fd)))
+        return true;
+    if (verbose)
+        printf("UID: %s\n", gid); 
+    if (!(is_correct_arg_size(gid, NULL, 2) && digits_only(gid, NULL) && read_string(" ", conn_fd)))
         return false;
     
     bzero(path, 29);
@@ -502,13 +512,10 @@ bool retrieve(int conn_fd, bool verbose){
     bzero(mid, 5);
     if (tcp_read(conn_fd, mid, 4) == -1)
         return true;
- 
-    if (!(is_correct_arg_size(mid, 4) && digits_only(mid, "mid") && read_string("\n", conn_fd)))
+    if (verbose)
+        printf("MID: %s\n", mid);
+    if (!(is_correct_arg_size(mid, NULL, 4) && digits_only(mid, NULL) && read_string("\n", conn_fd)))
         return false;
-
-    if (verbose){
-        printf("%s %s %s\n",uid,gid,mid);
-    }
     char messages[20][5];
     int n = get_number_of_messages(gid, atoi(mid), messages);
     if (n == 0){
@@ -519,6 +526,6 @@ bool retrieve(int conn_fd, bool verbose){
     sprintf(response, "RRT OK %d", n);
     tcp_send(conn_fd, response, strlen(response));
     bzero(response,strlen(response));
-    get_messages(conn_fd, gid, n, messages);
+    get_messages(conn_fd, gid, n, messages, verbose);
     return true;
 }

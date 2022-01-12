@@ -30,26 +30,27 @@ typedef struct{
 /* -------------------- server_main -------------------- */
 
 int udp_receive(int udp_socket, char* message);
-int udp_send(int udp_socket, char* message);
+int udp_send(int udp_socket, char* message, bool verbose);
 int socket_bind(int socktype, char* port, struct addrinfo** res);
 int parse_argv(int argc, char** argv, char* port, bool* verbose);
-int parse_udp(int udp_socket, char* message);
+void show_client_info(char* protocol, char* message);
+int parse_udp(int udp_socket, char* message, bool verbose);
 int parse_tcp(int conn_fd, char* message, bool verbose);
 int main(int argc, char** argv);
 
 /* -------------------- server_udp --------------------- */
-int reg(int udp_socket, char* uid, char* pass);
-int unreg(int udp_socket, char* uid, char* pass);
-int login(int udp_socket, char* uid, char* pass);
-int logout(int udp_socket, char* uid, char* pass);
+int reg(int udp_socket, char* uid, char* password, bool verbose);
+int unreg(int udp_socket, char* uid, char* password, bool verbose);
+int login(int udp_socket, char* uid, char* password, bool verbose);
+int logout(int udp_socket, char* uid, char* password, bool verbose);
 void find_last_message(char* gid, char* last_msg);
 int comparer(const void* x1, const void* x2);
 int list_groups_dir(group* list, bool my_groups, char* uid);
-void send_groups(int udp_socket, group* list, int groups, char* message);
-int groups(int udp_socket);
-int my_groups(int udp_socket, char* uid);
-int subscribe(int udp_socket, char* uid, char* gid, char* group_name);
-int unsubscribe(int udp_socket, char* uid, char* gid);
+void send_groups(int udp_socket, group* list, int groups, char* message, bool verbose);
+int groups(int udp_socket, bool verbose);
+int my_groups(int udp_socket, char* uid, bool verbose);
+int subscribe(int udp_socket, char* uid, char* gid, char* group_name, bool verbose);
+int unsubscribe(int udp_socket, char* uid, char* gid, bool verbose);
 
 
 /* -------------------- server_tcp --------------------- */
@@ -60,8 +61,8 @@ bool ulist(int conn_fd, bool verbose);
 bool download_file(int conn_fd, char* path_name, bool verbose);
 bool post(int conn_fd, bool verbose);
 int get_number_of_messages(char* gid, int first_msg, char messages[20][5]);
-void upload_file(int conn_fd, char* msg_path);
-void get_messages(int conn_fd, char* gid, int n, char messages[20][5]);
+void upload_file(int conn_fd, char* msg_path, bool verbose);
+void get_messages(int conn_fd, char* gid, int n, char messages[20][5], bool verbose);
 bool retrieve(int conn_fd, bool verbose);
 
 #endif

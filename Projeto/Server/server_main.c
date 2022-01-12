@@ -1,12 +1,12 @@
 #include "server.h"
 #include "../common.h"
 
-struct sockaddr_in serv_addr;
+struct sockaddr_in client_addr;
 
 
 int udp_receive(int udp_socket, char* message){
-    socklen_t addrlen = sizeof(serv_addr);
-    ssize_t nread = recvfrom(udp_socket, message, 128, 0, (struct sockaddr*)&serv_addr, &addrlen);
+    socklen_t addrlen = sizeof(client_addr);
+    ssize_t nread = recvfrom(udp_socket, message, 128, 0, (struct sockaddr*)&client_addr, &addrlen);
     if (nread == -1){
         puts(RECV_ERR);
         return -1;
@@ -14,10 +14,11 @@ int udp_receive(int udp_socket, char* message){
     return nread;
 }
 
-int udp_send(int udp_socket, char* message){
-    printf("Message: %s\n", message);
-    socklen_t addrlen = sizeof(serv_addr);
-    ssize_t n = sendto(udp_socket, message, strlen(message), 0, (struct sockaddr*)&serv_addr,addrlen);
+int udp_send(int udp_socket, char* message, bool verbose){
+    if (verbose)
+        printf("Message: %s\n", message);
+    socklen_t addrlen = sizeof(client_addr);
+    ssize_t n = sendto(udp_socket, message, strlen(message), 0, (struct sockaddr*)&client_addr,addrlen);
     if (n == -1){
         puts(SEND_ERR);
         return -1;
@@ -88,7 +89,11 @@ int parse_argv(int argc, char** argv, char* port, bool* verbose){
     return 0;
 }
 
-int parse_udp(int udp_socket, char* message){
+void show_client_info(char* protocol, char* message){
+    printf("Command from %s client: %s\nSent by: %d\nPort: %d\n", protocol, message, (int) client_addr.sin_addr.s_addr, (int) client_addr.sin_port);
+}
+
+int parse_udp(int udp_socket, char* message, bool verbose){
     char name[4];
     char arg1[SIZE];
     char arg2[SIZE];
@@ -104,30 +109,32 @@ int parse_udp(int udp_socket, char* message){
         puts(INVALID_CMD);
         return 0;
     }
+    if (verbose)
+        show_client_info("UDP", name);
     if (!strcmp(name, "REG")){        
         //Register (UDP): uid (tam 5), pass (tam 8)
-        return !strcmp(arg3, "") && reg(udp_socket, arg1, arg2);
+        return !strcmp(arg3, "") && reg(udp_socket, arg1, arg2, verbose);
     } else if (!strcmp(name, "UNR")){
         //Unegister (UDP): uid (tam 5), pass (tam 8)
-        return !strcmp(arg3, "") && unreg(udp_socket, arg1, arg2);
+        return !strcmp(arg3, "") && unreg(udp_socket, arg1, arg2, verbose);
     } else if (!strcmp(name, "LOG")){
         //Login (UDP): uid (tam 5), pass (tam 8)
-        return !strcmp(arg3, "") && login(udp_socket, arg1, arg2);
+        return !strcmp(arg3, "") && login(udp_socket, arg1, arg2, verbose);
     } else if (!strcmp(name, "OUT")){
         //Logout (UDP): (nada)
-        return !strcmp(arg3, "") && logout(udp_socket, arg1,arg2);
+        return !strcmp(arg3, "") && logout(udp_socket, arg1, arg2, verbose);
     } else if (!strcmp(name, "GLS")){
         //Groups (UDP): (nada)
-        return !strcmp(arg1, "") && groups(udp_socket);
+        return !strcmp(arg1, "") && groups(udp_socket, verbose);
     } else if (!strcmp(name, "GSR")){
         //Subscribe (UDP): gid (tam 2), group_name (tam 24)
-        return subscribe(udp_socket, arg1, arg2, arg3);
+        return subscribe(udp_socket, arg1, arg2, arg3, verbose);
     } else if (!strcmp(name, "GUR")){
         //Unsubscribe (UDP): gid (tam 2)
-        return !strcmp(arg3, "") && unsubscribe(udp_socket, arg1, arg2);
+        return !strcmp(arg3, "") && unsubscribe(udp_socket, arg1, arg2, verbose);
     } else if (!strcmp(name, "GLM")){
         //My groups (UDP): (nada)
-        return !strcmp(arg2, "") && my_groups(udp_socket, arg1);
+        return !strcmp(arg2, "") && my_groups(udp_socket, arg1, verbose);
     } else
         puts(INVALID_CMD);
 }
@@ -179,7 +186,6 @@ int main(int argc, char** argv){
     // Get maxfd
     int maxfd = udp_socket > tcp_socket ? udp_socket + 1 : tcp_socket + 1;
     while (true) {
- 
         // Set tcp_socket and udp_socket in readset
         FD_SET(tcp_socket, &rset);
         FD_SET(udp_socket, &rset);
@@ -189,12 +195,12 @@ int main(int argc, char** argv){
  
         // If tcp socket is readable then handle it by accepting the connection
         if (FD_ISSET(tcp_socket, &rset)) {
-            socklen_t len = sizeof(serv_addr);
-            conn_fd = accept(tcp_socket, (struct sockaddr*)&serv_addr, &len);
+            socklen_t len = sizeof(client_addr);
+            conn_fd = accept(tcp_socket, (struct sockaddr*)&client_addr, &len);
             bzero(message, sizeof(message));
             tcp_read(conn_fd, message, 4);
             if (verbose)
-                printf("Command from TCP client: %s\nSent by: %d\nPort: %d\n", message, (int) serv_addr.sin_addr.s_addr, (int) serv_addr.sin_port);
+                show_client_info("TCP", message);
             if (!parse_tcp(conn_fd, message, verbose))
                 tcp_send(conn_fd, "ERR\n",4);
             if (verbose)
@@ -205,14 +211,11 @@ int main(int argc, char** argv){
         if (FD_ISSET(udp_socket, &rset)) {
             bzero(message, sizeof(message));
             udp_receive(udp_socket, message);
-            if (verbose){
-                printf("Command from UDP client: %s\nSent by: %d\nPort: %d\n", message, (int) serv_addr.sin_addr.s_addr, (int) serv_addr.sin_port);
+            if (!parse_udp(udp_socket, message, verbose))
+                udp_send(udp_socket, "ERR\n", verbose);
+            if (verbose)
                 puts("----------------------------------------");
-            }
-            if (!parse_udp(udp_socket, message))
-                udp_send(udp_socket, "ERR\n");
         }
-        
     }
     close(tcp_socket);
     close(udp_socket);

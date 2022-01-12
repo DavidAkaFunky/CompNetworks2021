@@ -71,7 +71,7 @@ int udp_send_and_receive(int fd, struct addrinfo *res, char* message, char* buff
  * @param fd the udp socket used to communicate.
  */
 void reg(char* uid, char* password, struct addrinfo *res, int fd){
-    if (!(digits_only(uid,"uid") && has_correct_arg_sizes(uid, 5, password, 8) && is_alphanumerical(password, 0)))
+    if (!(digits_only(uid,"uid") && has_correct_arg_sizes(uid, "user ID", 5, password, "password", 8) && is_alphanumerical(password, 0, true)))
         return;
     char message[20], buffer[BUF_SIZE];
     bzero(message, 20);
@@ -101,7 +101,7 @@ void reg(char* uid, char* password, struct addrinfo *res, int fd){
  * @return true if the command was successful, false otherwise.
  */
 bool unreg(char* uid, char* password, struct addrinfo *res, int fd){
-    if (!(digits_only(uid,"uid") && has_correct_arg_sizes(uid, 5, password, 8) && is_alphanumerical(password, 0)))
+    if (!(digits_only(uid,"uid") && has_correct_arg_sizes(uid, "user ID", 5, password, "password", 8) && is_alphanumerical(password, 0, true)))
         return false;
     char message[20], buffer[BUF_SIZE];
     bzero(message, 20);
@@ -132,7 +132,7 @@ bool unreg(char* uid, char* password, struct addrinfo *res, int fd){
  * @return the value that indicates success or failure.
  */
 int login(char* uid, char* password, struct addrinfo *res, int fd){
-    if (!(digits_only(uid,"uid") && has_correct_arg_sizes(uid, 5, password, 8) && is_alphanumerical(password, 0)))
+    if (!(digits_only(uid,"uid") && has_correct_arg_sizes(uid, "user ID", 5, password, "password", 8) && is_alphanumerical(password, 0, true)))
         return -1;
     char message[20], buffer[BUF_SIZE];
     bzero(message, 20);
@@ -204,7 +204,7 @@ void show_groups(char* ptr, char* groups){
         bzero(group_name, 25);
         bzero(mid, 5);
         format = sscanf(ptr, " %s %s %s", groups, group_name, mid);
-        if (!(format == 3 && has_correct_arg_sizes(groups, 2, mid, 4) && digits_only(groups, "gid") && strlen(group_name) <= 24 && is_alphanumerical(group_name, 1) && digits_only(mid, "MID"))){
+        if (!(format == 3 && has_correct_arg_sizes(groups, "number of groups", 2, mid, "message ID", 4) && digits_only(groups, "gid") && strlen(group_name) <= 24 && is_alphanumerical(group_name, 1, true) && digits_only(mid, "MID"))){
             puts(INFO_ERR);
             return;
         }
@@ -263,7 +263,7 @@ void groups(struct addrinfo *res, int fd){
 void subscribe(char* uid, char* gid, char* group_name, struct addrinfo *res, int fd){
     if (strlen(gid) == 1)
         sprintf(gid, "0%c", gid[0]);
-    if (!(has_correct_arg_sizes(uid, 5, gid, 2) && digits_only(uid,"uid") && digits_only(gid,"gid") && strlen(group_name) <= 24 && is_alphanumerical(group_name, 1) && strlen(group_name) >= 1)){
+    if (!(has_correct_arg_sizes(uid, "user ID", 5, gid, "group ID", 2) && digits_only(uid,"uid") && digits_only(gid,"gid") && strlen(group_name) <= 24 && is_alphanumerical(group_name, 1, true) && strlen(group_name) >= 1)){
         puts("One or more arguments are invalid. Please try again!");
         return;
     }
@@ -292,7 +292,7 @@ void subscribe(char* uid, char* gid, char* group_name, struct addrinfo *res, int
         bzero(new_gid, 3);
         bzero(extra, SIZE);
         int format = sscanf(buffer, "%s %s %s %s", cmd1, cmd2, new_gid, extra);
-        if (!(format == 3 && !strcmp(cmd1, "RGS") && !strcmp(cmd1, "NEW") && is_correct_arg_size(new_gid, 2) && !strcmp(extra, ""))){
+        if (!(format == 3 && !strcmp(cmd1, "RGS") && !strcmp(cmd1, "NEW") && is_correct_arg_size(new_gid, "group ID", 2) && !strcmp(extra, ""))){
             strcpy(gid, new_gid);
             printf("New group created with gid %s!\n", new_gid);
         }

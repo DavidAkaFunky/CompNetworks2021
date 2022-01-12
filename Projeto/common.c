@@ -1,9 +1,10 @@
 #include "common.h"
 
-int digits_only(char *s, char* id){
+int digits_only(char *s, char* name){
     while (*s) {
         if (!isdigit(*s)){
-            printf("The %s has a non-numeric character. Please try again!\n", id);
+            if (name != NULL)
+                printf("The %s has a non-numeric character. Please try again!\n", name);
             return 0;
         }
         s++;
@@ -11,25 +12,28 @@ int digits_only(char *s, char* id){
     return 1;
 }
 
-int is_alphanumerical(char* s, int flag){
+int is_alphanumerical(char* s, int flag, bool log){
     while (*s) {
         if (!(isalpha(*s) || isdigit(*s))){
             switch (flag){
                 case 0:
                     if(!(*s == 32)){
-                        puts(NO_ALPH0);
+                        if (log)
+                            puts(NO_ALPH0);
                         return 0;
                     }
                     break;
                 case 1:
                     if(!(*s == 45 || *s == 95)){
-                        puts(NO_ALPH1);
+                        if (log)
+                            puts(NO_ALPH1);
                         return 0;
                     }
                     break;
                 case 2:
                     if(!(*s == 45 || *s == 46 || *s == 95)){
-                        puts(NO_ALPH2);
+                        if (log)
+                            puts(NO_ALPH2);
                         return 0;
                     }
                     break;
@@ -40,16 +44,17 @@ int is_alphanumerical(char* s, int flag){
     return 1;
 }
 
-int is_correct_arg_size(char* arg, int size){
+int is_correct_arg_size(char* arg, char* name, int size){
     if (strlen(arg) != size){
-        printf("%s's size is not %d. Please try again!\n", arg, size);
+        if (name != NULL)
+            printf("The %s's size is %d, instead of %d. Please try again!\n", name, strlen(arg), size);
         return 0;
     }
     return 1;
 }
 
-int has_correct_arg_sizes(char* arg1, int size1, char* arg2, int size2){
-    return is_correct_arg_size(arg1, size1) && is_correct_arg_size(arg2, size2);
+int has_correct_arg_sizes(char* arg1, char* name1, int size1, char* arg2, char* name2, int size2){
+    return is_correct_arg_size(arg1, name1, size1) && is_correct_arg_size(arg2, name2, size2);
 }
 
 void add_trailing_zeros(int number, int len, char* result){

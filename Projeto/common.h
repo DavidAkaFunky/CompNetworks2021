@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <ctype.h>
+#include <stdbool.h>
 
 #define SIZE 512
 #define BUF_SIZE 128
@@ -22,10 +23,10 @@
 #define FILE_UP_SUC "\nFile successfully uploaded!"
 #define FILE_DOWN_SUC "\nFile successfully downloaded!"
 
-int digits_only(char *s, char* id);
-int is_alphanumerical(char* s, int flag);
-int is_correct_arg_size(char* arg, int size);
-int has_correct_arg_sizes(char* arg1, int size1, char* arg2, int size2);
+int digits_only(char *s, char* name);
+int is_alphanumerical(char* s, int flag, bool log);
+int is_correct_arg_size(char* arg, char* name, int size);
+int has_correct_arg_sizes(char* arg1, char* name1, int size1, char* arg2, char* name2, int size2);
 void add_trailing_zeros(int number, int len, char* result);
 
 #endif

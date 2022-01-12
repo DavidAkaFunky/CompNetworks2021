@@ -185,26 +185,26 @@ void parse(int udp_socket, struct addrinfo *res, char* ip_address, char* port, c
     } else if (!strcmp(name, "logout")){
         // Logout (UDP): (none)
         // There must be a user logged in
-        if (!(has_correct_arg_sizes(arg1, 0, arg2, 0) && check_login(uid, true)))
+        if (!(has_correct_arg_sizes(arg1, "first additional argument", 0, arg2, "second additional argument", 0) && check_login(uid, true)))
             return;
         if (logout(uid, password, res, udp_socket) == 1)
             bzero(uid, 6);
     } else if (!strcmp(name, "showuid") || !strcmp(name, "su")){
         // Show UID : (none)
         // There must be a user logged in
-        if (!(has_correct_arg_sizes(arg1, 0, arg2, 0) && check_login(uid, true)))
+        if (!(has_correct_arg_sizes(arg1, "first additional argument", 0, arg2, "second additional argument", 0) && check_login(uid, true)))
             return;
         printf("The uid selected is %s.\n",uid);
     } else if (!strcmp(name, "exit")){
         // Exit (TCP): (none)
-        if (!has_correct_arg_sizes(arg1, 0, arg2, 0))
+        if (!has_correct_arg_sizes(arg1, "first additional argument", 0, arg2, "second additional argument", 0))
             return;
         freeaddrinfo(res);
         close(udp_socket);
         exit(EXIT_SUCCESS);
     } else if (!strcmp(name, "groups") || !strcmp(name, "gl")){
         // Groups (UDP): (none)
-        if (!has_correct_arg_sizes(arg1, 0, arg2, 0))
+        if (!has_correct_arg_sizes(arg1, "first additional argument", 0, arg2, "second additional argument", 0))
             return;
         groups(res, udp_socket);
     } else if (!strcmp(name, "subscribe") || !strcmp(name, "s")){
@@ -214,24 +214,24 @@ void parse(int udp_socket, struct addrinfo *res, char* ip_address, char* port, c
         subscribe(uid, arg1, arg2, res, udp_socket);
     } else if (!strcmp(name, "unsubscribe") || !strcmp(name, "u")){
         // Unsubscribe (UDP): gid (size 2, digits)
-        if (!(digits_only(arg1, "gid") && strlen(arg1) > 0))
+        if (!(digits_only(arg1, "group ID") && strlen(arg1) > 0))
             return;
         add_trailing_zeros(atoi(arg1), 2, arg1);
-        if (!has_correct_arg_sizes(arg1, 2, arg2, 0))
+        if (!has_correct_arg_sizes(arg1, "group ID", 2, arg2, "second additional argument", 0))
             return;
         unsubscribe(uid, arg1, res, udp_socket);
     } else if (!strcmp(name, "my_groups") || !strcmp(name, "mgl")){
         // My groups (UDP): (none)
         // There must be a user logged in
-        if (!(has_correct_arg_sizes(arg1, 0, arg2, 0) && check_login(uid, true)))
+        if (!(has_correct_arg_sizes(arg1, "first additional argument", 0, arg2, "second additional argument", 0) && check_login(uid, true)))
             return;
         my_groups(uid, res, udp_socket);
     } else if (!strcmp(name, "select") || !strcmp(name, "sag")){
         // Select: gid (size 2, digits)
-        if (!(digits_only(arg1, "gid") && strlen(arg1) > 0))
+        if (!(digits_only(arg1, "group ID") && strlen(arg1) > 0))
             return;
         add_trailing_zeros(atoi(arg1), 2, arg1);
-        if (!(has_correct_arg_sizes(arg1, 2, arg2, 0) && check_login(uid, true)))
+        if (!(has_correct_arg_sizes(arg1, "group ID", 2, arg2, "second additional argument", 0) && check_login(uid, true)))
             return;
         if (!strcmp(arg1, "00")){
             puts(GRP_ZERO);
@@ -242,13 +242,13 @@ void parse(int udp_socket, struct addrinfo *res, char* ip_address, char* port, c
     } else if (!strcmp(name, "showgid") || !strcmp(name, "sg")){
         // Show GID : (none)
         // There must be a logged in user and a group selected
-        if (!(has_correct_arg_sizes(arg1, 0, arg2, 0) && check_login(uid, true) && check_group(gid)))
+        if (!(has_correct_arg_sizes(arg1, "first additional argument", 0, arg2, "second additional argument", 0) && check_login(uid, true) && check_group(gid)))
             return;
         printf("The group selected is %s.\n", gid);
     } else if (!strcmp(name, "ulist") || !strcmp(name, "ul")){
         // User list (TCP): (none)
         // There must be a logged in user and a group selected
-        if (!(has_correct_arg_sizes(arg1, 0, arg2, 0) && check_login(uid, true) && check_group(gid)))
+        if (!(has_correct_arg_sizes(arg1, "first additional argument", 0, arg2, "second additional argument", 0) && check_login(uid, true) && check_group(gid)))
             return;
         ulist(ip_address, port, gid, res);
     } else if (!strcmp(name, "retrieve") || !strcmp(name, "r")){
@@ -257,7 +257,7 @@ void parse(int udp_socket, struct addrinfo *res, char* ip_address, char* port, c
         if (!(digits_only(arg1, "message ID") && strlen(arg1) > 0))
             return;
         add_trailing_zeros(atoi(arg1), 4, arg1);
-        if (!(has_correct_arg_sizes(arg1, 4, arg2, 0) && check_login(uid, true) && check_group(gid)))
+        if (!(has_correct_arg_sizes(arg1, "message ID", 4, arg2, "second additional argument", 0) && check_login(uid, true) && check_group(gid)))
             return;
         retrieve(ip_address, port, gid, uid, arg1, res);
     } else

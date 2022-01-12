@@ -143,8 +143,7 @@ void ulist(char* ip_address, char* port, char* gid, struct addrinfo *res){
                 return;
             if (group_name[counter] == '\n' || group_name[counter] == ' '){
                 group_name[counter] = '\0';
-                if (!(counter > 0 && is_alphanumerical(group_name, 1))){
-
+                if (!(counter > 0 && is_alphanumerical(group_name, 1, true))){
                     close(tcp_socket);
                     puts(INFO_ERR);
                     return;
@@ -152,7 +151,6 @@ void ulist(char* ip_address, char* port, char* gid, struct addrinfo *res){
                 break;
             }
             if (counter == 25){
-
                 close(tcp_socket);
                 puts(INFO_ERR);
                 return;
@@ -164,7 +162,6 @@ void ulist(char* ip_address, char* port, char* gid, struct addrinfo *res){
         printf("Group name: %s", group_name);
         if (group_name[counter] == '\n'){
             close(tcp_socket);
-
             puts(NO_USERS);
             return;
         }
@@ -265,7 +262,7 @@ void post(char* ip_address, char* port, char* gid, char* uid, struct addrinfo *r
         puts(BIG_TEXT);
         return;
     }
-    if (!(is_alphanumerical(file_name, 2) && check_login(uid, true) && check_group(gid)))
+    if (!(is_alphanumerical(file_name, 2, true) && check_login(uid, true) && check_group(gid)))
         return;
     int fname_strlen = strlen(file_name);
     char message[259];
@@ -287,7 +284,7 @@ void post(char* ip_address, char* port, char* gid, char* uid, struct addrinfo *r
             puts(INV_FILE);
             return;
         }
-        if (!(is_alphanumerical(&(file_name[fname_strlen - 3]), 0))){
+        if (!(is_alphanumerical(&(file_name[fname_strlen - 3]), 0, true))){
             close(tcp_socket);
             puts(INV_FILE);
             return;
@@ -354,7 +351,7 @@ int download_file(){
             return 0;
         if (file_name[counter] == ' '){
             file_name[counter] = '\0';
-            if (!(counter > 0 && is_alphanumerical(file_name, 2))){
+            if (!(counter > 0 && is_alphanumerical(file_name, 2, true))){
                 close(tcp_socket);
                 puts(INFO_ERR);
                 return 0;
@@ -394,7 +391,7 @@ int download_file(){
         puts(INV_FILE);
         return 0;
     }
-    if (!(is_alphanumerical(&(file_name[strlen(file_name) - 3]), 0))){
+    if (!(is_alphanumerical(&(file_name[strlen(file_name) - 3]), 0, true))){
         close(tcp_socket);
         puts(INV_FILE);
         return 0;
@@ -529,14 +526,14 @@ void retrieve(char* ip_address, char* port, char* gid, char* uid, char* MID, str
         else
             printf("Downloading %s messages:\n", n);
         int messages = atoi(n), max = messages < 20 ? messages : 20, i, flag = 0;
-        char rtv_MID[5], rtv_uid[6], tsize[4], text[241];
+        char rtv_mid[5], rtv_uid[6], tsize[4], text[241];
         for (i = 0; i < max; ++i){
-            bzero(&(rtv_MID[flag]), 5-flag);
-            nread = tcp_read(&(rtv_MID[flag]), 4-flag);
+            bzero(&(rtv_mid[flag]), 5-flag);
+            nread = tcp_read(&(rtv_mid[flag]), 4-flag);
             flag = 0;
             if (nread == -1)
                 return;
-            if (!(is_correct_arg_size(rtv_MID, 4) && digits_only(rtv_MID, "message ID"))){
+            if (!(is_correct_arg_size(rtv_mid, "message ID", 4) && digits_only(rtv_mid, "message ID"))){
                 close(tcp_socket);
                 puts(INFO_ERR);
                 return;
@@ -549,7 +546,7 @@ void retrieve(char* ip_address, char* port, char* gid, char* uid, char* MID, str
                 return;
             if (!read_space())
                 return;
-            if (!(is_correct_arg_size(rtv_uid, 5) && digits_only(rtv_uid, "user ID"))){
+            if (!(is_correct_arg_size(rtv_uid, "user ID", 5) && digits_only(rtv_uid, "user ID"))){
                 close(tcp_socket);
                 puts(INFO_ERR);
                 return;
@@ -578,7 +575,7 @@ void retrieve(char* ip_address, char* port, char* gid, char* uid, char* MID, str
             }
             bzero(text, 241);
             tcp_read(text, atoi(tsize));
-            printf("Message ID: %s\nSent by: %s\nMessage size: %d\nMessage: %s\n", rtv_MID, rtv_uid, atoi(tsize), text);
+            printf("Message ID: %s\nSent by: %s\nMessage size: %d\nMessage: %s\n", rtv_mid, rtv_uid, atoi(tsize), text);
             bzero(end, 2);
             nread = tcp_read(end, 1);
 
@@ -607,7 +604,7 @@ void retrieve(char* ip_address, char* port, char* gid, char* uid, char* MID, str
                         return;
                     }
                 } else {
-                    rtv_MID[0] = end[0];
+                    rtv_mid[0] = end[0];
                     flag = 1;
                 }
                 puts("");
