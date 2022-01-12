@@ -61,3 +61,4 @@ void add_trailing_zeros(int number, int len, char* result){
         number /= 10;
     }
 }
+

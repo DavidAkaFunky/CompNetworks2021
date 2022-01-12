@@ -61,21 +61,6 @@ int create_socket(struct addrinfo **res, int socktype, char* ip_address, char* p
     return sockfd;
 }
 
-// Esta função provavelmente é inútil - Perguntar aos profs!!!
-bool is_valid_IP(char* ip_address){
-    char part1[20], part2[4], part3[4], part4[4];
-    bzero(part1, 4);
-    bzero(part2, 4);
-    bzero(part3, 4);
-    bzero(part4, 4);
-    if (sscanf(ip_address, "%[^.].%[^.].%[^.].%[^.]", part1, part2, part3, part4) == 4 &&
-        0 < atoi(part1) && atoi(part1) < 255 && 0 < atoi(part2) && atoi(part2) < 255 &&
-        0 < atoi(part3) && atoi(part3) < 255 && 0 < atoi(part4) && atoi(part4) < 255)
-            return strlen(part1) <= 3 && strlen(part2) <= 3 && strlen(part3) <= 3 && strlen(part4) <= 3;
-            
-    return true;
-}
-
 /**
  * @brief Parse the argv to get the IP address and port needed to communicate with the server.
  * 
@@ -93,8 +78,6 @@ bool parse_argv(char* ip_address, char* port, int argc, char** argv){
     bzero(port, 6);
     if (argc >= 3){
         if (!strcmp(argv[1], "-n")){
-            /*if (!is_valid_IP())
-                return false;*/
             strcpy(ip_address, argv[2]); // Copy the IP address given in the argv
             if (argc > 3){
                 if (!strcmp(argv[3], "-p") && digits_only(argv[4], "port number")){ // Check if there's a valid port number
@@ -109,7 +92,7 @@ bool parse_argv(char* ip_address, char* port, int argc, char** argv){
         if (!strcmp(argv[1], "-p") && digits_only(argv[2], "port number")){
             strcpy(port, argv[2]);
             if (argc > 3){
-                if (!strcmp(argv[3], "-n") /* && is_valid_IP();*/){ // Check if there's a valid IP address
+                if (!strcmp(argv[3], "-n")){ // Check if there's a valid IP address
                     strcpy(ip_address, argv[4]); // Copy the IP address given in the argv
                     return true; 
                 }

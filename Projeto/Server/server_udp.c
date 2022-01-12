@@ -88,7 +88,7 @@ int unreg(int udp_socket, char* uid, char* pass){
                     return 1;
                 }
             }
-            if(i == 99)
+            if (i == 99)
                 break; 
             i++;
         }
@@ -237,7 +237,7 @@ int list_groups_dir(group* list, bool my_groups, char* uid){
                 bzero(gidname, 30);
                 sprintf(gidname,"GROUPS/%s/%s_name.txt",dir_name,dir_name);
                 fp = fopen(gidname,"r");
-                if(fp){
+                if (fp){
                     strcpy(list[i].gid, dir_name);
                     fscanf(fp,"%24s",list[i].group_name);
                     fclose(fp);
@@ -245,7 +245,7 @@ int list_groups_dir(group* list, bool my_groups, char* uid){
                     ++i;
                 }   
             }
-            if(i == 99)
+            if (i == 99)
                 break;
         }
         closedir(d);
@@ -301,7 +301,7 @@ int max_gid(){
         while ((dir = readdir(d)) != NULL){
             if (dir->d_name[0]=='.' || strlen(dir->d_name) > 2)
                 continue;
-            if((++i) == 99)
+            if ((++i) == 99)
                 break;
         }
         closedir(d);

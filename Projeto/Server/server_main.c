@@ -142,7 +142,6 @@ int parse_tcp(int conn_fd, char* message, bool verbose){
     } else if (!strcmp(message, "RTV ")){
         //Retrieve (TCP):
         return retrieve(conn_fd, verbose);
-    
     } else {
         puts(INVALID_CMD);
         return -1;
@@ -165,7 +164,7 @@ int main(int argc, char** argv){
         exit(EXIT_FAILURE);
     }
     
-    //Criacao e bind dos sockets udp e tcp do servidor
+    // Create e bind server's UDP and TCP sockets
     struct addrinfo *res;
     int udp_socket = socket_bind(SOCK_DGRAM, port, &res);
     int tcp_socket = socket_bind(SOCK_STREAM, port, &res);
@@ -174,43 +173,40 @@ int main(int argc, char** argv){
     fd_set rset;
     int conn_fd;
 
-    // clear the descriptor set
+    // Clear the descriptor set
     FD_ZERO(&rset);
  
-    // get maxfd
+    // Get maxfd
     int maxfd = udp_socket > tcp_socket ? udp_socket + 1 : tcp_socket + 1;
     while (true) {
  
-        // set tcp_socket and udp_socket in readset
+        // Set tcp_socket and udp_socket in readset
         FD_SET(tcp_socket, &rset);
         FD_SET(udp_socket, &rset);
  
-        // select the ready descriptor
+        // Select the ready descriptor
         int nready = select(maxfd, &rset, NULL, NULL, NULL);
  
-        // if tcp socket is readable then handle
-        // it by accepting the connection
+        // If tcp socket is readable then handle it by accepting the connection
         if (FD_ISSET(tcp_socket, &rset)) {
             socklen_t len = sizeof(serv_addr);
             conn_fd = accept(tcp_socket, (struct sockaddr*)&serv_addr, &len);
             bzero(message, sizeof(message));
             tcp_read(conn_fd, message, 4);
-            if (verbose){
-                printf("Message from TCP client:\n%s", message);    //nota é preciso completar a mensagem na funcao em questao
-                if (!parse_tcp(conn_fd, message, verbose))
-                    tcp_send(conn_fd, "ERR\n", 4);
-                puts("----------------------------------------");
-            }
-            else if (!parse_tcp(conn_fd, message, verbose))
+            if (verbose)
+                printf("Command from TCP client: %s\nSent by: %d\nPort: %d\n", message, (int) serv_addr.sin_addr.s_addr, (int) serv_addr.sin_port);
+            if (!parse_tcp(conn_fd, message, verbose))
                 tcp_send(conn_fd, "ERR\n",4);
+            if (verbose)
+                puts("----------------------------------------");
             close(conn_fd);
         }
-        // if udp socket is readable receive the message.
+        // If udp socket is readable receive the message.
         if (FD_ISSET(udp_socket, &rset)) {
             bzero(message, sizeof(message));
             udp_receive(udp_socket, message);
             if (verbose){
-                printf("Message from UDP client:\n%s\n", message);
+                printf("Command from UDP client: %s\nSent by: %d\nPort: %d\n", message, (int) serv_addr.sin_addr.s_addr, (int) serv_addr.sin_port);
                 puts("----------------------------------------");
             }
             if (!parse_udp(udp_socket, message))
