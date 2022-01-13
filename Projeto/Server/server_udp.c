@@ -324,10 +324,6 @@ int max_gid(){
 int subscribe(int udp_socket, char* uid, char* gid, char* group_name, bool verbose){
     bool new_group = false;
 
-    // Manter?
-    if (strlen(gid) == 1)
-        sprintf(gid, "0%c", gid[0]);
-
     if (verbose)
         printf("UID: %s\nGID: %s\nGroup name: %s\n", uid, gid, group_name);
 
@@ -444,9 +440,6 @@ int subscribe(int udp_socket, char* uid, char* gid, char* group_name, bool verbo
 }
 
 int unsubscribe(int udp_socket, char* uid, char* gid, bool verbose){
-    // Manter?
-    if (strlen(gid) == 1)
-        sprintf(gid, "0%c", gid[0]);
 
     if (verbose)
         printf("UID: %s\nGID: %s\n", uid, gid);

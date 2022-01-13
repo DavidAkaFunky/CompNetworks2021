@@ -16,7 +16,7 @@ int udp_receive(int udp_socket, char* message){
 
 int udp_send(int udp_socket, char* message, bool verbose){
     if (verbose)
-        printf("Message: %s\n", message);
+        printf("Message sent: %s\n", message);
     socklen_t addrlen = sizeof(client_addr);
     ssize_t n = sendto(udp_socket, message, strlen(message), 0, (struct sockaddr*)&client_addr,addrlen);
     if (n == -1){
