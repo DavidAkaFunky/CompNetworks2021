@@ -4,6 +4,13 @@
 struct sockaddr_in client_addr;
 socklen_t addrlen;
 
+/**
+ * @brief Receives the message sent from the client to the server (UDP).
+ * 
+ * @param udp_socket the udp socket used to communicate.
+ * @param message the message received from the client.
+ * @return the number of bytes received.
+ */
 int udp_receive(int udp_socket, char* message){
     addrlen = sizeof(client_addr);
     ssize_t nread = recvfrom(udp_socket, message, 128, 0, (struct sockaddr*)&client_addr, &addrlen);
@@ -14,6 +21,14 @@ int udp_receive(int udp_socket, char* message){
     return nread;
 }
 
+/**
+ * @brief Sends the message sent from the client to the server (UDP).
+ * 
+ * @param udp_socket the udp socket used to communicate.
+ * @param message the message sent to the client.
+ * @param verbose flag that makes the server run in verbose mode.
+ * @return the total number of bytes sent.
+ */
 int udp_send(int udp_socket, char* message, bool verbose){
     if (verbose)
         printf("Message sent: %s", message);
@@ -26,6 +41,14 @@ int udp_send(int udp_socket, char* message, bool verbose){
     return n;
 }
 
+/**
+ * @brief Binds the name given in address to the socket described by socket.
+ * 
+ * @param socktype can be SOCK_DGRAM or SOCK_STREAM.
+ * @param port the port used to send the packets to the desired IP address.
+ * @param res information about the address of the service provider.
+ * @return the socket file descriptor.
+ */
 int socket_bind(int socktype, char* port, struct addrinfo** res){
     int sockfd = socket(AF_INET,socktype,0);
     if (sockfd == -1){
@@ -52,7 +75,15 @@ int socket_bind(int socktype, char* port, struct addrinfo** res){
     return sockfd;
 }
 
-
+/**
+ * @brief Parse the argv to get the port needed to communicate with the client and if its going to run with verbose mode.
+ * 
+ * @param argc number of arguments in the stdin.
+ * @param argv array of the arguments written in stdin.
+ * @param port the port used to send the packets to the desired IP address.
+ * @param verbose flag that makes the server run in verbose mode.
+ * @return the value that indicates success or failure.
+ */
 int parse_argv(int argc, char** argv, char* port, bool* verbose){
     if (argc < 1 || argc > 4 || strcmp(argv[0], "./DS"))
         return 0;
@@ -89,12 +120,27 @@ int parse_argv(int argc, char** argv, char* port, bool* verbose){
     return 0;
 }
 
+/**
+ * @brief Prints to stdout the protocol used, message the client sent, their IP adress and his port.
+ * 
+ * @param protocol string with UDP or TCP.
+ * @param message string that has the message that the client sent.
+ */
 void show_client_info(char* protocol, char* message){
     char client[NI_MAXHOST];
     getnameinfo((struct sockaddr *) &client_addr, addrlen, client, sizeof(client), NULL, 0, 0);
     printf("Command from %s client: %s\nSent by: %s\nIP address: %s\nPort: %d\n", protocol, message, client, inet_ntoa(client_addr.sin_addr), client_addr.sin_port);
 }
 
+/**
+ * @brief Parse each line of the message received from the client and call a command if the line is well-formatted (UDP).
+ * 
+ * @param udp_socket the udp socket used to communicate.
+ * @param message the message received from the client.
+ * @param verbose flag that makes the server run in verbose mode.
+ * @return true, if the string is well-formatted and the command called executed with no problems.
+ * @return false otherwise.
+ */
 bool parse_udp(int udp_socket, char* message, bool verbose){
     char name[4], arg1[SIZE], arg2[SIZE], arg3[SIZE], arg4[SIZE];
     char delim1, delim2, delim3, delim4;
@@ -142,6 +188,15 @@ bool parse_udp(int udp_socket, char* message, bool verbose){
     return false;
 }
 
+/**
+ * @brief Parse the message received from the client and call a command (TCP). 
+ * 
+ * @param conn_fd the file descriptor of the accepted socket.
+ * @param message the message received from the client.
+ * @param verbose flag that makes the server run in verbose mode.
+ * @return true, if the string is well-formatted and the command called executed with no problems.
+ * @return false otherwise.
+ */
 bool parse_tcp(int conn_fd, char* message, bool verbose){
     if (!strcmp(message, "ULS ")){
         //User list (TCP)
@@ -218,6 +273,7 @@ int main(int argc, char** argv){
                 puts("----------------------------------------");
         }
     }
+    // Closes the tcp and udp sockets.
     close(tcp_socket);
     close(udp_socket);
     freeaddrinfo(res);

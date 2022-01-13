@@ -2,6 +2,14 @@
 #include "dirent.h"
 #include "../common.h"
 
+/**
+ * @brief Receives the message sent from the client to the server (TCP).
+ * 
+ * @param conn_fd the file descriptor of the accepted socket.
+ * @param message the message received from the client.
+ * @param size the quantity of bytes that will be read.
+ * @return the value that indicates success or failure.
+ */
 int tcp_read(int conn_fd, char* message, ssize_t size){
     ssize_t nleft = size, nread;
     char* ptr = message;
@@ -19,10 +27,18 @@ int tcp_read(int conn_fd, char* message, ssize_t size){
     return 1;
 }
 
+/**
+ * @brief Sends the message sent from the client to the server (TCP).
+ * 
+ * @param conn_fd the file descriptor of the accepted socket.
+ * @param response the response that the server sends to the client.
+ * @param size the quantity of bytes that will be sent.
+ * @return the value that indicates success or failure.
+ */
 int tcp_send(int conn_fd, char* response, ssize_t size){
     ssize_t nleft = size, nwritten;
     char* ptr = response;
-    //Caso o cliente não aceite a mensagem completa, manda por packages
+    //In case the client doesn't accept the whole message, sends it in packages.
     while (nleft > 0){
         nwritten = write(conn_fd, ptr, nleft);
         if (nwritten <= 0){
@@ -35,6 +51,14 @@ int tcp_send(int conn_fd, char* response, ssize_t size){
     return 1;
 }
 
+/**
+ * @brief Reads a string.
+ * 
+ * @param str the string to be read by the function tcp_read.
+ * @param conn_fd the file descriptor of the accepted socket.
+ * @return true, if the function worked without an error.
+ * @return false otherwise.
+ */
 bool read_string(char* str, int conn_fd){
     int len = strlen(str);
     char recv[len+1];
@@ -44,6 +68,14 @@ bool read_string(char* str, int conn_fd){
     return true;
 }
 
+/**
+ * @brief Executes the ulist command.
+ * 
+ * @param conn_fd the file descriptor of the accepted socket.
+ * @param verbose flag that makes the server run in verbose mode.
+ * @return true, if the string is well-formatted and there were no errors. 
+ * @return false otherwise.
+ */
 bool ulist(int conn_fd, bool verbose){
     char gid[3];
     char gid_path[10];
@@ -63,7 +95,7 @@ bool ulist(int conn_fd, bool verbose){
         return true;
     }
     
-    //sends all the subscribed users
+    //Sends all the subscribed users
     DIR* d = opendir(gid_path);
     struct dirent* dir;
     FILE* fp;
@@ -78,7 +110,7 @@ bool ulist(int conn_fd, bool verbose){
     
     sprintf(name_file, "%s_name.txt", gid);
     
-    //first sends the RUL OK GNAME
+    //First sends the RUL OK GNAME
     char send_status[31];
     char name_path[40];
     char gname[24];
@@ -127,6 +159,15 @@ bool ulist(int conn_fd, bool verbose){
     return true;
 }
 
+/**
+ * @brief Auxiliary function that downloads the file sent from the client to the server.
+ * 
+ * @param conn_fd the file descriptor of the accepted socket.
+ * @param path_name the path to where the file is located.
+ * @param verbose flag that makes the server run in verbose mode.
+ * @return true, if the string is well-formatted and there were no errors. 
+ * @return false otherwise.
+ */
 bool download_file(int conn_fd, char* path_name, bool verbose){
     char file_name[25];
     bzero(file_name, 25);
@@ -206,6 +247,14 @@ bool download_file(int conn_fd, char* path_name, bool verbose){
     return true;
 }
 
+/**
+ * @brief Executes the post command.
+ * 
+ * @param conn_fd the file descriptor of the accepted socket.
+ * @param verbose flag that makes the server run in verbose mode.
+ * @return true, if the string is well-formatted and there were no errors.
+ * @return false otherwise.
+ */
 bool post(int conn_fd, bool verbose){
     //Check if uid exists and if the user is logged in
     char uid[6];
@@ -336,6 +385,14 @@ bool post(int conn_fd, bool verbose){
     return true;
 }
 
+/**
+ * @brief Returns the number of messages that have been stored in the array.
+ * 
+ * @param gid the group ID that has the messages.
+ * @param first_msg the first message to be read.
+ * @param messages the array that stores the messages ID.
+ * @return the quantity of messages.
+ */
 int get_number_of_messages(char* gid, int first_msg, char messages[20][5]){
     char path[15], msg_path[19], file_path[35], msg[5];
     bzero(path, 15);
@@ -360,6 +417,13 @@ int get_number_of_messages(char* gid, int first_msg, char messages[20][5]){
     return n;
 }
 
+/**
+ * @brief Auxiliary function that uploads the file from the server to the client.
+ * 
+ * @param conn_fd the file descriptor of the accepted socket.
+ * @param msg_path the path to where the file is located.
+ * @param verbose flag that makes the server run in verbose mode.
+ */
 void upload_file(int conn_fd, char* msg_path, bool verbose){
     char response[40], file_path[43];
     DIR* d = opendir(msg_path);
@@ -416,6 +480,15 @@ void upload_file(int conn_fd, char* msg_path, bool verbose){
     }
 }
 
+/**
+ * @brief Iterate all messages in the array, and sends their content to the client.
+ * 
+ * @param conn_fd the file descriptor of the accepted socket.
+ * @param gid the group ID that has the messages.
+ * @param n the quantity of messages.
+ * @param messages the array that stores the messages ID.
+ * @param verbose flag that makes the server run in verbose mode.
+ */
 void get_messages(int conn_fd, char* gid, int n, char messages[20][5], bool verbose){
     char msg_path[19], file_path[35], uid[7], message[242], response[257];
     FILE* fp;
@@ -443,10 +516,8 @@ void get_messages(int conn_fd, char* gid, int n, char messages[20][5], bool verb
         if (strlen(message) > 240){
             continue;
         }
-
         bzero(response, 257);
         sprintf(response, " %s %s %ld %s", messages[i], uid, strlen(message), message);
-
         if (tcp_send(conn_fd, response, strlen(response)) == -1)
             continue;
         upload_file(conn_fd, msg_path, verbose);
@@ -456,6 +527,14 @@ void get_messages(int conn_fd, char* gid, int n, char messages[20][5], bool verb
     
 }
 
+/**
+ * @brief Executes the retrieve command.
+ * 
+ * @param conn_fd the file descriptor of the accepted socket.
+ * @param verbose flag that makes the server run in verbose mode.
+ * @return true, if the string is well-formatted and there were no errors.
+ * @return false otherwise.
+ */
 bool retrieve(int conn_fd, bool verbose){
     //Check if uid exists and if the user is logged in
     char uid[6];

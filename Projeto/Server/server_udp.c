@@ -2,6 +2,16 @@
 #include "dirent.h"
 #include "../common.h"
 
+/**
+ * @brief Executes the register command.
+ * 
+ * @param udp_socket the udp socket used to communicate.
+ * @param uid the user ID to be registered.
+ * @param password the password of the user to be unregistered.
+ * @param verbose flag that makes the server run in verbose mode.
+ * @return true, if the string is well-formatted and there were no errors. 
+ * @return false otherwise.
+ */
 bool reg(int udp_socket, char* uid, char* password, bool verbose){
     if (verbose)
         printf("UID: %s\nPassword: %s\n", uid, password);
@@ -39,6 +49,16 @@ bool reg(int udp_socket, char* uid, char* password, bool verbose){
     return true;
 }
 
+/**
+ * @brief Executes the unregister command.
+ * 
+ * @param udp_socket the udp socket used to communicate.
+ * @param uid the user ID to be unregistered.
+ * @param password the password of the user to be unregistered.
+ * @param verbose flag that makes the server run in verbose mode.
+ * @return true, if the string is well-formatted and there were no errors. 
+ * @return false otherwise.
+ */
 bool unreg(int udp_socket, char* uid, char* password, bool verbose){
     if (verbose)
         printf("UID: %s\nPassword: %s\n", uid, password);
@@ -50,7 +70,7 @@ bool unreg(int udp_socket, char* uid, char* password, bool verbose){
     if (!(digits_only(uid, NULL) && has_correct_arg_sizes(uid, "user ID", 5, password, "password", 8) && is_alphanumerical(password, 0, false)))
         return false;
 
-    // Delete folder with the user uid, and the txt file with his password
+    // Delete folder with the user uid, and the txt file with his password.
     char file_path[26];
     bzero(file_path, 26);
     sprintf(file_path,"%s/%s_pass.txt",path,uid);
@@ -61,17 +81,16 @@ bool unreg(int udp_socket, char* uid, char* password, bool verbose){
 
     bzero(file_path, 26);
     sprintf(file_path,"%s/%s_login.txt",path,uid);
-    if (!access(file_path, F_OK) && remove(file_path)){ //if the uid directory already exists
+    if (!access(file_path, F_OK) && remove(file_path)){ //if the uid directory already exists.
         udp_send(udp_socket, "RUN NOK\n", verbose);
         return true;
     }
 
-    if (access(path, F_OK) == -1 || remove(path)){    //user doesnt exist
+    if (access(path, F_OK) == -1 || remove(path)){    //user doesnt exist.
         udp_send(udp_socket, "RUN NOK\n", verbose);
         return true;
     }
     
-    //Falta retirar o utilizador de todos os grupos
     DIR *d;
     bool valid;
     struct dirent *dir;
@@ -103,6 +122,16 @@ bool unreg(int udp_socket, char* uid, char* password, bool verbose){
     return true;
 }
 
+/**
+ * @brief Executes the login command.
+ * 
+ * @param udp_socket the udp socket used to communicate.
+ * @param uid the user ID to be logged in.
+ * @param password the password of the user to be logged in.
+ * @param verbose flag that makes the server run in verbose mode.
+ * @return true, if the string is well-formatted and there were no errors. 
+ * @return false otherwise.
+ */
 bool login(int udp_socket, char* uid, char* password, bool verbose){
     if (verbose)
         printf("UID: %s\nPassword: %s\n", uid, password);
@@ -114,12 +143,12 @@ bool login(int udp_socket, char* uid, char* password, bool verbose){
     if (!(digits_only(uid, NULL) && has_correct_arg_sizes(uid, "user ID", 5, password, "password", 8) && is_alphanumerical(password, 0, false)))
         return false;
     
-    if (access(path, F_OK) == -1){ // If the uid directory doesn't exist 
+    if (access(path, F_OK) == -1){ // If the uid directory doesn't exist.
         udp_send(udp_socket, "RLO NOK\n", verbose);
         return true;
     }
 
-    // Check if the password is correct from the uid_pass.txt
+    // Check if the password is correct from the uid_pass.txt.
     char file_path[26], pass_temp[9];
     bzero(file_path, 26);
     sprintf(file_path,"%s/%s_pass.txt",path,uid);
@@ -137,7 +166,7 @@ bool login(int udp_socket, char* uid, char* password, bool verbose){
         return true;
     }
 
-    //create a txt file with his log
+    //create a txt file with his log.
     bzero(file_path, 26);
     sprintf(file_path,"%s/%s_login.txt",path,uid);
     fp = fopen(file_path, "w");
@@ -151,11 +180,21 @@ bool login(int udp_socket, char* uid, char* password, bool verbose){
     return true;
 }
 
+/**
+ * @brief Executes the logout command.
+ * 
+ * @param udp_socket the udp socket used to communicate.
+ * @param uid the user ID to be logged out.
+ * @param password the password of the user to be logged out.
+ * @param verbose flag that makes the server run in verbose mode.
+ * @return true, if the string is well-formatted and there were no errors. 
+ * @return false otherwise.
+ */
 bool logout(int udp_socket, char* uid, char* password, bool verbose){
     if (verbose)
         printf("UID: %s\nPassword: %s\n", uid, password);
 
-    // Check if the format is correct
+    // Check if the format is correct.
     if (!(digits_only(uid, NULL) && has_correct_arg_sizes(uid, "user ID", 5, password, "password", 8) && is_alphanumerical(password, 0, false)))
         return false;
     
@@ -163,12 +202,12 @@ bool logout(int udp_socket, char* uid, char* password, bool verbose){
     bzero(path, 12);
     sprintf(path,"USERS/%s",uid);
 
-    if (access(path, F_OK) == -1){//if the uid directory exists
+    if (access(path, F_OK) == -1){//if the uid directory exists.
         udp_send(udp_socket, "ROU NOK\n", verbose);
         return true;
     }
 
-    //Check if the password is correct from the uid_pass.txt
+    //Check if the password is correct from the uid_pass.txt.
     char file_path[26], pass_temp[9];
     bzero(file_path, 26);
     sprintf(file_path,"%s/%s_pass.txt",path,uid);
@@ -185,12 +224,12 @@ bool logout(int udp_socket, char* uid, char* password, bool verbose){
         return true;
     }
 
-    //Delete the txt file with his log
+    //Delete the txt file with his log.
     bzero(file_path, 26);
     sprintf(file_path,"%s/%s_login.txt",path,uid);
 
     //Check if the login file exists
-    if (access(file_path, F_OK) || remove(file_path)){ //checks if login exists and if it can delete it
+    if (access(file_path, F_OK) || remove(file_path)){ //checks if login exists and if it can delete it.
         udp_send(udp_socket, "ROU NOK\n", verbose);
         return true;
     }
@@ -199,6 +238,12 @@ bool logout(int udp_socket, char* uid, char* password, bool verbose){
     return true;
 }
 
+/**
+ * @brief Update the value stored in last_msg.
+ * 
+ * @param gid the group ID that has the message.
+ * @param last_msg the last message that has been stored in the group with gid.
+ */
 void find_last_message(char* gid, char* last_msg){
     char msg_path[15];
     bzero(msg_path, 15);
@@ -214,12 +259,27 @@ void find_last_message(char* gid, char* last_msg){
     add_trailing_zeros(max, 4, last_msg);
 }
 
+/**
+ * @brief Compares two struct group. 
+ * 
+ * @param x1 first parameter.
+ * @param x2 second parameter.
+ * @return the value of the strcmp of the two structures.
+ */
 int comparer(const void* x1, const void* x2){
     const group* g1 = (group*) x1;
     const group* g2 = (group*) x2;
     return strcmp(g1->gid, g2->gid);
 }
 
+/**
+ * @brief Updates the struct group list with the group name, the gid, and last message.
+ * 
+ * @param list struct group list that has the groups information.
+ * @param my_groups flag that is true when the fucntion is called by my_groups.
+ * @param uid the user ID in case that the function was called by my_groups.
+ * @return the total number of groups added to the list.
+ */
 int list_groups_dir(group* list, bool my_groups, char* uid){
     DIR *d;
     struct dirent *dir;
@@ -263,6 +323,15 @@ int list_groups_dir(group* list, bool my_groups, char* uid){
     return -1;
 }
 
+/**
+ * @brief Send the struct group list of groups to the client.
+ * 
+ * @param udp_socket the udp socket used to communicate.
+ * @param list struct group list that has the groups information.
+ * @param groups the total number of groups added to the list.
+ * @param message yet to be completed message that will be sent to the client.
+ * @param verbose flag that makes the server run in verbose mode.
+ */
 void send_groups(int udp_socket, group* list, int groups, char* message, bool verbose){
     int index;
     qsort(list, groups, sizeof(group), comparer);
@@ -275,6 +344,14 @@ void send_groups(int udp_socket, group* list, int groups, char* message, bool ve
     udp_send(udp_socket, message, verbose);
 }
 
+/**
+ * @brief Executes the groups command.
+ * 
+ * @param udp_socket the udp socket used to communicate.
+ * @param verbose flag that makes the server run in verbose mode.
+ * @return true, if there were no errors. 
+ * @return false otherwise.
+ */
 bool groups(int udp_socket, bool verbose){
     group list[99];
     char message[GROUPS];
@@ -287,6 +364,15 @@ bool groups(int udp_socket, bool verbose){
     return true;
 }
 
+/**
+ * @brief Executes the my_groups command.
+ * 
+ * @param udp_socket the udp socket used to communicate.
+ * @param uid the user ID to show the groups he is subscribed.
+ * @param verbose flag that makes the server run in verbose mode.
+ * @return true, if the string is well-formatted and there were no errors. 
+ * @return false otherwise.
+ */
 bool my_groups(int udp_socket, char* uid, bool verbose){
     if (verbose)
         printf("UID: %s\n", uid);
@@ -304,6 +390,11 @@ bool my_groups(int udp_socket, char* uid, bool verbose){
     return true;
 }
 
+/**
+ * @brief Returns the ID of the last group created.
+ * 
+ * @return the max group id that has been created.
+ */
 int max_gid(){
     DIR *d;
     struct dirent *dir;
@@ -322,6 +413,17 @@ int max_gid(){
     return -1;
 }
 
+/**
+ * @brief Executes the subscribe command.
+ * 
+ * @param udp_socket the udp socket used to communicate.
+ * @param uid the user ID to be subscribed.
+ * @param gid the group ID to subscribe.
+ * @param group_name the group name to subscribe.
+ * @param verbose flag that makes the server run in verbose mode.
+ * @return true, if the string is well-formatted and there were no errors. 
+ * @return false otherwise.
+ */
 bool subscribe(int udp_socket, char* uid, char* gid, char* group_name, bool verbose){
     bool new_group = false;
 
@@ -440,6 +542,16 @@ bool subscribe(int udp_socket, char* uid, char* gid, char* group_name, bool verb
     }
 }
 
+/**
+ * @brief Executes the unsubscribe command.
+ * 
+ * @param udp_socket the udp socket used to communicate.
+ * @param uid the user ID to be unsubscribed.
+ * @param gid the group ID to unsubscribe.
+ * @param verbose flag that makes the server run in verbose mode.
+ * @return true, if the string is well-formatted and there were no errors. 
+ * @return false otherwise.
+ */
 bool unsubscribe(int udp_socket, char* uid, char* gid, bool verbose){
 
     if (verbose)
