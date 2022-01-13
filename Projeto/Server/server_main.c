@@ -182,7 +182,7 @@ bool parse_udp(int udp_socket, char* message, bool verbose){
         return delim1 == ' ' && delim2 == ' ' && delim3 == '\n' && unsubscribe(udp_socket, arg1, arg2, verbose);
     } else if (!strcmp(name, "GLM")){
         //My groups
-        sscanf(message, "%c%[^ \n]%c%[^ \n]%c", &delim1, arg1, &delim2);
+        sscanf(message, "%c%[^ \n]%c", &delim1, arg1, &delim2);
         return delim1 == ' ' && delim2 == '\n' && my_groups(udp_socket, arg1, verbose);
     }
     return false;
