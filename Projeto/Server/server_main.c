@@ -2,10 +2,10 @@
 #include "../common.h"
 
 struct sockaddr_in client_addr;
-
+socklen_t addrlen;
 
 int udp_receive(int udp_socket, char* message){
-    socklen_t addrlen = sizeof(client_addr);
+    addrlen = sizeof(client_addr);
     ssize_t nread = recvfrom(udp_socket, message, 128, 0, (struct sockaddr*)&client_addr, &addrlen);
     if (nread == -1){
         puts(RECV_ERR);
@@ -16,8 +16,8 @@ int udp_receive(int udp_socket, char* message){
 
 int udp_send(int udp_socket, char* message, bool verbose){
     if (verbose)
-        printf("Message sent: %s\n", message);
-    socklen_t addrlen = sizeof(client_addr);
+        printf("Message sent: %s", message);
+    addrlen = sizeof(client_addr);
     ssize_t n = sendto(udp_socket, message, strlen(message), 0, (struct sockaddr*)&client_addr,addrlen);
     if (n == -1){
         puts(SEND_ERR);
@@ -90,56 +90,59 @@ int parse_argv(int argc, char** argv, char* port, bool* verbose){
 }
 
 void show_client_info(char* protocol, char* message){
-    printf("Command from %s client: %s\nSent by: %d\nPort: %d\n", protocol, message, (int) client_addr.sin_addr.s_addr, (int) client_addr.sin_port);
+    char client[NI_MAXHOST];
+    getnameinfo((struct sockaddr *) &client_addr, addrlen, client, sizeof(client), NULL, 0, 0);
+    printf("Command from %s client: %s\nSent by: %s\nIP address: %s\nPort: %d\n", protocol, message, client, inet_ntoa(client_addr.sin_addr), client_addr.sin_port);
 }
 
-int parse_udp(int udp_socket, char* message, bool verbose){
-    char name[4];
-    char arg1[SIZE];
-    char arg2[SIZE];
-    char arg3[SIZE];
-    char arg4[SIZE];
+bool parse_udp(int udp_socket, char* message, bool verbose){
+    char name[4], arg1[SIZE], arg2[SIZE], arg3[SIZE], arg4[SIZE];
+    char delim1, delim2, delim3, delim4;
     bzero(name, 4);
     bzero(arg1, SIZE);
     bzero(arg2, SIZE);
     bzero(arg3, SIZE);
-    bzero(arg4, SIZE);
-    sscanf(message, "%s %s %s %s %[^\n]", name, arg1, arg2, arg3, arg4);
-    if (strcmp(arg4, "")){
-        puts(INVALID_CMD);
-        return 0;
-    }
+    sscanf(message, "%[^ \n]", name);
     if (verbose)
         show_client_info("UDP", name);
+    message += strlen(name);
     if (!strcmp(name, "REG")){        
-        //Register (UDP): uid (tam 5), pass (tam 8)
-        return !strcmp(arg3, "") && reg(udp_socket, arg1, arg2, verbose);
+        //Register
+        sscanf(message, "%c%[^ \n]%c%[^ \n]%c", &delim1, arg1, &delim2, arg2, &delim3);
+        return delim1 == ' ' && delim2 == ' ' && delim3 == '\n' && reg(udp_socket, arg1, arg2, verbose);
     } else if (!strcmp(name, "UNR")){
-        //Unegister (UDP): uid (tam 5), pass (tam 8)
-        return !strcmp(arg3, "") && unreg(udp_socket, arg1, arg2, verbose);
+        //Unegister
+        sscanf(message, "%c%[^ \n]%c%[^ \n]%c", &delim1, arg1, &delim2, arg2, &delim3);
+        return delim1 == ' ' && delim2 == ' ' && delim3 == '\n' && unreg(udp_socket, arg1, arg2, verbose);
     } else if (!strcmp(name, "LOG")){
-        //Login (UDP): uid (tam 5), pass (tam 8)
-        return !strcmp(arg3, "") && login(udp_socket, arg1, arg2, verbose);
+        //Login
+        sscanf(message, "%c%[^ \n]%c%[^ \n]%c", &delim1, arg1, &delim2, arg2, &delim3);
+        return delim1 == ' ' && delim2 == ' ' && delim3 == '\n' && login(udp_socket, arg1, arg2, verbose);
     } else if (!strcmp(name, "OUT")){
-        //Logout (UDP): (nada)
-        return !strcmp(arg3, "") && logout(udp_socket, arg1, arg2, verbose);
+        //Logout
+        sscanf(message, "%c%[^ \n]%c%[^ \n]%c", &delim1, arg1, &delim2, arg2, &delim3);
+        return delim1 == ' ' && delim2 == ' ' && delim3 == '\n' && logout(udp_socket, arg1, arg2, verbose);
     } else if (!strcmp(name, "GLS")){
-        //Groups (UDP): (nada)
-        return !strcmp(arg1, "") && groups(udp_socket, verbose);
+        //Groups
+        sscanf(message, "%c", &delim1);
+        return delim1 == '\n' && groups(udp_socket, verbose);
     } else if (!strcmp(name, "GSR")){
-        //Subscribe (UDP): gid (tam 2), group_name (tam 24)
-        return subscribe(udp_socket, arg1, arg2, arg3, verbose);
+        //Subscribe
+        sscanf(message, "%c%[^ \n]%c%[^ \n]%c%[^ \n]%c", &delim1, arg1, &delim2, arg2, &delim3, arg3, &delim4);
+        return delim1 == ' ' && delim2 == ' ' && delim3 == ' ' && delim4 == '\n' && subscribe(udp_socket, arg1, arg2, arg3, verbose);
     } else if (!strcmp(name, "GUR")){
-        //Unsubscribe (UDP): gid (tam 2)
-        return !strcmp(arg3, "") && unsubscribe(udp_socket, arg1, arg2, verbose);
+        //Unsubscribe
+        sscanf(message, "%c%[^ \n]%c%[^ \n]%c", &delim1, arg1, &delim2, arg2, &delim3);
+        return delim1 == ' ' && delim2 == ' ' && delim3 == '\n' && unsubscribe(udp_socket, arg1, arg2, verbose);
     } else if (!strcmp(name, "GLM")){
-        //My groups (UDP): (nada)
-        return !strcmp(arg2, "") && my_groups(udp_socket, arg1, verbose);
-    } else
-        puts(INVALID_CMD);
+        //My groups
+        sscanf(message, "%c%[^ \n]%c%[^ \n]%c", &delim1, arg1, &delim2);
+        return delim1 == ' ' && delim2 == '\n' && my_groups(udp_socket, arg1, verbose);
+    }
+    return false;
 }
 
-int parse_tcp(int conn_fd, char* message, bool verbose){
+bool parse_tcp(int conn_fd, char* message, bool verbose){
     if (!strcmp(message, "ULS ")){
         //User list (TCP)
         return ulist(conn_fd, verbose);
@@ -149,10 +152,8 @@ int parse_tcp(int conn_fd, char* message, bool verbose){
     } else if (!strcmp(message, "RTV ")){
         //Retrieve (TCP):
         return retrieve(conn_fd, verbose);
-    } else {
-        puts(INVALID_CMD);
-        return -1;
     }
+    return false;
 }
 
 int main(int argc, char** argv){
@@ -175,7 +176,7 @@ int main(int argc, char** argv){
     struct addrinfo *res;
     int udp_socket = socket_bind(SOCK_DGRAM, port, &res);
     int tcp_socket = socket_bind(SOCK_STREAM, port, &res);
-    listen(tcp_socket, 1);
+    listen(tcp_socket, 10);
     char message[BUF_SIZE];
     fd_set rset;
     int conn_fd;

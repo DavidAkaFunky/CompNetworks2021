@@ -337,44 +337,26 @@ bool post(int conn_fd, bool verbose){
 }
 
 int get_number_of_messages(char* gid, int first_msg, char messages[20][5]){
-    char path[15], msg_path[19], file_path[35], msg[5], first_msg_str[5];
+    char path[15], msg_path[19], file_path[35], msg[5];
     bzero(path, 15);
-    bzero(first_msg_str, 5);
     sprintf(path,"GROUPS/%s/MSG/", gid);
-    add_trailing_zeros(first_msg, 4, first_msg_str);
-    DIR* d = opendir(path);
-    struct dirent* dir;
     int n = 0;
-    if (d){
-        while (n < 20 && (dir = readdir(d)) != NULL){
-            if(dir->d_name[0] == '.' || !strcmp(dir->d_name,"..")){
-                continue;
-            }
-            if (!strcmp(dir -> d_name, first_msg_str)){
-                while(n < 20 && dir != NULL){
-                    bzero(msg_path, 19);
-                    bzero(msg, 5);
-                    strcpy(msg,dir -> d_name);
-                    add_trailing_zeros(first_msg, 4, msg);
-                    sprintf(msg_path, "%s%s", path, msg);
-                    if (!access(msg_path, F_OK)){
-                        bzero(file_path, 35);
-                        sprintf(file_path, "%s/A U T H O R.txt", msg_path);
-                        if (!access(file_path, F_OK)){
-                            bzero(file_path, 35);
-                            sprintf(file_path, "%s/T E X T.txt", msg_path);
-                            if (!access(file_path, F_OK)){
-                                strcpy(messages[n++], msg);
-                            }
-                        }
-                    }
-                    first_msg++;
-                    dir = readdir(d);
-                }
+    for (int i = first_msg; i < first_msg + 20; ++i){
+        bzero(msg_path, 19);
+        bzero(msg, 5);
+        add_trailing_zeros(i, 4, msg);
+        sprintf(msg_path, "%s%s", path, msg);
+        if (!access(msg_path, F_OK)){
+            bzero(file_path, 35);
+            sprintf(file_path, "%s/A U T H O R.txt", msg_path);
+            if (!access(file_path, F_OK)){
+                bzero(file_path, 35);
+                sprintf(file_path, "%s/T E X T.txt", msg_path);
+                if (!access(file_path, F_OK))
+                    strcpy(messages[n++], msg);
             }
         }
     }
-    closedir(d);
     return n;
 }
 
@@ -426,6 +408,8 @@ void upload_file(int conn_fd, char* msg_path, bool verbose){
                     return;
                 }
             }
+            if (verbose)
+                printf("Uploading file: %ld of %s bytes...\r", total, file_size);
             fclose(fp);
         }
         closedir(d);
@@ -476,10 +460,10 @@ bool retrieve(int conn_fd, bool verbose){
     //Check if uid exists and if the user is logged in
     char uid[6];
     bzero(uid, 6);
-    if (verbose)
-        printf("UID: %s\n", uid);
     if (tcp_read(conn_fd, uid, 5) == -1)
         return true;
+    if (verbose)
+        printf("UID: %s\n", uid);
     if (!(is_correct_arg_size(uid, NULL, 5) && digits_only(uid, NULL) && read_string(" ", conn_fd))){
         return false;
     }
@@ -497,7 +481,7 @@ bool retrieve(int conn_fd, bool verbose){
     if (tcp_read(conn_fd, gid, 2) == -1)
         return true;
     if (verbose)
-        printf("UID: %s\n", gid); 
+        printf("GID: %s\n", gid); 
     if (!(is_correct_arg_size(gid, NULL, 2) && digits_only(gid, NULL) && read_string(" ", conn_fd)))
         return false;
     
@@ -518,10 +502,12 @@ bool retrieve(int conn_fd, bool verbose){
         return false;
     char messages[20][5];
     int n = get_number_of_messages(gid, atoi(mid), messages);
+
     if (n == 0){
         tcp_send(conn_fd, "RRT EOF\n", 8);
         return true;
     }
+
     char response[10];
     sprintf(response, "RRT OK %d", n);
     tcp_send(conn_fd, response, strlen(response));

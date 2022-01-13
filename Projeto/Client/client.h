@@ -15,8 +15,8 @@
 #include <stdbool.h>
 
 #define DOWNLOADS_FAIL "Failed creating the DOWNLOADS folder. Please try again!"
-#define NO_LOGIN "Not logged in. Please try again!"
-#define NO_GROUP "No group selected. Please try again!"
+#define NO_LOGIN "You are not logged in. Please try again!"
+#define NO_GROUP "You have not selected a group. Please try again!"
 #define GEN_ERR "The server returned an error. Please try again!"
 #define CONN_ERR "There was an error conecting to the server. Please try again!"
 #define SEND_ERR "There was an error sending information to the server. Please try again!"
@@ -43,6 +43,7 @@
 #define GRP_ERR "Either you're not logged in or your user is invalid. Please try again!"
 #define NO_USERS "There are no users registered to this group."
 #define NO_GROUPS "There are no registered groups."
+#define NO_SUB_GROUPS "You are not subscribed to any group."
 #define NO_FILE "Input path invalid. Please try again!"
 #define FORMAT_ERR "Incorrect text format: You must add quotation marks (\") around the text. Please try again!"
 #define NO_TEXT "The text argument is empty. Please try again!"

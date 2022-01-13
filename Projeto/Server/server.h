@@ -34,23 +34,23 @@ int udp_send(int udp_socket, char* message, bool verbose);
 int socket_bind(int socktype, char* port, struct addrinfo** res);
 int parse_argv(int argc, char** argv, char* port, bool* verbose);
 void show_client_info(char* protocol, char* message);
-int parse_udp(int udp_socket, char* message, bool verbose);
-int parse_tcp(int conn_fd, char* message, bool verbose);
+bool parse_udp(int udp_socket, char* message, bool verbose);
+bool parse_tcp(int conn_fd, char* message, bool verbose);
 int main(int argc, char** argv);
 
 /* -------------------- server_udp --------------------- */
-int reg(int udp_socket, char* uid, char* password, bool verbose);
-int unreg(int udp_socket, char* uid, char* password, bool verbose);
-int login(int udp_socket, char* uid, char* password, bool verbose);
-int logout(int udp_socket, char* uid, char* password, bool verbose);
+bool reg(int udp_socket, char* uid, char* password, bool verbose);
+bool unreg(int udp_socket, char* uid, char* password, bool verbose);
+bool login(int udp_socket, char* uid, char* password, bool verbose);
+bool logout(int udp_socket, char* uid, char* password, bool verbose);
 void find_last_message(char* gid, char* last_msg);
 int comparer(const void* x1, const void* x2);
 int list_groups_dir(group* list, bool my_groups, char* uid);
 void send_groups(int udp_socket, group* list, int groups, char* message, bool verbose);
-int groups(int udp_socket, bool verbose);
-int my_groups(int udp_socket, char* uid, bool verbose);
-int subscribe(int udp_socket, char* uid, char* gid, char* group_name, bool verbose);
-int unsubscribe(int udp_socket, char* uid, char* gid, bool verbose);
+bool groups(int udp_socket, bool verbose);
+bool my_groups(int udp_socket, char* uid, bool verbose);
+bool subscribe(int udp_socket, char* uid, char* gid, char* group_name, bool verbose);
+bool unsubscribe(int udp_socket, char* uid, char* gid, bool verbose);
 
 
 /* -------------------- server_tcp --------------------- */

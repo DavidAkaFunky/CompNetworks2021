@@ -214,7 +214,7 @@ void parse(int udp_socket, struct addrinfo *res, char* ip_address, char* port, c
         subscribe(uid, arg1, arg2, res, udp_socket);
     } else if (!strcmp(name, "unsubscribe") || !strcmp(name, "u")){
         // Unsubscribe (UDP): gid (size 2, digits)
-        if (!(digits_only(arg1, "group ID") && strlen(arg1) > 0))
+        if (!(digits_only(arg1, "group ID") && strlen(arg1) > 0 && check_login(uid, true)))
             return;
         add_trailing_zeros(atoi(arg1), 2, arg1);
         if (!has_correct_arg_sizes(arg1, "group ID", 2, arg2, "second additional argument", 0))
